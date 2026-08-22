@@ -4,6 +4,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { requireCurrentDbUser } from '@/lib/auth/require-user';
 
 const NEXT_STATUS: Record<string, string> = {
   draft: 'researching', researching: 'ai_reviewed', ai_reviewed: 'technical_review',
@@ -13,13 +14,15 @@ const NEXT_STATUS: Record<string, string> = {
 export async function decideAction(formData: FormData) {
   const instanceId = String(formData.get('instanceId'));
   const decision = String(formData.get('decision')) as 'approved' | 'rejected' | 'hold';
-  const approverEmail = String(formData.get('approverEmail'));
   const comment = String(formData.get('comment') ?? '');
 
   const db = getDb(getDatabaseUrl());
-  const [approver] = await db.select().from(s.users).where(eq(s.users.email, approverEmail)).limit(1);
+  // 承認者は認証Cookieから解決する。フォームの approverEmail は使わない
+  // （CodeRabbit指摘: クライアントが承認者を偽装できてしまう脆弱性への対応）
+  const approver = await requireCurrentDbUser(db);
+
   const [instance] = await db.select().from(s.workflowInstances).where(eq(s.workflowInstances.id, instanceId)).limit(1);
-  if (!instance || !approver) return;
+  if (!instance) return;
 
   // 自己承認の禁止
   if (instance.authorId === approver.id) {
@@ -58,12 +61,11 @@ export async function decideAction(formData: FormData) {
 
 export async function completeHumanCheck(formData: FormData) {
   const instanceId = String(formData.get('instanceId'));
-  const userEmail = String(formData.get('userEmail'));
   const db = getDb(getDatabaseUrl());
-  const [user] = await db.select().from(s.users).where(eq(s.users.email, userEmail)).limit(1);
+  const me = await requireCurrentDbUser(db);
   await db.update(s.workflowInstances).set({ humanCheckCompletedAt: new Date() }).where(eq(s.workflowInstances.id, instanceId));
   await db.insert(s.auditLogs).values({
-    id: crypto.randomUUID(), actorUserId: user?.id, action: 'update', targetType: 'workflow_instance',
+    id: crypto.randomUUID(), actorUserId: me.id, action: 'update', targetType: 'workflow_instance',
     targetId: instanceId, result: 'success', meta: { field: 'human_check_completed' }
   });
   revalidatePath(`/approvals/${instanceId}`);

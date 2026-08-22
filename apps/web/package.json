@@ -16,7 +16,7 @@
     "db:seed": "tsx src/lib/db/seed.ts"
   },
   "dependencies": {
-    "next": "14.2.15",
+    "next": "14.2.35",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "@neondatabase/serverless": "0.10.1",
@@ -33,6 +33,6 @@
     "tsx": "4.16.2",
     "vitest": "2.1.9",
     "eslint": "8.57.0",
-    "eslint-config-next": "14.2.15"
+    "eslint-config-next": "14.2.35"
   }
 }

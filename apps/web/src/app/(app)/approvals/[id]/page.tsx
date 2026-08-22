@@ -48,7 +48,6 @@ export default async function ApprovalDetail({ params }: { params: { id: string 
               <strong>人間確認事項が未完了です。</strong> {risk.note}
               <form action={completeHumanCheck} style={{ marginLeft: 'auto' }}>
                 <input type="hidden" name="instanceId" value={w.id} />
-                <input type="hidden" name="userEmail" value={user.email} />
                 <button type="submit" className="btn btn-secondary" style={{ height: 28, padding: '0 12px', fontSize: 11.5 }}>確認完了を記録</button>
               </form>
             </div>
@@ -64,7 +63,6 @@ export default async function ApprovalDetail({ params }: { params: { id: string 
 
       <form action={decideAction} className="card" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <input type="hidden" name="instanceId" value={w.id} />
-        <input type="hidden" name="approverEmail" value={user.email} />
         <textarea name="comment" placeholder="コメント（差戻し時は理由を記入）" rows={2}
           style={{ padding: 8, border: '1px solid var(--line)', borderRadius: 3, fontSize: 13, fontFamily: 'inherit' }} />
         <div style={{ display: 'flex', gap: 10 }}>

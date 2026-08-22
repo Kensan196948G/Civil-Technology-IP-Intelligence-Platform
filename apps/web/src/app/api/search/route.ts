@@ -1,5 +1,6 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
+import { getCurrentUser } from '@/lib/auth/current-user';
 import { sql } from 'drizzle-orm';
 
 export const runtime = 'edge';
@@ -7,6 +8,12 @@ export const runtime = 'edge';
 // MVP版の検索API。本番のハイブリッド検索（pg_trgm+pgvector+RRF）は
 // docs/30-design/06-search-and-rag-design.md の設計に基づき別途実装する。
 export async function GET(req: Request) {
+  // CodeRabbit指摘: 未認証アクセスを許していた。Cookie（デモ認証）を必須にする。
+  const user = getCurrentUser();
+  if (!user) {
+    return Response.json({ error: 'unauthenticated', message: 'ログインが必要です' }, { status: 401 });
+  }
+
   const url = new URL(req.url);
   const q = (url.searchParams.get('q') ?? '').trim();
   const db = getDb(getDatabaseUrl());

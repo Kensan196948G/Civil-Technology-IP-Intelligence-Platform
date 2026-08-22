@@ -275,7 +275,7 @@ corepack enable && pnpm install
 
 # apps/web/.env.local に DATABASE_URL=postgresql://... を設定（Neon の接続文字列。値は管理者から受領）
 pnpm --filter @ctiip/web db:migrate   # DDL適用（初回のみ）
-pnpm --filter @ctiip/web db:seed      # 架空ダミーデータ投入（何度でも再実行可・毎回洗い替え）
+CTIIP_ALLOW_SEED_TRUNCATE=true pnpm --filter @ctiip/web db:seed   # 架空ダミーデータ投入（既存データを洗い替えるため明示フラグが必須）
 
 pnpm dev                               # http://localhost:3000
 ```

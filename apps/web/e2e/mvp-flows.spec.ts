@@ -31,11 +31,21 @@ test('Claim Chart：注記が常時表示され、判定を変更すると反映
   await page.getByText('ケーソン据付装置').click();
   await expect(page).toHaveURL(/\/claims\//);
   await expect(page.getByText('類似度は権利侵害の判断ではありません')).toBeVisible();
-  await page.locator('table tbody tr').first().getByText('相違', { exact: true }).click();
-  await page.waitForTimeout(1500);
+
+  const firstRow = page.locator('table tbody tr').first();
+  // 判定変更前：1行目は初期状態の「一致」ボタンが選択状態（太字）になっている
+  await expect(firstRow.getByText('一致', { exact: true })).toHaveCSS('font-weight', '700');
+
+  await firstRow.getByText('相違', { exact: true }).click();
+  await page.waitForTimeout(1200);
   await page.reload();
-  // サーバーアクションでDBが更新され、再読込後も判定が「相違」に反映されている（実データ連動の確認）
-  await expect(page.locator('table tbody tr').first()).toContainText('相違');
+
+  // 判定変更後：再読込してもDB側で「相違」が選択状態のまま反映されている（同語反復にならないよう、
+  // 「相違」ボタンが太字＝選択中であることまで確認する。単なるテキスト存在チェックでは
+  // 更新が失敗していても常に通ってしまうため、CSSでの状態確認を必須にしている）
+  const firstRowAfter = page.locator('table tbody tr').first();
+  await expect(firstRowAfter.getByText('相違', { exact: true })).toHaveCSS('font-weight', '700');
+  await expect(firstRowAfter.getByText('一致', { exact: true })).not.toHaveCSS('font-weight', '700');
   await expect(page.getByText('類似度は権利侵害の判断ではありません')).toBeVisible();
 });
 

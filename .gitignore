@@ -17,3 +17,6 @@ coverage/
 tsconfig.tsbuildinfo
 test-results/
 playwright-report/
+
+# ローカルツール状態
+.claude/

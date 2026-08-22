@@ -2,7 +2,6 @@ import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
-import { getCurrentUser } from '@/lib/auth/current-user';
 import { submitSiteIssue } from '../../actions';
 import { notFound } from 'next/navigation';
 
@@ -10,7 +9,6 @@ export const runtime = 'edge';
 
 export default async function SiteIssuePage({ params }: { params: { id: string } }) {
   const db = getDb(getDatabaseUrl());
-  const user = getCurrentUser()!;
   const [site] = await db.select().from(s.sites).where(eq(s.sites.id, params.id)).limit(1);
   if (!site) notFound();
   const issues = await db.select().from(s.siteIssues).where(eq(s.siteIssues.siteId, params.id)).orderBy(desc(s.siteIssues.createdAt));
@@ -33,7 +31,6 @@ export default async function SiteIssuePage({ params }: { params: { id: string }
 
           <form action={submitSiteIssue} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <input type="hidden" name="siteId" value={site.id} />
-            <input type="hidden" name="userEmail" value={user.email} />
             <textarea name="body" required rows={5}
               placeholder="例：波が高い日にケーソンの据付がなかなか決まらない…"
               style={{ padding: 12, border: '1px solid var(--blue)', borderRadius: 3, fontSize: 14.5, fontFamily: 'inherit', resize: 'vertical' }} />

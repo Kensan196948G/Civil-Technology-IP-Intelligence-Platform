@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/current-user';
 import { updateRowKind } from '../actions';
 
 export const runtime = 'edge';
@@ -13,7 +12,6 @@ const KIND_COLOR: Record<string, string> = { match: 'var(--green)', similar: 'va
 
 export default async function ClaimChartPage({ params }: { params: { id: string } }) {
   const db = getDb(getDatabaseUrl());
-  const user = getCurrentUser()!;
   const [analysis] = await db.select().from(s.claimAnalyses).where(eq(s.claimAnalyses.id, params.id)).limit(1);
   if (!analysis) notFound();
   const [patent] = await db.select().from(s.patents).where(eq(s.patents.id, analysis.patentId)).limit(1);
@@ -67,7 +65,6 @@ export default async function ClaimChartPage({ params }: { params: { id: string 
                         <input type="hidden" name="rowId" value={r.id} />
                         <input type="hidden" name="analysisId" value={params.id} />
                         <input type="hidden" name="kind" value={k} />
-                        <input type="hidden" name="editedBy" value={user.email} />
                         <button type="submit" className="badge" style={{
                           border: `1px solid ${r.kind === k ? KIND_COLOR[k] : 'var(--line)'}`,
                           color: r.kind === k ? KIND_COLOR[k] : 'var(--ink-2)',

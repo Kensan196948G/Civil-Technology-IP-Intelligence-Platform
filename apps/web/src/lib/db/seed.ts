@@ -7,10 +7,25 @@ import { randomUUID as uuid } from 'node:crypto';
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error('DATABASE_URL が設定されていません');
+
+  // CodeRabbit指摘: このスクリプトは全業務テーブルを TRUNCATE する破壊的操作。
+  // 誤って本番/共有DBに向けて実行しないよう、明示的な opt-in を必須にする。
+  if (process.env.CTIIP_ALLOW_SEED_TRUNCATE !== 'true') {
+    throw new Error(
+      'このスクリプトは既存データを全て削除して再投入します（破壊的操作）。\n' +
+      '意図した接続先であることを確認したうえで、環境変数 CTIIP_ALLOW_SEED_TRUNCATE=true を設定して再実行してください。\n' +
+      '対象DB: ' + url.replace(/:[^:@]+@/, ':***@')
+    );
+  }
+  const host = new URL(url.replace('postgresql://', 'postgres://')).hostname;
+  if (/prod|production/i.test(host)) {
+    throw new Error('接続先ホスト名に prod/production が含まれています。安全のため中止しました: ' + host);
+  }
+
   const pool = new Pool({ connectionString: url });
   const sql = (text: string, params: any[] = []) => pool.query(text, params);
 
-  console.log('🧹 既存データをクリア中...');
+  console.log('🧹 既存データをクリア中... (接続先: ' + host + ')');
   const tables = [
     'audit_logs','ai_citations','ai_runs','approvals','workflow_instances',
     'inventions','field_applications','site_issues','sites',
