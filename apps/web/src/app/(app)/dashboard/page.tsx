@@ -54,20 +54,26 @@ export default async function DashboardPage() {
         <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 700, fontSize: 13 }}>
           要対応・最近の案件
         </div>
-        <table className="plain">
-          <thead><tr><th>種別</th><th>件名</th><th>ステータス</th><th>起案</th><th>期限</th></tr></thead>
-          <tbody>
-            {c.pending.map((w: any) => (
-              <tr key={w.id}>
-                <td className="mono" style={{ fontSize: 11 }}>{w.kind}</td>
-                <td><Link href={`/approvals/${w.id}`}>{w.title}</Link></td>
-                <td>{w.status}</td>
-                <td>{w.author}</td>
-                <td className="mono">{w.due_on ?? '—'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {c.pending.length === 0 ? (
+          <div style={{ padding: '14px 16px', fontSize: 13, color: 'var(--ink-2)' }}>
+            要対応の案件はありません。
+          </div>
+        ) : (
+          <table className="plain">
+            <thead><tr><th>種別</th><th>件名</th><th>ステータス</th><th>起案</th><th>期限</th></tr></thead>
+            <tbody>
+              {c.pending.map((w: any) => (
+                <tr key={w.id}>
+                  <td className="mono" style={{ fontSize: 11 }}>{w.kind}</td>
+                  <td><Link href={`/approvals/${w.id}`}>{w.title}</Link></td>
+                  <td>{w.status}</td>
+                  <td>{w.author}</td>
+                  <td className="mono">{w.due_on ?? '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
