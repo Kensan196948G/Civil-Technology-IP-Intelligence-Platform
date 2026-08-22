@@ -12,3 +12,11 @@ coverage/
 *.log
 .DS_Store
 .turbo/
+
+# ビルド成果物・テスト結果
+tsconfig.tsbuildinfo
+test-results/
+playwright-report/
+
+# ローカルツール状態
+.claude/

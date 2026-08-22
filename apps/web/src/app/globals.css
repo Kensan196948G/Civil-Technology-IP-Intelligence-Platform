@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Shippori+Mincho+B1:wght@700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap');
+
+:root {
+  --paper:#EAEDEE; --surface:#F7F9F9; --sunk:#DFE4E5;
+  --ink:#16262E; --ink-2:#516268; --line:#BFCACD; --line-2:#93A3A8;
+  --blue:#0D6E8C; --blue-soft:#D8E9EF;
+  --amber:#A9700D; --amber-soft:#F2E7D0;
+  --brick:#9C3E24; --brick-soft:#F2DDD6;
+  --green:#2F6B4F; --green-soft:#D9E9DF;
+  --f-disp:'Shippori Mincho B1',serif;
+  --f-body:'Zen Kaku Gothic New',system-ui,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--paper); color: var(--ink); font-family: var(--f-body);
+  font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased;
+}
+a { color: var(--blue); text-decoration: none; }
+a:hover { color: #095972; text-decoration: underline; }
+h1, h2, h3 { font-family: var(--f-disp); font-weight: 700; margin: 0; }
+button { font: inherit; cursor: pointer; }
+input, textarea, select { font: inherit; }
+
+.mono { font-family: var(--f-mono); }
+.shell { display: flex; flex-direction: column; min-height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 16px; height: 52px; padding: 0 20px;
+  background: var(--ink); color: #DEE9EC; flex: none;
+}
+.mvp-banner {
+  display: flex; align-items: center; gap: 8px; padding: 6px 20px;
+  background: var(--amber-soft); border-bottom: 1px solid #E0CFA8; color: #7A5008;
+  font-size: 12px; flex: none;
+}
+.body-row { display: flex; flex-grow: 1; align-items: stretch; }
+.sidebar { width: 214px; flex: none; background: var(--sunk); border-right: 1px solid var(--line); padding: 14px 0; }
+.nav-item {
+  display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 14px;
+  color: var(--ink); font-size: 13px; border-left: 3px solid transparent;
+}
+.nav-item.active { color: var(--blue); background: var(--surface); border-left-color: var(--blue); font-weight: 700; }
+.nav-item:hover { text-decoration: none; background: rgba(255,255,255,.4); }
+.main { flex-grow: 1; padding: 22px 26px 40px; min-width: 0; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 3px; }
+.badge { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; border-radius: 2px; padding: 1px 6px; }
+.pill { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; border-radius: 999px; padding: 0 7px; border: 1px solid currentColor; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 34px; padding: 0 18px; border-radius: 3px; font-size: 13px; font-weight: 700; border: 1px solid transparent;
+}
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-primary:hover { background: #095972; text-decoration: none; color: #fff; }
+.btn-secondary { background: var(--surface); color: var(--blue); border-color: var(--blue); }
+.btn-ghost { background: var(--surface); color: var(--ink-2); border-color: var(--line); }
+.btn:disabled { background: var(--sunk); color: var(--line-2); border-color: var(--line); cursor: not-allowed; }
+
+.notice {
+  display: flex; gap: 10px; padding: 12px 14px; border-radius: 3px; border: 1px solid; line-height: 1.7;
+}
+.notice-brick { background: var(--brick-soft); border-color: #D3A695; color: #7A2E17; border-left-width: 3px; border-left-color: var(--brick); }
+.notice-amber { background: var(--amber-soft); border-color: #DDC08A; color: #7A5008; }
+.notice-green { background: var(--green-soft); border-color: #8FBBA3; color: #1F4D38; }
+.notice-blue { background: var(--blue-soft); border-color: #9CC3D0; color: #0A5B75; }
+
+.mobile-shell { width: 100%; max-width: 430px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; background: var(--paper); }
+
+table.plain { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+table.plain th, table.plain td { text-align: left; padding: 8px 12px; border-top: 1px solid var(--line); }
+table.plain thead th { border-top: none; background: var(--sunk); font-size: 11px; }

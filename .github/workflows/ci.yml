@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.1.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm --filter @ctiip/web lint
+
+      - name: Typecheck
+        run: pnpm --filter @ctiip/web typecheck
+
+      - name: Build
+        run: pnpm --filter @ctiip/web build
+
+      - name: Secret scan (簡易)
+        # CodeRabbit指摘: 以前は origin/main との git diff に依存しており、
+        # actions/checkout の既定 fetch-depth:1 では origin/main がローカルに
+        # 存在せず diff が失敗しうる。失敗が 2>/dev/null と if の外側で握りつぶされ、
+        # 検査対象が0件のまま「OK」と誤表示する経路があった。
+        # → diff ではなく追跡ファイル全体を対象にした git grep へ変更し、
+        #   コマンド自体の失敗（grep以外の異常）はジョブ失敗として扱う（pipefail）。
+        # docs/ と .env.example は意図的なプレースホルダー例（実在しないダミー値）を
+        # 含むため対象外とする。
+        # CodeRabbit指摘: このワークフロー自身をスキャン対象から除外すると、
+        # 誰かが将来ここへ本物のシークレットを貼り付けても検出できなくなる。
+        # パターン文字列を断片から実行時に組み立てることで、このファイル自身に
+        # 検知対象の文字列が「リテラルとしては」現れないようにし、除外せずに
+        # 自己検知を回避する。
+        run: |
+          set -euo pipefail
+          P1="sk-ant"; P1="${P1}-"
+          P2="AKIA"; P2="${P2}[0-9A-Z]{16}"
+          P3="-----BEGIN "; P3="${P3}(RSA|EC) PRIVATE KEY-----"
+          PATTERN="(${P1}|${P2}|${P3})"
+          if git grep -InE "$PATTERN" -- . ':!pnpm-lock.yaml' ':!docs' ':!**/*.example'; then
+            echo "::error::シークレットらしき文字列が検出されました"
+            exit 1
+          fi
+          echo "OK: 既知のシークレットパターンは検出されませんでした"
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.1.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Check E2E database secrets are configured
+        id: check
+        run: |
+          if [ -n "${{ secrets.DATABASE_URL_MVP }}" ] && [ -n "${{ secrets.CTIIP_SEED_ALLOWED_HOST }}" ] && [ -n "${{ secrets.CTIIP_SEED_ALLOWED_DB }}" ] && [ -n "${{ secrets.CTIIP_DEMO_COOKIE_SECRET }}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::DATABASE_URL_MVP / CTIIP_SEED_ALLOWED_HOST / CTIIP_SEED_ALLOWED_DB / CTIIP_DEMO_COOKIE_SECRET のいずれかがリポジトリSecretsに未設定のため、E2Eをスキップします。専用のE2E用Neonデータベースを用意し、Secretsへ設定してください。"
+          fi
+
+      - name: Install dependencies
+        if: steps.check.outputs.ready == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        if: steps.check.outputs.ready == 'true'
+        run: pnpm --filter @ctiip/web exec playwright install --with-deps chromium
+
+      - name: Run E2E (Playwright)
+        if: steps.check.outputs.ready == 'true'
+        working-directory: apps/web
+        env:
+          CI: true
+          DATABASE_URL: ${{ secrets.DATABASE_URL_MVP }}
+          CTIIP_SEED_ALLOWED_HOST: ${{ secrets.CTIIP_SEED_ALLOWED_HOST }}
+          CTIIP_SEED_ALLOWED_DB: ${{ secrets.CTIIP_SEED_ALLOWED_DB }}
+          CTIIP_DEMO_COOKIE_SECRET: ${{ secrets.CTIIP_DEMO_COOKIE_SECRET }}
+          CTIIP_ALLOW_SEED_TRUNCATE: 'true'
+        run: pnpm exec playwright test --workers=1
+
+      - name: Upload Playwright report
+        if: steps.check.outputs.ready == 'true' && failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7

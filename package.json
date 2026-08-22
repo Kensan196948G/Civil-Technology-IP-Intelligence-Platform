@@ -1,0 +1,20 @@
+{
+  "name": "civil-technology-ip-intelligence-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @ctiip/web dev",
+    "build": "pnpm --filter @ctiip/web build",
+    "lint": "pnpm --filter @ctiip/web lint",
+    "typecheck": "pnpm --filter @ctiip/web typecheck",
+    "test": "pnpm --filter @ctiip/web test"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.1.0",
+  "devDependencies": {
+    "@playwright/test": "1.47.2"
+  }
+}
