@@ -13,9 +13,13 @@ function normalizeHref(href: string) {
 // リンクがアクティブ表示されていた。クエリを含めた完全一致を優先し、
 // 完全一致が無い場合のみクエリなしパスの一致にフォールバックする。
 function canonical(path: string, query: string) {
+  // CodeRabbit指摘: entries()はデコード済みの値を返すため、手動連結すると
+  // 値に&や=を含む場合に異なるクエリが同じcanonical値になり得る。
+  // ソート後にURLSearchParams.toString()へ戻し、正しく再エンコードする。
   const params = new URLSearchParams(query);
-  const entries = [...params.entries()].sort(([a], [b]) => a.localeCompare(b));
-  return path + (entries.length ? '?' + entries.map(([k, v]) => `${k}=${v}`).join('&') : '');
+  const sorted = new URLSearchParams([...params.entries()].sort(([a], [b]) => a.localeCompare(b)));
+  const qs = sorted.toString();
+  return path + (qs ? '?' + qs : '');
 }
 
 function isLeafActive(leaf: NavLeaf, pathname: string, currentSearch: string): boolean {

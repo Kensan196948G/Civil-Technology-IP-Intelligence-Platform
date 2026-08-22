@@ -7,7 +7,9 @@ import { ListView } from '@/components/ListView';
 export const runtime = 'edge';
 
 const KIND_LABEL: Record<string, string> = { invention: '発明届', field_adoption: '現場導入' };
-const RATING_LABEL: Record<string, string> = { low: '弱い（拒絶リスク高）', medium: '中程度', high: '強い（進歩性あり）' };
+// CodeRabbit指摘: 「強い（進歩性あり）」は進歩性の成立を確定的に断定する表現になる。
+// AI評価値であることと専門家確認の必要性を明示する表現へ変更する。
+const RATING_LABEL: Record<string, string> = { low: 'AI評価：低（要確認）', medium: 'AI評価：中（要確認）', high: 'AI評価：高（要専門家確認）' };
 const RATING_COLOR: Record<string, string> = { low: 'var(--brick)', medium: 'var(--amber)', high: 'var(--green)' };
 
 type RiskSummary = { inventive?: string };

@@ -1,14 +1,18 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { desc } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
 export const runtime = 'edge';
 
 export default async function ResearchMlitPage() {
   const db = getDb(getDatabaseUrl());
-  const rows = await db.select().from(s.netisTechnologies).orderBy(desc(s.netisTechnologies.registeredOn)).limit(100);
+  // CodeRabbit指摘: registeredOnはnullable。desc()のみだとNULLが先頭に来て
+  // limit(100)が未登録日のデータを優先してしまうため、NULLS LASTを明示する。
+  const rows = await db.select().from(s.netisTechnologies)
+    .orderBy(sql`${s.netisTechnologies.registeredOn} desc nulls last`)
+    .limit(100);
 
   return (
     <ListView

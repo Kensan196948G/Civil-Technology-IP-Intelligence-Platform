@@ -29,9 +29,12 @@ export default async function RejectionGroundsPage() {
     .filter(w => (w.aiRiskSummary as RiskSummary | null)?.note)
     .map(w => {
       const risk = w.aiRiskSummary as RiskSummary;
+      // CodeRabbit指摘: novelty/inventiveは値が低いほど「弱い＝拒絶リスク高」という
+      // 強度スケール（examiner/inventive-step の RATING_LABEL と同じ解釈）。
+      // low の場合にのみ拒絶理由の懸念として計上する（!== 'low' は判定が逆だった）。
       const grounds: string[] = [];
-      if (risk.novelty && risk.novelty !== 'low') grounds.push('新規性');
-      if (risk.inventive && risk.inventive !== 'low') grounds.push('進歩性');
+      if (risk.novelty === 'low') grounds.push('新規性');
+      if (risk.inventive === 'low') grounds.push('進歩性');
       const ground = grounds.length > 0
         ? `想定拒絶理由の懸念（${grounds.join('・')}）`
         : 'AI総合所見（新規性・進歩性以外の要確認事項）';
