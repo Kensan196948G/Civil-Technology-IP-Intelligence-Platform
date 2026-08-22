@@ -17,22 +17,47 @@ async function main() {
       '対象DB: ' + url.replace(/:[^:@]+@/, ':***@')
     );
   }
-  const host = new URL(url.replace('postgresql://', 'postgres://')).hostname;
-  if (/prod|production/i.test(host)) {
-    throw new Error('接続先ホスト名に prod/production が含まれています。安全のため中止しました: ' + host);
+  // CodeRabbit指摘: prod/productionという文字列を「含まない」ことに依存した判定は、
+  // 命名規則に従わない共有DB/本番DBを誤って通してしまう。ホスト名とDB名の完全一致による
+  // 許可リストへ変更し、明示的に許可された接続先以外はすべて拒否する（fail closed）。
+  const parsed = new URL(url.replace('postgresql://', 'postgres://'));
+  const host = parsed.hostname;
+  const dbName = parsed.pathname.replace(/^\//, '');
+  const allowedHost = process.env.CTIIP_SEED_ALLOWED_HOST;
+  const allowedDb = process.env.CTIIP_SEED_ALLOWED_DB;
+  if (!allowedHost || !allowedDb) {
+    throw new Error(
+      '安全確認のため、環境変数 CTIIP_SEED_ALLOWED_HOST と CTIIP_SEED_ALLOWED_DB の設定が必須です。\n' +
+      '（このスクリプトが対象として良い接続先を、ホスト名・DB名の完全一致で明示してください）\n' +
+      '現在の接続先: host=' + host + ' db=' + dbName
+    );
+  }
+  if (host !== allowedHost || dbName !== allowedDb) {
+    throw new Error(
+      '接続先が許可リストと一致しません。安全のため中止しました。\n' +
+      '接続先: host=' + host + ' db=' + dbName + '\n' +
+      '許可リスト: host=' + allowedHost + ' db=' + allowedDb
+    );
   }
 
   const pool = new Pool({ connectionString: url });
-  const sql = (text: string, params: any[] = []) => pool.query(text, params);
+  // CodeRabbit指摘: pool.query() は呼び出しごとに別コネクションを使う可能性があり、
+  // BEGIN〜COMMITが同一セッションで完結する保証がない。専用クライアントを1本取得し、
+  // 全書き込みをそのクライアント上の単一トランザクションとして実行する。
+  const client = await pool.connect();
+  const sql = (text: string, params: any[] = []) => client.query(text, params);
 
-  console.log('🧹 既存データをクリア中... (接続先: ' + host + ')');
-  const tables = [
-    'audit_logs','ai_citations','ai_runs','approvals','workflow_instances',
-    'inventions','field_applications','site_issues','sites',
-    'claim_chart_rows','claim_analyses','claim_elements','patent_claims','patents',
-    'technologies','netis_technologies','papers','users','departments'
-  ];
-  for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
+  try {
+    await client.query('BEGIN');
+
+    console.log('🧹 既存データをクリア中... (接続先: ' + host + ')');
+    const tables = [
+      'audit_logs','ai_citations','ai_runs','approvals','workflow_instances',
+      'inventions','field_applications','site_issues','sites',
+      'claim_chart_rows','claim_analyses','claim_elements','patent_claims','patents',
+      'technologies','netis_technologies','papers','users','departments'
+    ];
+    for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
   // 部署（8部署）
   const depts = [
@@ -193,10 +218,13 @@ async function main() {
   const num = axes.reduce((s, a) => s + a.value * a.weight, 0);
   const den = axes.reduce((s, a) => s + a.weight, 0);
   const score = Math.round((num / den) * 100 * 100) / 100;
+  // CodeRabbit指摘: 生成したIDを保持せず、下流のワークフローが別のIDを
+  // subject_id に設定していたため、存在しない field_application を参照するバグがあった。
+  const fieldApplicationId = uuid();
   await sql(
     `INSERT INTO field_applications (id, site_issue_id, candidate_type, candidate_id, score, axes, blockers)
      VALUES ($1,$2,'technology',$3,$4,$5,'[]')`,
-    [uuid(), issueId, techId2, score, JSON.stringify(axes)]
+    [fieldApplicationId, issueId, techId2, score, JSON.stringify(axes)]
   );
 
   // 発明届 → ワークフロー（AI模擬審査ステップ相当・人間確認未完了）
@@ -232,7 +260,7 @@ async function main() {
   await sql(
     `INSERT INTO workflow_instances (id, kind, subject_type, subject_id, title, status, classification, author_id, due_on, human_check_required, human_check_completed_at)
      VALUES ($1,'field_adoption','field_application',$2,$3,'technical_review','C2',$4,'2026-08-25', false, now())`,
-    [faWfId, uuid(), 'GNSS併用ケーソン据付支援システムの導入（デモ）', U('sato.ken@demo.ctiip.example')]
+    [faWfId, fieldApplicationId, 'GNSS併用ケーソン据付支援システムの導入（デモ）', U('sato.ken@demo.ctiip.example')]
   );
 
   // AI実行と根拠（Provenance の実演）
@@ -250,11 +278,18 @@ async function main() {
     [uuid(), U('kondo.jun@demo.ctiip.example')]
   );
 
-  await pool.end();
-  console.log('✅ シード完了');
-  console.log(`   部署 ${depts.length} / 利用者 ${userDefs.length} / 特許 ${patentDefs.length} / 論文 ${paperDefs.length}`);
-  console.log(`   NETIS 1 / 自社技術 2 / Claim比較 1件（要件${rowDefs.length}） / 現場適用スコア ${score}`);
-  console.log(`   ワークフロー案件 3件（発明2・現場導入1） / AI実行1（根拠付き）`);
+    await client.query('COMMIT');
+    console.log('✅ シード完了');
+    console.log(`   部署 ${depts.length} / 利用者 ${userDefs.length} / 特許 ${patentDefs.length} / 論文 ${paperDefs.length}`);
+    console.log(`   NETIS 1 / 自社技術 2 / Claim比較 1件（要件${rowDefs.length}） / 現場適用スコア ${score}`);
+    console.log(`   ワークフロー案件 3件（発明2・現場導入1） / AI実行1（根拠付き）`);
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+    await pool.end();
+  }
 }
 
 main().catch(e => { console.error('❌ シード失敗:', e); process.exit(1); });

@@ -9,7 +9,7 @@ export const runtime = 'edge';
 
 export default async function ApprovalsPage() {
   const db = getDb(getDatabaseUrl());
-  const user = getCurrentUser()!;
+  const user = (await getCurrentUser())!;
   const rows = await db.execute(sql`
     select wi.id, wi.kind, wi.title, wi.status, wi.classification, wi.due_on, u.display_name as author, wi.author_id
     from workflow_instances wi join users u on u.id = wi.author_id

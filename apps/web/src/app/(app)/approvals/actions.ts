@@ -1,5 +1,6 @@
 'use server';
 import { getDb } from '@/lib/db/client';
+import { getRawSql } from '@/lib/db/raw';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
@@ -16,7 +17,8 @@ export async function decideAction(formData: FormData) {
   const decision = String(formData.get('decision')) as 'approved' | 'rejected' | 'hold';
   const comment = String(formData.get('comment') ?? '');
 
-  const db = getDb(getDatabaseUrl());
+  const dbUrl = getDatabaseUrl();
+  const db = getDb(dbUrl);
   // 承認者は認証Cookieから解決する。フォームの approverEmail は使わない
   // （CodeRabbit指摘: クライアントが承認者を偽装できてしまう脆弱性への対応）
   const approver = await requireCurrentDbUser(db);
@@ -43,18 +45,29 @@ export async function decideAction(formData: FormData) {
     return;
   }
 
-  await db.insert(s.approvals).values({ id: crypto.randomUUID(), instanceId, approverId: approver.id, decision, comment });
+  let newStatus: string = instance.status;
+  if (decision === 'approved') newStatus = NEXT_STATUS[instance.status] ?? instance.status;
+  if (decision === 'rejected') newStatus = 'rejected';
+  if (decision === 'hold') newStatus = 'hold';
 
-  let newStatus = instance.status;
-  if (decision === 'approved') newStatus = (NEXT_STATUS[instance.status] ?? instance.status) as any;
-  if (decision === 'rejected') newStatus = 'rejected' as any;
-  if (decision === 'hold') newStatus = 'hold' as any;
-  await db.update(s.workflowInstances).set({ status: newStatus as any }).where(eq(s.workflowInstances.id, instanceId));
+  const approvalId = crypto.randomUUID();
+  const auditId = crypto.randomUUID();
 
-  await db.insert(s.auditLogs).values({
-    id: crypto.randomUUID(), actorUserId: approver.id, action: 'approve', targetType: 'workflow_instance',
-    targetId: instanceId, result: 'success', meta: { decision, newStatus }
-  });
+  // CodeRabbit指摘: 承認記録・状態更新・監査ログの3書き込みが個別クエリだと、
+  // 途中で失敗した場合に不整合な状態が残る。原子的トランザクションにまとめる。
+  // 制約: neon-http は行ロック(FOR UPDATE)を伴う対話型トランザクションを提供しないため、
+  // 「全部成功/全部失敗」は保証するが、同時承認の競合防止（真の排他制御）はカバーしない。
+  // 真の同時実行安全性は本番実装のバックログとする（lib/db/raw.ts 参照）。
+  const sql = getRawSql(dbUrl);
+  await sql.transaction([
+    sql`insert into approvals (id, instance_id, approver_id, decision, comment)
+        values (${approvalId}, ${instanceId}, ${approver.id}, ${decision}, ${comment})`,
+    sql`update workflow_instances set status = ${newStatus} where id = ${instanceId}`,
+    sql`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
+        values (${auditId}, ${approver.id}, 'approve', 'workflow_instance', ${instanceId}, 'success',
+                ${JSON.stringify({ decision, newStatus })}::jsonb)`
+  ]);
+
   revalidatePath(`/approvals/${instanceId}`);
   revalidatePath('/approvals');
 }

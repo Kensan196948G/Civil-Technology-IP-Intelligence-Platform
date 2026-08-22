@@ -10,7 +10,7 @@ export const runtime = 'edge';
 
 export default async function ApprovalDetail({ params }: { params: { id: string } }) {
   const db = getDb(getDatabaseUrl());
-  const user = getCurrentUser()!;
+  const user = (await getCurrentUser())!;
   const [w] = await db.select().from(s.workflowInstances).where(eq(s.workflowInstances.id, params.id)).limit(1);
   if (!w) notFound();
   const [author] = await db.select().from(s.users).where(eq(s.users.id, w.authorId)).limit(1);

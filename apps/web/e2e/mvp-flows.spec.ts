@@ -37,7 +37,8 @@ test('Claim Chart：注記が常時表示され、判定を変更すると反映
   await expect(firstRow.getByText('一致', { exact: true })).toHaveCSS('font-weight', '700');
 
   await firstRow.getByText('相違', { exact: true }).click();
-  await page.waitForTimeout(1200);
+  // 固定待機ではなく、UI状態（相違ボタンが選択状態になる）の自動待機にする
+  await expect(firstRow.getByText('相違', { exact: true })).toHaveCSS('font-weight', '700');
   await page.reload();
 
   // 判定変更後：再読込してもDB側で「相違」が選択状態のまま反映されている（同語反復にならないよう、
@@ -51,7 +52,10 @@ test('Claim Chart：注記が常時表示され、判定を変更すると反映
 
 test('現場適用スコア：軸別内訳が常に併記される', async ({ page }) => {
   await loginAs(page, '佐藤 建');
-  await page.goto('/search?q=ケーソン&tab=tech');
+  // 「ケーソン」は自社技術2件（現場適用性データの有無が異なる）にヒットし、
+  // 同一トランザクション内で作成されたため created_at が同値で順序が非決定的になる。
+  // 現場適用性データを持つ技術だけがヒットする語で検索し、一意に特定する。
+  await page.goto('/search?q=GNSS&tab=tech');
   await page.getByRole('link', { name: '現場適用性を見る →' }).first().click();
   await expect(page.getByText('FIELD APPLICABILITY SCORE')).toBeVisible();
   await expect(page.getByText('このスコアは導入可否の判断を代替しません')).toBeVisible();
@@ -80,6 +84,6 @@ test('承認：自己承認は禁止、他者は承認できる', async ({ page 
   await expect(page.getByText('人間確認事項が未完了です')).toBeVisible();
   await expect(page.getByRole('button', { name: '承認' })).toBeDisabled();
   await page.getByRole('button', { name: '確認完了を記録' }).click();
-  await page.waitForTimeout(800);
+  // toBeEnabled() 自体がポーリングして待つため、固定待機は不要
   await expect(page.getByRole('button', { name: '承認' })).toBeEnabled();
 });

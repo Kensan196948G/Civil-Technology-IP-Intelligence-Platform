@@ -9,7 +9,7 @@ export const runtime = 'edge';
 // docs/30-design/06-search-and-rag-design.md の設計に基づき別途実装する。
 export async function GET(req: Request) {
   // CodeRabbit指摘: 未認証アクセスを許していた。Cookie（デモ認証）を必須にする。
-  const user = getCurrentUser();
+  const user = await getCurrentUser();
   if (!user) {
     return Response.json({ error: 'unauthenticated', message: 'ログインが必要です' }, { status: 401 });
   }

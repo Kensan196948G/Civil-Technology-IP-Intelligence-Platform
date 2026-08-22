@@ -9,6 +9,12 @@ export default async function globalSetup() {
   execSync('npx tsx src/lib/db/seed.ts', {
     cwd: path.resolve(__dirname, '..'),
     stdio: 'inherit',
-    env: { ...process.env, CTIIP_ALLOW_SEED_TRUNCATE: 'true' }
+    env: {
+      ...process.env,
+      CTIIP_ALLOW_SEED_TRUNCATE: 'true',
+      // 許可リスト（完全一致）。E2E専用のMVP用Neonプロジェクトのみを対象にする
+      CTIIP_SEED_ALLOWED_HOST: process.env.CTIIP_SEED_ALLOWED_HOST,
+      CTIIP_SEED_ALLOWED_DB: process.env.CTIIP_SEED_ALLOWED_DB
+    }
   });
 }

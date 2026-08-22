@@ -10,34 +10,64 @@ const TABS = [
   { key: 'netis', label: 'NETIS' }, { key: 'tech', label: '自社技術' }
 ] as const;
 
-async function runSearch(q: string) {
+const PER_TAB_LIMIT = 30;
+
+// CodeRabbit指摘: 以前は4種別をUNION ALLしたうえで全体にLIMITをかけていたため、
+// 特許だけで上限に達すると他の種別が0件に見えてしまうバグがあった。
+// 種別ごとに独立してクエリ・件数集計・上限適用を行うよう修正した。
+async function runSearchByTab(q: string, tab: string) {
   const db = getDb(getDatabaseUrl());
   const like = `%${q}%`;
-  const rows = await db.execute(sql`
-    select 'patent' as kind, id, title, applicant_name as sub, source, retrieved_at, classification, is_sample
+
+  if (tab === 'patent') {
+    const r = await db.execute(sql`
+      select 'patent' as kind, id, title, applicant_name as sub, source, retrieved_at, classification, is_sample
       from patents where ${q} = '' or title ilike ${like} or abstract ilike ${like}
-    union all
-    select 'paper' as kind, id, title, venue as sub, source, retrieved_at, 'C1' as classification, is_sample
+      order by retrieved_at desc limit ${PER_TAB_LIMIT}
+    `);
+    return r.rows as any[];
+  }
+  if (tab === 'paper') {
+    const r = await db.execute(sql`
+      select 'paper' as kind, id, title, venue as sub, source, retrieved_at, 'C1' as classification, is_sample
       from papers where ${q} = '' or title ilike ${like} or abstract ilike ${like}
-    union all
-    select 'netis' as kind, id, name as title, category as sub, source, retrieved_at, 'C1' as classification, is_sample
+      order by retrieved_at desc limit ${PER_TAB_LIMIT}
+    `);
+    return r.rows as any[];
+  }
+  if (tab === 'netis') {
+    const r = await db.execute(sql`
+      select 'netis' as kind, id, name as title, category as sub, source, retrieved_at, 'C1' as classification, is_sample
       from netis_technologies where ${q} = '' or name ilike ${like} or summary ilike ${like}
-    union all
+      order by retrieved_at desc limit ${PER_TAB_LIMIT}
+    `);
+    return r.rows as any[];
+  }
+  const r = await db.execute(sql`
     select 'tech' as kind, id, name as title, kind as sub, 'social:internal' as source, created_at as retrieved_at, classification, is_sample
-      from technologies where ${q} = '' or name ilike ${like} or summary ilike ${like}
-    order by retrieved_at desc
-    limit 50
+    from technologies where ${q} = '' or name ilike ${like} or summary ilike ${like}
+    order by created_at desc limit ${PER_TAB_LIMIT}
   `);
-  return rows.rows as any[];
+  return r.rows as any[];
+}
+
+async function countAllTabs(q: string) {
+  const db = getDb(getDatabaseUrl());
+  const like = `%${q}%`;
+  const r = await db.execute(sql`
+    select
+      (select count(*) from patents where ${q} = '' or title ilike ${like} or abstract ilike ${like}) as patent,
+      (select count(*) from papers where ${q} = '' or title ilike ${like} or abstract ilike ${like}) as paper,
+      (select count(*) from netis_technologies where ${q} = '' or name ilike ${like} or summary ilike ${like}) as netis,
+      (select count(*) from technologies where ${q} = '' or name ilike ${like} or summary ilike ${like}) as tech
+  `);
+  return r.rows[0] as any;
 }
 
 export default async function SearchPage({ searchParams }: { searchParams: { q?: string; tab?: string } }) {
   const q = searchParams.q ?? '';
   const tab = searchParams.tab ?? 'patent';
-  const results = await runSearch(q);
-  const counts: Record<string, number> = { patent: 0, paper: 0, netis: 0, tech: 0 };
-  for (const r of results) counts[r.kind] = (counts[r.kind] ?? 0) + 1;
-  const shown = results.filter(r => r.kind === tab);
+  const [shown, counts] = await Promise.all([runSearchByTab(q, tab), countAllTabs(q)]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -59,7 +89,7 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
               padding: '9px 16px', marginBottom: -1, borderBottom: `2px solid ${tab === t.key ? 'var(--blue)' : 'transparent'}`,
               color: tab === t.key ? 'var(--blue)' : 'var(--ink-2)', fontWeight: tab === t.key ? 700 : 400, fontSize: 13
             }}>
-            {t.label} <span className="mono" style={{ fontSize: 11 }}>{counts[t.key] ?? 0}</span>
+            {t.label} <span className="mono" style={{ fontSize: 11 }}>{Number(counts?.[t.key] ?? 0)}</span>
           </Link>
         ))}
       </div>
@@ -83,6 +113,10 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
           </div>
         ))}
       </div>
+
+      {shown.length === PER_TAB_LIMIT && (
+        <div style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>上位{PER_TAB_LIMIT}件のみ表示しています（MVP簡易実装。本番はページネーションに対応）。</div>
+      )}
     </div>
   );
 }
