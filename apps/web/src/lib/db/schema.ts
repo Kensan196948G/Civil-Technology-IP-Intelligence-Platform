@@ -226,3 +226,77 @@ export const auditLogs = pgTable('audit_logs', {
   reason: text('reason'),
   meta: jsonb('meta').notNull().default({})
 });
+
+// ナビゲーション全項目（20セクション）を画面化するために追加した最小サブセット。
+// 既存エンティティ（patents/technologies/papers/netis/workflowInstances/aiRuns/auditLogs）で
+// 表現できる画面は新テーブルを作らず、フィルタ済み一覧として実装する。
+
+export const researchers = pgTable('researchers', {
+  id: uuid('id').primaryKey(),
+  name: text('name').notNull(),
+  affiliation: text('affiliation'),
+  field: text('field'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const competitors = pgTable('competitors', {
+  id: uuid('id').primaryKey(),
+  name: text('name').notNull(),
+  category: text('category'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const investigations = pgTable('investigations', {
+  id: uuid('id').primaryKey(),
+  title: text('title').notNull(),
+  query: text('query').notNull(),
+  status: text('status').notNull().default('open'),
+  createdBy: uuid('created_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const watches = pgTable('watches', {
+  id: uuid('id').primaryKey(),
+  kind: text('kind').notNull(), // patent / competitor / technology / ipc / researcher / paper / netis
+  label: text('label').notNull(),
+  ownerId: uuid('owner_id').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const licenses = pgTable('licenses', {
+  id: uuid('id').primaryKey(),
+  kind: text('kind').notNull(), // license_in / license_out
+  counterpartName: text('counterpart_name').notNull(),
+  subjectType: text('subject_type').notNull(), // patent / technology / netis
+  subjectId: uuid('subject_id').notNull(),
+  status: text('status').notNull().default('candidate'),
+  terms: jsonb('terms').notNull().default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const reports = pgTable('reports', {
+  id: uuid('id').primaryKey(),
+  kind: text('kind').notNull(),
+  title: text('title').notNull(),
+  createdBy: uuid('created_by').notNull().references(() => users.id),
+  format: text('format').notNull().default('html'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const featureFlags = pgTable('feature_flags', {
+  id: uuid('id').primaryKey(),
+  key: text('key').notNull().unique(),
+  enabled: boolean('enabled').notNull().default(false),
+  description: text('description'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const settings = pgTable('settings', {
+  id: uuid('id').primaryKey(),
+  key: text('key').notNull().unique(),
+  value: jsonb('value').notNull().default({}),
+  description: text('description'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
