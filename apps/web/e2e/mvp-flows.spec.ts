@@ -119,7 +119,7 @@ test('エラーバウンダリ：不正なIDでのアクセスがエラー画面
   await loginAs(page, '田村 誠');
   await page.goto('/patents/not-a-valid-uuid');
   await expect(page.getByText('この画面の表示中にエラーが発生しました')).toBeVisible();
-  await page.getByRole('button', { name: '再試行' }).isVisible();
+  await expect(page.getByRole('button', { name: '再試行' })).toBeVisible();
   await page.getByRole('link', { name: 'ダッシュボードへ戻る' }).click();
   await expect(page).toHaveURL(/\/dashboard/);
 });
