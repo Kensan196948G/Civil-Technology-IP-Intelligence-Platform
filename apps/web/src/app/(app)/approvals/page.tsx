@@ -20,19 +20,24 @@ export default async function ApprovalsPage() {
         <h1 style={{ fontSize: 22 }}>承認・案件一覧</h1>
         <span className="mono" style={{ fontSize: 10, letterSpacing: '.16em', color: 'var(--ink-2)' }}>S-29 / WORKFLOW</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {list.map(w => (
-          <Link key={w.id} href={`/approvals/${w.id}`} className="card" style={{ padding: '12px 15px', display: 'flex', alignItems: 'center', gap: 12, color: 'var(--ink)' }}>
-            <span className="pill" style={{ color: 'var(--blue)' }}>{w.kind}</span>
-            <span style={{ fontWeight: 700 }}>{w.title}</span>
-            <span className="pill" style={{ color: w.classification === 'C3' ? 'var(--amber)' : 'var(--green)' }}>{w.classification}</span>
-            <span style={{ flexGrow: 1 }} />
-            <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>{w.status}</span>
-            <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>起案 {w.author}</span>
-            
-          </Link>
-        ))}
-      </div>
+      {list.length === 0 ? (
+        <div className="card" style={{ padding: '14px 16px', fontSize: 13, color: 'var(--ink-2)' }}>
+          登録されている承認・案件はありません。
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {list.map(w => (
+            <Link key={w.id} href={`/approvals/${w.id}`} className="card" style={{ padding: '12px 15px', display: 'flex', alignItems: 'center', gap: 12, color: 'var(--ink)' }}>
+              <span className="pill" style={{ color: 'var(--blue)' }}>{w.kind}</span>
+              <span style={{ fontWeight: 700 }}>{w.title}</span>
+              <span className="pill" style={{ color: w.classification === 'C3' ? 'var(--amber)' : 'var(--green)' }}>{w.classification}</span>
+              <span style={{ flexGrow: 1 }} />
+              <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>{w.status}</span>
+              <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>起案 {w.author}</span>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

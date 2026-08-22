@@ -56,6 +56,11 @@ export default async function PatentDetailPage({ params }: { params: { id: strin
           請求項・構成要件分解
         </div>
         <div>
+          {claims.length === 0 && (
+            <div style={{ padding: '14px 16px', fontSize: 13, color: 'var(--ink-2)' }}>
+              請求項データは登録されていません。
+            </div>
+          )}
           {claims.map(c => (
             <div key={c.id} style={{ padding: '12px 16px', borderBottom: '1px solid #E8EDED', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

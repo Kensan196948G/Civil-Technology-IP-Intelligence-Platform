@@ -41,25 +41,31 @@ export default async function RndRoadmapPage() {
       blocks={blocks}
       note="MVPでは技術マスタの成熟度区分から簡易的にロードマップを構成しています。時系列の計画・マイルストーン管理は本番設計フェーズで拡張予定です。"
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
-        {[...byMaturity.entries()].map(([maturity, techs]) => (
-          <div key={maturity} className="card" style={{ padding: 0 }}>
-            <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 700, fontSize: 13 }}>
-              {maturity}
+      {byMaturity.size === 0 ? (
+        <div className="card" style={{ padding: '14px 16px', fontSize: 13, color: 'var(--ink-2)', marginTop: 16 }}>
+          登録されている技術テーマはありません。
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
+          {[...byMaturity.entries()].map(([maturity, techs]) => (
+            <div key={maturity} className="card" style={{ padding: 0 }}>
+              <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 700, fontSize: 13 }}>
+                {maturity}
+              </div>
+              <div>
+                {techs.map((t, i) => (
+                  <div key={t.id} style={{ padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: i < techs.length - 1 ? '1px solid #E8EDED' : 'none' }}>
+                    <span style={{ fontWeight: 700, fontSize: 13 }}>{t.name}</span>
+                    <span className="mono" style={{ fontSize: 10.5, color: 'var(--ink-2)' }}>{KIND_LABEL[t.kind] ?? t.kind}</span>
+                    <span style={{ flexGrow: 1 }} />
+                    <span className="badge" style={{ color: 'var(--blue)', border: '1px solid var(--blue)' }}>{t.classification}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div>
-              {techs.map((t, i) => (
-                <div key={t.id} style={{ padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: i < techs.length - 1 ? '1px solid #E8EDED' : 'none' }}>
-                  <span style={{ fontWeight: 700, fontSize: 13 }}>{t.name}</span>
-                  <span className="mono" style={{ fontSize: 10.5, color: 'var(--ink-2)' }}>{KIND_LABEL[t.kind] ?? t.kind}</span>
-                  <span style={{ flexGrow: 1 }} />
-                  <span className="badge" style={{ color: 'var(--blue)', border: '1px solid var(--blue)' }}>{t.classification}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </InfoPage>
   );
 }
