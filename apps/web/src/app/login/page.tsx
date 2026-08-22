@@ -1,6 +1,13 @@
 import { DEMO_USERS, ROLE_LABEL } from '@/lib/auth/demo';
 import { loginAsAction } from './actions';
 
+// Cloudflare Pages上では静的プリレンダーされたページにはWorker関数が
+// 割り当てられず、同一パスへのServer Action POSTが405になる
+// （next start ローカル/CI環境では発生しないため見過ごされていた）。
+// 動的レンダリングを強制してPOSTを受けられるようにする。
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 export default function LoginPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--paper)' }}>
