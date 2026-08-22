@@ -108,7 +108,8 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
             <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>
               {r.sub} ｜ 出典 {r.source} ｜ 取得 <span className="mono">{String(r.retrieved_at).slice(0, 10)}</span>
             </div>
-            {r.kind === 'patent' && <Link href={`/claims/by-patent/${r.id}`} style={{ fontSize: 12 }}>Claim解析を見る →</Link>}
+            {r.kind === 'patent' && <Link href={`/patents/${r.id}`} style={{ fontSize: 12 }}>特許詳細を見る →</Link>}
+            {r.kind === 'netis' && <Link href={`/netis/${r.id}`} style={{ fontSize: 12 }}>NETIS詳細を見る →</Link>}
             {r.kind === 'tech' && <Link href={`/field/by-tech/${r.id}`} style={{ fontSize: 12 }}>現場適用性を見る →</Link>}
           </div>
         ))}

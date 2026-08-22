@@ -28,9 +28,9 @@ async function loadCounts() {
 export default async function DashboardPage() {
   const c = await loadCounts();
   const cards = [
-    { label: '特許', n: c.patents, href: '/search?tab=patent' },
+    { label: '特許', n: c.patents, href: '/patents' },
     { label: '論文', n: c.papers, href: '/search?tab=paper' },
-    { label: 'NETIS', n: c.netis, href: '/search?tab=netis' },
+    { label: 'NETIS', n: c.netis, href: '/netis' },
     { label: '自社技術', n: c.technologies, href: '/search?tab=tech' },
     { label: '承認・案件', n: c.workflows, href: '/approvals' }
   ];

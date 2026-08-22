@@ -343,6 +343,19 @@ MVPは「主要ユースケースを実際に操作できること」を優先�
 これらは**MVPの評価が完了し本番実装フェーズへ進む際の実装バックログ**である。
 現時点でのP0（致命的な欠落・障害）はない。
 
+### モジュール実装状況（幅の簡略化）
+
+上表は各機能の実装の*深さ*の簡略化を示す。以下は構想している25モジュールのうち、
+MVPで画面化した範囲（幅）を示す。
+
+| 画面化済み（10） | 未着手（バックログ） |
+|---|---|
+| ダッシュボード / 横断検索 / 特許 / NETIS・公開技術 / Claim解析 / 現場適用 / 現場・課題 / 発明管理 / AI実行履歴・根拠 / 承認・案件 | Prior Art Intelligence（先行技術調査専用画面） / Competitor Intelligence / Patent Landscape / R&D Intelligence / Licensing Intelligence / IP Portfolio Management / Legal Intelligence / Monitoring & Watch / Knowledge・RAG / Reporting出力（PDF/DOCX/XLSX） / Data Management（クレンジング・名寄せ画面） / Administration・監査ログ画面 / 論文（papers）専用一覧画面 |
+
+MVPは「主要ユースケースを実データで最後まで動かせること」を優先したため、
+上記バックログの各モジュールは、テーブル設計（`schema.ts`）レベルでは一部先行しているものの、
+画面としては未実装である。
+
 ## 🔧 17. 既知の技術的制約
 
 | 制約 | 対応 | 参照 |
