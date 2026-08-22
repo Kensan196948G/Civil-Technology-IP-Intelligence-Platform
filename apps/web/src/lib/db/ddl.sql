@@ -225,6 +225,76 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   meta jsonb NOT NULL DEFAULT '{}'
 );
 
+CREATE TABLE IF NOT EXISTS researchers (
+  id uuid PRIMARY KEY,
+  name text NOT NULL,
+  affiliation text,
+  field text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS competitors (
+  id uuid PRIMARY KEY,
+  name text NOT NULL,
+  category text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS investigations (
+  id uuid PRIMARY KEY,
+  title text NOT NULL,
+  query text NOT NULL,
+  status text NOT NULL DEFAULT 'open',
+  created_by uuid NOT NULL REFERENCES users(id),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS watches (
+  id uuid PRIMARY KEY,
+  kind text NOT NULL,
+  label text NOT NULL,
+  owner_id uuid NOT NULL REFERENCES users(id),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS licenses (
+  id uuid PRIMARY KEY,
+  kind text NOT NULL,
+  counterpart_name text NOT NULL,
+  subject_type text NOT NULL,
+  subject_id uuid NOT NULL,
+  status text NOT NULL DEFAULT 'candidate',
+  terms jsonb NOT NULL DEFAULT '{}',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS reports (
+  id uuid PRIMARY KEY,
+  kind text NOT NULL,
+  title text NOT NULL,
+  created_by uuid NOT NULL REFERENCES users(id),
+  format text NOT NULL DEFAULT 'html',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS feature_flags (
+  id uuid PRIMARY KEY,
+  key text NOT NULL UNIQUE,
+  enabled boolean NOT NULL DEFAULT false,
+  description text,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS settings (
+  id uuid PRIMARY KEY,
+  key text NOT NULL UNIQUE,
+  value jsonb NOT NULL DEFAULT '{}',
+  description text,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS idx_patents_title ON patents (title);
 CREATE INDEX IF NOT EXISTS idx_technologies_name ON technologies (name);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_occurred ON audit_logs (occurred_at DESC);

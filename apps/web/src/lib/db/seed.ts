@@ -62,7 +62,9 @@ async function main() {
       'audit_logs','ai_citations','ai_runs','approvals','workflow_instances',
       'inventions','field_applications','site_issues','sites',
       'claim_chart_rows','claim_analyses','claim_elements','patent_claims','patents',
-      'technologies','netis_technologies','papers','users','departments'
+      'technologies','netis_technologies','papers',
+      'researchers','competitors','investigations','watches','licenses','reports',
+      'feature_flags','settings','users','departments'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -100,14 +102,23 @@ async function main() {
 
   // 特許（架空企業。実在企業を想起させない名称）
   const patentDefs = [
-    { title: 'ケーソン据付装置および据付方法', applicant: '北浜重工デモ株式会社', ipc: ['E02B 3/06'], wt: ['port'], claims: [
+    { title: 'ケーソン据付装置および据付方法', applicant: '北浜重工デモ株式会社', country: 'JP', pubNo: '特開2024-500001', ipc: ['E02B 3/06'], wt: ['port'], claims: [
       { no: 1, indep: true, text: 'ケーソンを吊り下げる吊具と、当該吊具の姿勢を計測する計測手段と、前記計測手段の出力に基づいて据付目標位置との偏差を算出する演算手段と、前記偏差を打ち消す向きに前記吊具を移動させる動揺補償機構と、を備える据付装置。' }
     ]},
-    { title: '水中構造物の据付位置計測システム', applicant: '第一土木デモ建設株式会社', ipc: ['E02D 27/18'], wt: ['port','marine'], claims: [
+    { title: '水中構造物の据付位置計測システム', applicant: '第一土木デモ建設株式会社', country: 'JP', pubNo: '特開2024-500002', ipc: ['E02D 27/18'], wt: ['port','marine'], claims: [
       { no: 1, indep: true, text: '水中に沈設される構造物について、音響測位と慣性計測を併用して位置を求める計測システムであって、音響測位手段と慣性計測手段の出力を統合する統合処理手段を備える。' }
     ]},
-    { title: '起重機船の動揺補償装置', applicant: '旭洋テクノデモ工業株式会社', ipc: ['B63B 27/10'], wt: ['marine'], claims: [
+    { title: '起重機船の動揺補償装置', applicant: '旭洋テクノデモ工業株式会社', country: 'JP', pubNo: '特開2024-500003', ipc: ['B63B 27/10'], wt: ['marine'], claims: [
       { no: 1, indep: true, text: '波浪による船体の動揺を打ち消し、吊荷の対地位置を一定に保つ補償装置であって、船体の動揺を検出する検出手段と、吊荷の位置を補正する補正手段とを備える。' }
+    ]},
+    { title: 'Method for autonomous marine pile driving alignment', applicant: 'Northport Marine Robotics Demo Inc.', country: 'US', pubNo: 'US2024/0123456A1', ipc: ['E02D 7/00'], wt: ['port','marine'], claims: [
+      { no: 1, indep: true, text: 'A system comprising a pile guide frame, a positioning sensor array, and a control unit configured to align the pile axis with a target trajectory using real-time feedback.' }
+    ]},
+    { title: 'Verfahren zur automatisierten Tunnelvortriebssteuerung', applicant: 'Alpenbau Tunneltechnik Demo GmbH', country: 'EP', pubNo: 'EP4123456A1', ipc: ['E21D 9/00'], wt: ['tunnel'], claims: [
+      { no: 1, indep: true, text: 'Ein Verfahren zur Steuerung einer Tunnelbohrmaschine, umfassend die Erfassung der Vortriebsrichtung mittels Lasermessung und die automatische Korrektur der Schneidkopfausrichtung.' }
+    ]},
+    { title: '一种用于桥梁健康监测的传感器融合方法（演示）', applicant: '华东桥梁科技演示有限公司', country: 'CN', pubNo: 'CN117123456A', ipc: ['G01M 5/00'], wt: ['bridge'], claims: [
+      { no: 1, indep: true, text: '一种桥梁健康监测方法，包括布置于桥梁关键部位的振动传感器阵列，以及将多传感器数据融合以评估结构疲劳状态的处理单元。' }
     ]}
   ];
   const patentIds: string[] = [];
@@ -117,9 +128,9 @@ async function main() {
     const pid = uuid(); patentIds.push(pid);
     await sql(
       `INSERT INTO patents (id, country, publication_no, title, abstract, applicant_name, application_date, publication_date, ipc_codes, work_types, classification, source, source_url, retrieved_at, is_sample)
-       VALUES ($1,'JP',$2,$3,$4,$5,$6,$7,$8,$9,'C1','デモ用サンプルデータ',NULL, now(), true)`,
-      [pid, `特開2024-${String(500000 + patentIds.length).slice(0,6)}`, p.title, p.title + 'に関する要約（デモ）。', p.applicant,
-       '2023-06-01', '2024-03-12', p.ipc, p.wt]
+       VALUES ($1,$10,$2,$3,$4,$5,$6,$7,$8,$9,'C1','デモ用サンプルデータ',NULL, now(), true)`,
+      [pid, p.pubNo, p.title, p.title + 'に関する要約（デモ）。', p.applicant,
+       '2023-06-01', '2024-03-12', p.ipc, p.wt, p.country]
     );
     for (const c of p.claims) {
       const cid = uuid();
@@ -298,7 +309,124 @@ async function main() {
     [uuid(), fieldScoreRunId, techId2, '（デモ原文抜粋）NETIS登録技術のデモ複製。据付精度向上を目的とする。']
   );
 
-  // 監査ログ
+  // 発明者・研究者（M02/M07/M10で利用）
+  const researcherDefs = [
+    ['吉田 淳', '当社 技術研究所（デモ）', '港湾・海洋工学'],
+    ['金子 遥', '当社 技術研究所（デモ）', '地盤工学'],
+    ['大野 修', '国立海洋土木大学デモ校', 'ロボティクス'],
+    ['清水 彩', '国立海洋土木大学デモ校', '構造ヘルスモニタリング'],
+    ['Chen Wei', 'Pacific Coastal Engineering Demo Univ.', 'Autonomous Construction'],
+    ['橋本 涼', '当社 技術研究所（デモ）', 'ICT施工']
+  ] as const;
+  const researcherIds: string[] = [];
+  for (const [name, affiliation, field] of researcherDefs) {
+    const id = uuid(); researcherIds.push(id);
+    await sql(`INSERT INTO researchers (id, name, affiliation, field) VALUES ($1,$2,$3,$4)`, [id, name, affiliation, field]);
+  }
+
+  // 競合企業（M09 Competitor Intelligence）
+  const competitorDefs = [
+    ['北浜重工デモ株式会社', '総合建設'], ['第一土木デモ建設株式会社', '土木専門'],
+    ['旭洋テクノデモ工業株式会社', '海洋機械'], ['Northport Marine Robotics Demo Inc.', '海外・ロボティクス'],
+    ['Alpenbau Tunneltechnik Demo GmbH', '海外・トンネル'], ['华东桥梁科技演示有限公司', '海外・橋梁']
+  ] as const;
+  const competitorIds: string[] = [];
+  for (const [name, category] of competitorDefs) {
+    const id = uuid(); competitorIds.push(id);
+    await sql(`INSERT INTO competitors (id, name, category) VALUES ($1,$2,$3)`, [id, name, category]);
+  }
+
+  // 先行技術調査案件（M04）
+  const investigationDefs = [
+    ['港湾ケーソン据付自動化の先行技術調査（デモ）', 'ケーソン 据付 自動化', 'open'],
+    ['トンネル掘進AI制御の先行技術調査（デモ）', 'トンネル AI 掘進制御', 'open'],
+    ['橋梁ヘルスモニタリングの先行技術調査（デモ）', '橋梁 センサ 健全性', 'closed']
+  ] as const;
+  const investigationIds: string[] = [];
+  for (const [title, query, status] of investigationDefs) {
+    const id = uuid(); investigationIds.push(id);
+    await sql(`INSERT INTO investigations (id, title, query, status, created_by) VALUES ($1,$2,$3,$4,$5)`,
+      [id, title, query, status, U('takahashi.minoru@demo.ctiip.example')]);
+  }
+
+  // ウォッチ登録（M19）
+  const watchDefs = [
+    ['patent', '北浜重工デモ株式会社の新規出願'], ['competitor', 'Northport Marine Robotics Demo Inc.'],
+    ['technology', 'ICT施工'], ['ipc', 'E02B 3/06（外郭施設）'],
+    ['researcher', 'Chen Wei'], ['netis', '港湾・海洋分野の新規登録']
+  ] as const;
+  for (const [kind, label] of watchDefs) {
+    await sql(`INSERT INTO watches (id, kind, label, owner_id) VALUES ($1,$2,$3,$4)`,
+      [uuid(), kind, label, U('takahashi.minoru@demo.ctiip.example')]);
+  }
+
+  // ライセンス案件（M11）
+  const licenseDefs = [
+    ['license_in', 'Northport Marine Robotics Demo Inc.', 'patent', patentIds[3], 'candidate'],
+    ['license_out', '第一土木デモ建設株式会社', 'technology', techId, 'candidate'],
+    ['license_in', 'Alpenbau Tunneltechnik Demo GmbH', 'patent', patentIds[4], 'evaluating']
+  ] as const;
+  for (const [kind, counterpart, subjectType, subjectId, status] of licenseDefs) {
+    await sql(`INSERT INTO licenses (id, kind, counterpart_name, subject_type, subject_id, status, terms) VALUES ($1,$2,$3,$4,$5,$6,'{}')`,
+      [uuid(), kind, counterpart, subjectType, subjectId, status]);
+  }
+
+  // レポート出力履歴（M23）
+  const reportDefs = [
+    ['patent-survey', '港湾ケーソン据付技術 特許調査報告書（デモ）', 'pdf'],
+    ['claim-compare', 'ケーソン据付装置 Claim比較レポート（デモ）', 'docx'],
+    ['field-application', '◯◯港 岸壁改良工事 現場適用性評価レポート（デモ）', 'pdf'],
+    ['executive', '技術・知財 経営サマリー（デモ）', 'html']
+  ] as const;
+  for (const [kind, title, format] of reportDefs) {
+    await sql(`INSERT INTO reports (id, kind, title, created_by, format) VALUES ($1,$2,$3,$4,$5)`,
+      [uuid(), kind, title, U('yamamoto.kei@demo.ctiip.example'), format]);
+  }
+
+  // Feature Flags（M19）
+  const featureFlagDefs = [
+    ['ultrareview_auto_merge', true, 'PRの自動マージ前にultrareviewを必須化する（デモ設定）'],
+    ['ai_examiner_v2', false, '次期AI模擬審査モデルの先行有効化（デモ設定）'],
+    ['hybrid_search', false, 'pg_trgm+pgvectorハイブリッド検索への切替（デモ設定・本番設計）']
+  ] as const;
+  for (const [key, enabled, description] of featureFlagDefs) {
+    await sql(`INSERT INTO feature_flags (id, key, enabled, description) VALUES ($1,$2,$3,$4)`, [uuid(), key, enabled, description]);
+  }
+
+  // システム設定（M19、settings画面用のダミー設定値）
+  const settingDefs = [
+    ['ai.model.default', { model: 'demo-model-v1', temperature: 0.2 }, 'AIモデル設定：既定モデル'],
+    ['ai.model.examiner', { model: 'demo-model-v1-examiner' }, 'AIモデル設定：AI模擬審査専用モデル'],
+    ['agent.max_concurrency', { value: 3 }, 'Agent設定：同時実行数上限'],
+    ['api.rate_limit', { requests_per_minute: 60 }, 'API設定：レート制限'],
+    ['integration.jpo', { enabled: false, note: '本番設計（未接続）' }, '外部データ連携：JPO'],
+    ['integration.netis', { enabled: false, note: '本番設計（未接続）' }, '外部データ連携：NETIS'],
+    ['notification.email', { enabled: true }, '通知設定：メール通知'],
+    ['workflow.human_check_default', { required_for: ['C3', 'C4'] }, 'ワークフロー設定：人間確認必須の分類'],
+    ['master.work_types', { source: 'technologies.work_types（派生）' }, 'マスタ設定：工種マスタの生成元']
+  ] as const;
+  for (const [key, value, description] of settingDefs) {
+    await sql(`INSERT INTO settings (id, key, value, description) VALUES ($1,$2,$3,$4)`,
+      [uuid(), key, JSON.stringify(value), description]);
+  }
+
+  // 監査ログ（種別を多様化し、履歴系画面のフィルタが実データで意味を持つようにする）
+  const auditLogDefs: Array<[string, string, string | null, string]> = [
+    ['login', 'auth', null, 'success'],
+    ['search', 'query', null, 'success'],
+    ['ai_run', 'ai_runs', runId, 'success'],
+    ['view', 'patents', patentIds[0]!, 'success'],
+    ['export', 'reports', null, 'success'],
+    ['update', 'claim_chart_rows', null, 'success'],
+    ['role_change', 'users', U('sato.ken@demo.ctiip.example'), 'success'],
+    ['security_event', 'auth', null, 'blocked']
+  ];
+  for (const [action, targetType, targetId, result] of auditLogDefs) {
+    await sql(
+      `INSERT INTO audit_logs (id, actor_user_id, action, target_type, target_id, result, meta) VALUES ($1,$2,$3,$4,$5,$6,'{"note":"デモ用ログ"}')`,
+      [uuid(), U('kondo.jun@demo.ctiip.example'), action, targetType, targetId, result]
+    );
+  }
   await sql(
     `INSERT INTO audit_logs (id, actor_user_id, action, target_type, target_id, result, meta) VALUES ($1,$2,'seed','system',NULL,'success','{"note":"MVPデモデータ投入"}')`,
     [uuid(), U('kondo.jun@demo.ctiip.example')]
@@ -309,6 +437,7 @@ async function main() {
     console.log(`   部署 ${depts.length} / 利用者 ${userDefs.length} / 特許 ${patentDefs.length} / 論文 ${paperDefs.length}`);
     console.log(`   NETIS 2 / 自社技術 2 / Claim比較 1件（要件${rowDefs.length}） / 現場適用スコア ${score}`);
     console.log(`   ワークフロー案件 3件（発明2・現場導入1） / AI実行3（根拠付き）`);
+    console.log(`   研究者${researcherDefs.length} / 競合${competitorDefs.length} / 調査案件${investigationDefs.length} / ウォッチ${watchDefs.length} / ライセンス${licenseDefs.length} / レポート${reportDefs.length} / FeatureFlags${featureFlagDefs.length} / 設定${settingDefs.length}`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;

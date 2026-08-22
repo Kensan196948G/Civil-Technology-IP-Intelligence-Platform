@@ -19,13 +19,13 @@ export async function GET(req: Request) {
   const db = getDb(getDatabaseUrl());
   const like = `%${q}%`;
   const rows = await db.execute(sql`
-    select 'patent' as kind, id, title from patents where ${q} = '' or title ilike ${like}
+    select 'patent' as kind, id, title from patents where ${q}::text = '' or title ilike ${like}
     union all
-    select 'paper' as kind, id, title from papers where ${q} = '' or title ilike ${like}
+    select 'paper' as kind, id, title from papers where ${q}::text = '' or title ilike ${like}
     union all
-    select 'netis' as kind, id, name as title from netis_technologies where ${q} = '' or name ilike ${like}
+    select 'netis' as kind, id, name as title from netis_technologies where ${q}::text = '' or name ilike ${like}
     union all
-    select 'tech' as kind, id, name as title from technologies where ${q} = '' or name ilike ${like}
+    select 'tech' as kind, id, name as title from technologies where ${q}::text = '' or name ilike ${like}
     limit 50
   `);
   return Response.json({ query: q, count: rows.rows.length, results: rows.rows, note: 'MVPデモ用の簡易検索です' });

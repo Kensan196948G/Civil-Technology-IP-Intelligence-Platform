@@ -22,7 +22,7 @@ async function runSearchByTab(q: string, tab: string) {
   if (tab === 'patent') {
     const r = await db.execute(sql`
       select 'patent' as kind, id, title, applicant_name as sub, source, retrieved_at, classification, is_sample
-      from patents where ${q} = '' or title ilike ${like} or abstract ilike ${like}
+      from patents where ${q}::text = '' or title ilike ${like} or abstract ilike ${like}
       order by retrieved_at desc limit ${PER_TAB_LIMIT}
     `);
     return r.rows as any[];
@@ -30,7 +30,7 @@ async function runSearchByTab(q: string, tab: string) {
   if (tab === 'paper') {
     const r = await db.execute(sql`
       select 'paper' as kind, id, title, venue as sub, source, retrieved_at, 'C1' as classification, is_sample
-      from papers where ${q} = '' or title ilike ${like} or abstract ilike ${like}
+      from papers where ${q}::text = '' or title ilike ${like} or abstract ilike ${like}
       order by retrieved_at desc limit ${PER_TAB_LIMIT}
     `);
     return r.rows as any[];
@@ -38,14 +38,14 @@ async function runSearchByTab(q: string, tab: string) {
   if (tab === 'netis') {
     const r = await db.execute(sql`
       select 'netis' as kind, id, name as title, category as sub, source, retrieved_at, 'C1' as classification, is_sample
-      from netis_technologies where ${q} = '' or name ilike ${like} or summary ilike ${like}
+      from netis_technologies where ${q}::text = '' or name ilike ${like} or summary ilike ${like}
       order by retrieved_at desc limit ${PER_TAB_LIMIT}
     `);
     return r.rows as any[];
   }
   const r = await db.execute(sql`
     select 'tech' as kind, id, name as title, kind as sub, 'social:internal' as source, created_at as retrieved_at, classification, is_sample
-    from technologies where ${q} = '' or name ilike ${like} or summary ilike ${like}
+    from technologies where ${q}::text = '' or name ilike ${like} or summary ilike ${like}
     order by created_at desc limit ${PER_TAB_LIMIT}
   `);
   return r.rows as any[];
@@ -56,10 +56,10 @@ async function countAllTabs(q: string) {
   const like = `%${q}%`;
   const r = await db.execute(sql`
     select
-      (select count(*) from patents where ${q} = '' or title ilike ${like} or abstract ilike ${like}) as patent,
-      (select count(*) from papers where ${q} = '' or title ilike ${like} or abstract ilike ${like}) as paper,
-      (select count(*) from netis_technologies where ${q} = '' or name ilike ${like} or summary ilike ${like}) as netis,
-      (select count(*) from technologies where ${q} = '' or name ilike ${like} or summary ilike ${like}) as tech
+      (select count(*) from patents where ${q}::text = '' or title ilike ${like} or abstract ilike ${like}) as patent,
+      (select count(*) from papers where ${q}::text = '' or title ilike ${like} or abstract ilike ${like}) as paper,
+      (select count(*) from netis_technologies where ${q}::text = '' or name ilike ${like} or summary ilike ${like}) as netis,
+      (select count(*) from technologies where ${q}::text = '' or name ilike ${like} or summary ilike ${like}) as tech
   `);
   return r.rows[0] as any;
 }
