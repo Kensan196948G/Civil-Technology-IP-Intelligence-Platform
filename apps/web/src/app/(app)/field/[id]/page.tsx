@@ -15,7 +15,11 @@ export default async function FieldScorePage({ params }: { params: { id: string 
   if (!fa) notFound();
   const [issue] = await db.select().from(s.siteIssues).where(eq(s.siteIssues.id, fa.siteIssueId)).limit(1);
   const [site] = issue ? await db.select().from(s.sites).where(eq(s.sites.id, issue.siteId)).limit(1) : [null];
-  const [tech] = await db.select().from(s.technologies).where(eq(s.technologies.id, fa.candidateId)).limit(1);
+  // CodeRabbit指摘: candidateType を無視して常に technologies を参照していたため、
+  // NETIS由来の候補（candidateType='netis'）では候補技術名が空欄になっていた。
+  const candidateName = fa.candidateType === 'netis'
+    ? (await db.select().from(s.netisTechnologies).where(eq(s.netisTechnologies.id, fa.candidateId)).limit(1))[0]?.name
+    : (await db.select().from(s.technologies).where(eq(s.technologies.id, fa.candidateId)).limit(1))[0]?.name;
   const axes = fa.axes as unknown as Axis[];
   const score = Number(fa.score);
 
@@ -25,7 +29,7 @@ export default async function FieldScorePage({ params }: { params: { id: string 
         <h1 style={{ fontSize: 22 }}>現場適用性評価</h1>
         <span className="mono" style={{ fontSize: 10, letterSpacing: '.16em', color: 'var(--ink-2)' }}>S-19 / FIELD APPLICATION</span>
       </div>
-      <div style={{ fontSize: 13, color: 'var(--ink-2)' }}>{site?.name} ｜ 候補技術：{tech?.name}</div>
+      <div style={{ fontSize: 13, color: 'var(--ink-2)' }}>{site?.name} ｜ 候補技術：{candidateName}</div>
 
       <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start' }}>
         <div className="card" style={{ width: 320, flex: 'none', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
