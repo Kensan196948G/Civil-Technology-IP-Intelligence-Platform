@@ -31,7 +31,9 @@ describe('signValue / verifySignedValue', () => {
 
   it('署名部分を書き換えた値は検証に失敗する', async () => {
     const signed = await signValue('tanaka.makoto@demo.ctiip.example');
-    const [email] = signed.split('.');
+    // メールアドレス自体に "." を含むため、実装（lastIndexOf('.')）と同じ区切り方をする。
+    const lastDot = signed.lastIndexOf('.');
+    const email = signed.slice(0, lastDot);
     const forged = `${email}.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`;
     const verified = await verifySignedValue(forged);
     expect(verified).toBeNull();

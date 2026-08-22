@@ -3,7 +3,11 @@
 // このファイルを (app)/ 直下に置くことで配下の全ルートに自動適用される。
 export default function AppLoading() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '40px 0', color: 'var(--ink-2)', fontSize: 13 }}>
+    <div
+      role="status"
+      aria-live="polite"
+      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '40px 0', color: 'var(--ink-2)', fontSize: 13 }}
+    >
       <span className="mono">読み込み中…</span>
     </div>
   );
