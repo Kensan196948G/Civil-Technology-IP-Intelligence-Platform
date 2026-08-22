@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="土木・建設の特許、論文、NETIS、工法を一本につなぐプラットフォームを、大きな図と最小限の言葉で説明する入門ページ。">
+<title>土木技術・知財の司令塔</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8F%97%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+<style>
+/* minimal reset (Artifact ランタイム相当) */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+img,svg{display:block;max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+</style>
+<style>
+:root{
+  --paper:#EAEDEE;
+  --surface:#F7F9F9;
+  --sunk:#DFE4E5;
+  --ink:#16262E;
+  --ink-2:#516268;
+  --line:#BFCACD;
+  --blue:#0D6E8C;
+  --blue-soft:#D8E9EF;
+  --amber:#A9700D;
+  --amber-soft:#F0E4CB;
+  --brick:#9C3E24;
+
+  --f-disp:"Shippori Mincho B1",'Hiragino Mincho ProN','Yu Mincho',serif;
+  --f-body:"Zen Kaku Gothic New",'Hiragino Sans','Yu Gothic',system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+
+  --fs-hero:clamp(2.1rem,5.4vw,3.9rem);
+  --fs-h2:clamp(1.5rem,3vw,2.2rem);
+  --fs-lead:clamp(1rem,1.7vw,1.19rem);
+
+  --gut:clamp(1.15rem,4vw,2.5rem);
+  --wrap:960px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D1A20;
+    --surface:#152730;
+    --sunk:#0A1418;
+    --ink:#DEE9EC;
+    --ink-2:#93A8B0;
+    --line:#2B434E;
+    --blue:#63C2E0;
+    --blue-soft:#123240;
+    --amber:#E0AE4E;
+    --amber-soft:#33280F;
+    --brick:#E38263;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D1A20;
+  --surface:#152730;
+  --sunk:#0A1418;
+  --ink:#DEE9EC;
+  --ink-2:#93A8B0;
+  --line:#2B434E;
+  --blue:#63C2E0;
+  --blue-soft:#123240;
+  --amber:#E0AE4E;
+  --amber-soft:#33280F;
+  --brick:#E38263;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:1rem;
+  line-height:1.95;
+  -webkit-font-smoothing:antialiased;
+}
+:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--gut)}
+
+/* ─── section rhythm ─────────────────────────── */
+.band{padding:clamp(3rem,7vw,5.5rem) 0;border-top:1px solid var(--line)}
+.band:first-of-type{border-top:none}
+.band > .wrap{display:flex;flex-direction:column;gap:clamp(1.4rem,3vw,2.2rem)}
+
+.eyebrow{
+  margin:0;display:flex;align-items:center;gap:.7rem;
+  font-family:var(--f-mono);font-size:.7rem;font-weight:500;
+  letter-spacing:.19em;text-transform:uppercase;color:var(--ink-2);
+}
+.eyebrow::before{content:"";width:34px;height:1px;background:var(--blue);flex:none}
+.eyebrow .jp{font-family:var(--f-body);letter-spacing:.08em;font-size:.78rem;color:var(--ink)}
+
+h1,h2,h3{font-family:var(--f-disp);font-weight:700;text-wrap:balance;margin:0;line-height:1.34}
+h1{font-size:var(--fs-hero);line-height:1.24;letter-spacing:-.01em}
+h2{font-size:var(--fs-h2)}
+h3{font-size:1.06rem;font-family:var(--f-body);font-weight:700;letter-spacing:.01em}
+p{margin:0;max-width:38em}
+.lead{font-size:var(--fs-lead);color:var(--ink-2);line-height:1.9;max-width:34em}
+
+/* ─── hero ───────────────────────────────────── */
+.hero{padding-top:clamp(2.6rem,7vw,4.6rem)}
+.hero .wrap{gap:clamp(1.5rem,3vw,2rem)}
+.hero-stamp{
+  font-family:var(--f-mono);font-size:.64rem;letter-spacing:.2em;
+  color:var(--ink-2);border:1px solid var(--line);border-radius:2px;
+  padding:.35rem .6rem;align-self:flex-start;
+}
+.fade{animation:rise .7s cubic-bezier(.2,.7,.3,1) both}
+.fade:nth-of-type(2){animation-delay:.06s}
+.fade:nth-of-type(3){animation-delay:.12s}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.fade{animation:none}}
+
+/* ─── figures ────────────────────────────────── */
+figure{margin:0;display:flex;flex-direction:column;gap:.85rem}
+.plate{
+  background:var(--surface);border:1px solid var(--line);border-radius:3px;
+  padding:clamp(.9rem,2.5vw,1.6rem);overflow-x:auto;
+}
+figure svg{display:block;width:100%;min-width:520px;height:auto;color:var(--ink-2)}
+figcaption{font-size:.87rem;color:var(--ink-2);line-height:1.8;max-width:40em}
+
+.dl{stroke:currentColor;stroke-width:1;fill:none}
+.dl-2{stroke:currentColor;stroke-width:1.7;fill:none}
+.dash{stroke-dasharray:4 5}
+.fs{fill:var(--surface)}
+.fp{fill:var(--paper)}
+.fb{fill:var(--blue-soft)}
+.fa{fill:var(--amber-soft)}
+.sb{stroke:var(--blue);fill:none;stroke-width:1.4}
+.sa{stroke:var(--amber);fill:none;stroke-width:1.4}
+.sr{stroke:var(--brick);fill:none;stroke-width:1.5}
+.tx{fill:var(--ink);font-family:var(--f-body);font-size:14px}
+.tx-s{fill:var(--ink-2);font-family:var(--f-body);font-size:12px}
+.tx-b{fill:var(--blue);font-family:var(--f-body);font-size:13px;font-weight:700}
+.tx-a{fill:var(--amber);font-family:var(--f-body);font-size:13px;font-weight:700}
+.tx-r{fill:var(--brick);font-family:var(--f-body);font-size:13px;font-weight:700}
+.tx-m{fill:var(--ink-2);font-family:var(--f-mono);font-size:10px;letter-spacing:.14em}
+.tx-num{fill:var(--blue);font-family:var(--f-mono);font-size:12px;letter-spacing:.1em}
+.big{font-size:19px;font-weight:700}
+.huge{font-size:22px;font-weight:700}
+
+/* ─── grids ──────────────────────────────────── */
+.grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.cell{background:var(--surface);padding:1.15rem 1.15rem 1.35rem;display:flex;flex-direction:column;gap:.5rem}
+.cell .k{font-family:var(--f-mono);font-size:.63rem;letter-spacing:.18em;color:var(--blue)}
+.cell p{font-size:.87rem;line-height:1.8;color:var(--ink-2)}
+@media(max-width:760px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr}}
+@media(max-width:430px){.grid-4{grid-template-columns:1fr}}
+
+/* ─── numbered steps list ────────────────────── */
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:1px;background:var(--line);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.steps li{background:var(--paper);display:grid;grid-template-columns:2.6rem 7.5rem 1fr;gap:.9rem;align-items:baseline;padding:.85rem .2rem}
+.steps .n{font-family:var(--f-mono);font-size:.78rem;color:var(--blue);letter-spacing:.08em}
+.steps .t{font-weight:700}
+.steps .d{font-size:.88rem;color:var(--ink-2);line-height:1.75}
+@media(max-width:620px){.steps li{grid-template-columns:2.4rem 1fr;row-gap:.15rem}.steps .d{grid-column:2}}
+
+/* ─── spec card (AI模擬審査) ─────────────────── */
+.spec{border:1px solid var(--line);border-radius:3px;background:var(--surface);overflow:hidden}
+.spec-hd{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.7rem 1rem;border-bottom:1px solid var(--line);background:var(--sunk)}
+.spec-hd b{font-size:.9rem}
+.spec-hd span{font-family:var(--f-mono);font-size:.62rem;letter-spacing:.15em;color:var(--ink-2)}
+.rows{display:grid}
+.row{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.62rem 1rem;border-top:1px solid var(--line)}
+.row:first-child{border-top:none}
+.row span{font-size:.92rem}
+.pill{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;padding:.16rem .6rem;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.lo{color:var(--blue)}
+.mid{color:var(--amber)}
+.spec-ft{padding:.75rem 1rem;border-top:1px solid var(--line);font-size:.83rem;color:var(--ink-2);line-height:1.75}
+
+/* ─── score meter ────────────────────────────── */
+.score{border:1px solid var(--line);border-radius:3px;background:var(--surface);padding:1.15rem 1.2rem;display:flex;flex-direction:column;gap:.9rem}
+.score .val{font-family:var(--f-mono);font-size:2.3rem;line-height:1;color:var(--blue);font-variant-numeric:tabular-nums}
+.score .val em{font-style:normal;font-size:.9rem;color:var(--ink-2);letter-spacing:.12em}
+.bar{height:9px;background:var(--sunk);border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;width:74%;background:var(--blue);border-radius:999px}
+.tags{display:flex;flex-wrap:wrap;gap:.35rem}
+.tags b{font-family:var(--f-mono);font-weight:400;font-size:.66rem;letter-spacing:.1em;color:var(--ink-2);border:1px solid var(--line);border-radius:2px;padding:.1rem .45rem}
+
+/* ─── rule callout ───────────────────────────── */
+.rule{border-left:3px solid var(--brick);padding:.15rem 0 .15rem 1.15rem;display:flex;flex-direction:column;gap:.45rem}
+.rule b{font-size:1.05rem}
+.rule p{font-size:.9rem;color:var(--ink-2)}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1rem,3vw,2rem);align-items:start}
+@media(max-width:760px){.two{grid-template-columns:1fr}}
+
+/* ─── closing ────────────────────────────────── */
+.closer{background:var(--sunk)}
+.chain{font-family:var(--f-disp);font-weight:700;font-size:clamp(1.25rem,3.4vw,2rem);line-height:1.7;text-wrap:balance}
+.chain em{font-style:normal;color:var(--blue)}
+footer{border-top:1px solid var(--line);padding:1.6rem 0 3rem;font-family:var(--f-mono);font-size:.66rem;letter-spacing:.13em;color:var(--ink-2)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:.6rem 1.6rem}
+</style>
+</head>
+<body>
+<!-- ══ HERO ══════════════════════════════════════ -->
+<section class="band hero">
+  <div class="wrap">
+    <p class="hero-stamp fade">CIVIL TECHNOLOGY &amp; IP INTELLIGENCE PLATFORM</p>
+    <h1 class="fade">現場のこまりごとに、<br>世界の技術で答える。</h1>
+    <p class="lead fade">特許も、論文も、NETIS も、工法も。ぜんぶ一つの箱に入れて、AI が読んで、人が決める。土木・建設会社のための「技術と知財の司令塔」です。</p>
+
+    <figure>
+      <div class="plate">
+        <svg viewBox="0 0 900 384" role="img" aria-label="世界の特許・論文・NETIS・工法という知識の帯が、トンネル・橋りょう・港湾という現場の構造物それぞれにひもづいている図">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+            </marker>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--brick)"/>
+            </marker>
+          </defs>
+
+          <text class="tx-s" x="50" y="24">世界じゅうに、すでにある知識</text>
+          <text class="tx-m" x="850" y="24" text-anchor="end">KNOWLEDGE</text>
+
+          <rect class="fb sb" x="50" y="34" width="800" height="66" rx="5"/>
+          <rect class="fs sb" x="66" y="50" width="170" height="34" rx="3"/>
+          <text class="tx" x="151" y="72" text-anchor="middle">特許</text>
+          <rect class="fs sb" x="265" y="50" width="170" height="34" rx="3"/>
+          <text class="tx" x="350" y="72" text-anchor="middle">論文</text>
+          <rect class="fs sb" x="464" y="50" width="170" height="34" rx="3"/>
+          <text class="tx" x="549" y="72" text-anchor="middle">NETIS</text>
+          <rect class="fs sb" x="663" y="50" width="170" height="34" rx="3"/>
+          <text class="tx" x="748" y="72" text-anchor="middle">工法・材料</text>
+
+          <line class="dl dash" x1="150" y1="100" x2="150" y2="172"/>
+          <line class="dl dash" x1="450" y1="100" x2="450" y2="196"/>
+          <line class="dl dash" x1="750" y1="100" x2="750" y2="146"/>
+          <circle class="sb fs" cx="150" cy="176" r="4"/>
+          <circle class="sb fs" cx="450" cy="200" r="4"/>
+          <circle class="sb fs" cx="750" cy="150" r="4"/>
+
+          <line class="dl" x1="40" y1="316" x2="860" y2="316"/>
+
+          <path class="dl fs" d="M60 316 Q150 172 240 316 Z"/>
+          <path class="dl fp" d="M120 316 L120 272 A30 30 0 0 1 180 272 L180 316"/>
+
+          <line class="dl" x1="330" y1="206" x2="570" y2="206"/>
+          <line class="dl" x1="342" y1="206" x2="342" y2="214"/>
+          <line class="dl" x1="402" y1="206" x2="402" y2="214"/>
+          <line class="dl" x1="462" y1="206" x2="462" y2="214"/>
+          <line class="dl" x1="522" y1="206" x2="522" y2="214"/>
+          <rect class="dl fs" x="330" y="214" width="240" height="12"/>
+          <rect class="dl fs" x="372" y="226" width="18" height="90"/>
+          <rect class="dl fs" x="510" y="226" width="18" height="90"/>
+
+          <path class="dl" d="M620 292 q13 -7 26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0"/>
+          <rect class="dl fs" x="690" y="246" width="110" height="70"/>
+          <line class="dl-2" x1="750" y1="246" x2="750" y2="152"/>
+          <line class="dl-2" x1="750" y1="160" x2="832" y2="160"/>
+          <line class="dl" x1="814" y1="160" x2="814" y2="236"/>
+          <rect class="dl fs" x="805" y="236" width="18" height="11"/>
+
+          <text class="tx-s" x="150" y="344" text-anchor="middle">トンネル</text>
+          <text class="tx-s" x="450" y="344" text-anchor="middle">橋りょう</text>
+          <text class="tx-s" x="750" y="344" text-anchor="middle">港湾・海洋</text>
+          <text class="tx-m" x="450" y="370" text-anchor="middle">YOUR SITE</text>
+        </svg>
+      </div>
+      <figcaption>現場の構造物ひとつひとつに、世界のどこかの特許・論文・NETIS・工法がひもづいている。その線を一本ずつ引くのが、このシステムの仕事です。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ══ ひとことで ═══════════════════════════════ -->
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">In one line<span class="jp">ひとことで言うと</span></p>
+    <h2>「すでにある答え」を探して、<br>うちの現場で使えるか見きわめる機械。</h2>
+    <div class="grid grid-3">
+      <div class="cell"><span class="k">01 / SEARCH</span><h3>さがす</h3><p>特許・論文・NETIS・工法を、一つの検索窓からまとめて探す。検索式は AI が組み立てる。</p></div>
+      <div class="cell"><span class="k">02 / COMPARE</span><h3>くらべる</h3><p>特許の請求項を部品に分解して、自社案や他社案と一つずつ突き合わせる。</p></div>
+      <div class="cell"><span class="k">03 / APPLY</span><h3>つかう</h3><p>地盤・海象・工期・コストまで見て、「この現場で本当に使えるか」を点数にする。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 材料 ═════════════════════════════════════ -->
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">Ingredients<span class="jp">材料は、この4つ</span></p>
+    <p class="lead">どれも世の中に公開されている情報です。ばらばらに置かれているから使えていないだけ。</p>
+    <div class="grid grid-4">
+      <div class="cell"><span class="k">PATENT</span><h3>特許</h3><p>他社が「これはうちのもの」と主張している技術。避けるべき道と、借りられる道の両方が見えます。</p></div>
+      <div class="cell"><span class="k">PAPER</span><h3>論文</h3><p>大学や研究機関の、まだ製品になっていない最新の知見。共同研究の相手も見つかります。</p></div>
+      <div class="cell"><span class="k">NETIS</span><h3>NETIS</h3><p>国が登録した新技術データベース。公共工事で使える／提案できる技術かどうかの目印。</p></div>
+      <div class="cell"><span class="k">METHOD</span><h3>工法・材料</h3><p>実際に現場で使われてきたやり方と、その実績。机上の話を地面に着地させる部分。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 5ステップ ════════════════════════════════ -->
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">How it runs<span class="jp">どう動くか</span></p>
+    <h2>調査の依頼を投げると、この順に流れます。</h2>
+
+    <figure>
+      <div class="plate">
+        <svg viewBox="0 0 900 246" role="img" aria-label="さがす・わかる・くらべるの3工程はAIが主に行い、つくる・つかうの2工程は人が判断する、5段階のパイプライン図">
+          <rect class="fb sb" x="50" y="62" width="140" height="88" rx="4"/>
+          <rect class="fb sb" x="215" y="62" width="140" height="88" rx="4"/>
+          <rect class="fb sb" x="380" y="62" width="140" height="88" rx="4"/>
+          <rect class="fa sa" x="545" y="62" width="140" height="88" rx="4"/>
+          <rect class="fa sa" x="710" y="62" width="140" height="88" rx="4"/>
+
+          <text class="tx-num" x="64" y="84">01</text>
+          <text class="tx-num" x="229" y="84">02</text>
+          <text class="tx-num" x="394" y="84">03</text>
+          <text class="tx-num" x="559" y="84" style="fill:var(--amber)">04</text>
+          <text class="tx-num" x="724" y="84" style="fill:var(--amber)">05</text>
+
+          <text class="tx big" x="120" y="118" text-anchor="middle">さがす</text>
+          <text class="tx big" x="285" y="118" text-anchor="middle">わかる</text>
+          <text class="tx big" x="450" y="118" text-anchor="middle">くらべる</text>
+          <text class="tx big" x="615" y="118" text-anchor="middle">つくる</text>
+          <text class="tx big" x="780" y="118" text-anchor="middle">つかう</text>
+
+          <text class="tx-m" x="120" y="140" text-anchor="middle">DISCOVER</text>
+          <text class="tx-m" x="285" y="140" text-anchor="middle">UNDERSTAND</text>
+          <text class="tx-m" x="450" y="140" text-anchor="middle">ANALYZE</text>
+          <text class="tx-m" x="615" y="140" text-anchor="middle">INNOVATE</text>
+          <text class="tx-m" x="780" y="140" text-anchor="middle">UTILIZE</text>
+
+          <line class="dl-2" x1="196" y1="106" x2="208" y2="106" marker-end="url(#ar)"/>
+          <line class="dl-2" x1="361" y1="106" x2="373" y2="106" marker-end="url(#ar)"/>
+          <line class="dl-2" x1="526" y1="106" x2="538" y2="106" marker-end="url(#ar)"/>
+          <line class="dl-2" x1="691" y1="106" x2="703" y2="106" marker-end="url(#ar)"/>
+
+          <rect x="50" y="160" width="470" height="4" fill="var(--blue)"/>
+          <rect x="545" y="160" width="305" height="4" fill="var(--amber)"/>
+
+          <rect x="50" y="200" width="16" height="9" fill="var(--blue)"/>
+          <text class="tx-s" x="76" y="209">AI が下ごしらえをする</text>
+          <rect x="280" y="200" width="16" height="9" fill="var(--amber)"/>
+          <text class="tx-s" x="306" y="209">人が判断して、決める</text>
+        </svg>
+      </div>
+      <figcaption>色の帯は担当のちがいを示します。前の3つは AI が大量に処理し、後ろの2つは必ず人の判断が入ります。</figcaption>
+    </figure>
+
+    <ol class="steps">
+      <li><span class="n">01</span><span class="t">さがす</span><span class="d">キーワードでも、話し言葉でも、特許番号でも。国内外の特許・論文・NETIS・自社の過去調査まで、横断で拾います。</span></li>
+      <li><span class="n">02</span><span class="t">わかる</span><span class="d">難しい文章を AI が要約し、技術の中身（何を解決する／どんな条件で使える）を取り出します。</span></li>
+      <li><span class="n">03</span><span class="t">くらべる</span><span class="d">先行技術、競合他社、自社の持ち技と突き合わせ、地図（Patent Landscape）にして「まだ誰もいない場所」を探します。</span></li>
+      <li><span class="n">04</span><span class="t">つくる</span><span class="d">空白地帯を研究テーマや発明のタネに変換。自社開発か、買うか、組むかを比べます。</span></li>
+      <li><span class="n">05</span><span class="t">つかう</span><span class="d">現場に適用する、または他社特許をライセンスで借りる。契約が要るなら法務システムへ引き渡します。</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ══ とくい技 1: Claim分解 ════════════════════ -->
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">Signature move<span class="jp">とくい技 その1</span></p>
+    <h2>特許を「部品」に分けて、一つずつ突き合わせる。</h2>
+    <p class="lead">特許の権利範囲は、請求項という一文で決まります。読みにくいこの一文を、AI が構成要件（部品）に切り分けます。</p>
+
+    <figure>
+      <div class="plate">
+        <svg viewBox="0 0 900 322" role="img" aria-label="他社特許の請求項をAIが3つの部品に分解し、自社アイデアの部品と一致・類似・相違を一つずつ照合する図">
+          <text class="tx-s" x="140" y="46" text-anchor="middle">他社の特許（請求項）</text>
+          <rect class="fs dl" x="40" y="60" width="200" height="200" rx="4"/>
+          <line class="dl" x1="62" y1="92" x2="218" y2="92"/>
+          <line class="dl" x1="62" y1="118" x2="218" y2="118"/>
+          <line class="dl" x1="62" y1="144" x2="196" y2="144"/>
+          <line class="dl" x1="62" y1="170" x2="218" y2="170"/>
+          <line class="dl" x1="62" y1="196" x2="218" y2="196"/>
+          <line class="dl" x1="62" y1="222" x2="174" y2="222"/>
+
+          <text class="tx-s" x="286" y="146" text-anchor="middle">AI が分解</text>
+          <line class="dl-2" x1="250" y1="160" x2="318" y2="160" marker-end="url(#ar)"/>
+
+          <text class="tx-s" x="415" y="46" text-anchor="middle">構成要件に分ける</text>
+          <rect class="fb sb" x="330" y="60" width="170" height="52" rx="4"/>
+          <text class="tx" x="415" y="92" text-anchor="middle">部品 A</text>
+          <rect class="fb sb" x="330" y="134" width="170" height="52" rx="4"/>
+          <text class="tx" x="415" y="166" text-anchor="middle">部品 B</text>
+          <rect class="fb sb" x="330" y="208" width="170" height="52" rx="4"/>
+          <text class="tx" x="415" y="240" text-anchor="middle">部品 C</text>
+
+          <text class="tx-s" x="745" y="46" text-anchor="middle">自社のアイデア</text>
+          <rect class="fs dl" x="660" y="60" width="170" height="52" rx="4"/>
+          <text class="tx" x="745" y="92" text-anchor="middle">部品 A</text>
+          <rect class="fs dl" x="660" y="134" width="170" height="52" rx="4"/>
+          <text class="tx" x="745" y="166" text-anchor="middle">部品 B′</text>
+          <rect class="fs dl" x="660" y="208" width="170" height="52" rx="4"/>
+          <text class="tx-s" x="745" y="240" text-anchor="middle">見あたらない</text>
+
+          <line class="sb" x1="500" y1="86" x2="660" y2="86"/>
+          <text class="tx-b" x="580" y="78" text-anchor="middle">同じ</text>
+          <line class="sa dash" x1="500" y1="160" x2="660" y2="160"/>
+          <text class="tx-a" x="580" y="152" text-anchor="middle">似ている</text>
+          <line class="sr dash" x1="500" y1="234" x2="660" y2="234"/>
+          <text class="tx-r" x="580" y="226" text-anchor="middle">ちがう</text>
+
+          <text class="tx-m" x="450" y="300" text-anchor="middle">CLAIM CHART</text>
+        </svg>
+      </div>
+      <figcaption>一致・類似・相違を、部品ごとに証拠付きで並べたものが Claim Chart です。どこが同じでどこが違うのかを、人が目で確かめられる形にします。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ══ とくい技 2 + 3 ═══════════════════════════ -->
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">Signature move<span class="jp">とくい技 その2・その3</span></p>
+    <div class="two">
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <h3>人の審査の前に、AI が模擬審査する</h3>
+        <p class="lead" style="font-size:.94rem">出願する前に「たぶん、ここを突かれる」を先に洗い出します。合否を決めるのではなく、専門家が見るべき場所を絞るための道具です。</p>
+        <div class="spec">
+          <div class="spec-hd"><b>AI 模擬審査</b><span>SAMPLE VIEW</span></div>
+          <div class="rows">
+            <div class="row"><span>新規性</span><span class="pill lo">低リスク</span></div>
+            <div class="row"><span>進歩性</span><span class="pill mid">中リスク</span></div>
+            <div class="row"><span>記載要件</span><span class="pill lo">低リスク</span></div>
+            <div class="row"><span>競合との重複</span><span class="pill mid">中リスク</span></div>
+          </div>
+          <p class="spec-ft">要確認 — 請求項1の部品 B・C は先行文献 A と近い。専門家の確認をおすすめします。</p>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <h3>「この現場で使えるか」を点数にする</h3>
+        <p class="lead" style="font-size:.94rem">特許として強いかどうかと、現場で使えるかどうかは別の話。土木のシステムだから、後者もちゃんと採点します。</p>
+        <div class="score">
+          <div class="val">74<em> / 100</em></div>
+          <div class="bar"><i></i></div>
+          <p style="font-size:.85rem;color:var(--ink-2);margin:0">Field Applicability Score — 現場適用スコア（表示イメージ）</p>
+          <div class="tags"><b>地盤</b><b>海象</b><b>作業ヤード</b><b>建機</b><b>人員</b><b>工期</b><b>安全</b><b>CO2</b><b>コスト</b><b>省人化</b><b>導入難易度</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 約束 ═════════════════════════════════════ -->
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">The one rule<span class="jp">いちばん大事な約束</span></p>
+    <h2>AI は、決めません。</h2>
+
+    <figure>
+      <div class="plate">
+        <svg viewBox="0 0 900 262" role="img" aria-label="AIは候補と根拠を出すだけで、人が判断してはじめて決定に至る。AIから決定へ直接向かう経路は禁止されていることを示す図">
+          <rect class="fb sb" x="40" y="62" width="180" height="100" rx="5"/>
+          <text class="tx huge" x="130" y="106" text-anchor="middle">AI</text>
+          <text class="tx-s" x="130" y="134" text-anchor="middle">調べて、並べる</text>
+
+          <text class="tx-s" x="262" y="102" text-anchor="middle">候補と根拠</text>
+          <line class="dl-2" x1="228" y1="120" x2="296" y2="120" marker-end="url(#ar)"/>
+
+          <rect class="fs dl-2" x="308" y="62" width="230" height="100" rx="5"/>
+          <text class="tx huge" x="423" y="106" text-anchor="middle">人</text>
+          <text class="tx-s" x="423" y="134" text-anchor="middle">技術 ／ 知財 ／ 法務</text>
+
+          <text class="tx-s" x="580" y="102" text-anchor="middle">判断</text>
+          <line class="dl-2" x1="546" y1="120" x2="614" y2="120" marker-end="url(#ar)"/>
+
+          <rect class="fs dl-2" x="626" y="62" width="200" height="100" rx="5"/>
+          <text class="tx huge" x="726" y="106" text-anchor="middle">決定</text>
+          <text class="tx-s" x="726" y="134" text-anchor="middle">出願する／しない</text>
+
+          <path class="sr dash" d="M130 176 Q423 240 726 176" marker-end="url(#arr)"/>
+          <circle class="fp sr" cx="428" cy="211" r="15"/>
+          <line class="sr" x1="420" y1="203" x2="436" y2="219"/>
+          <line class="sr" x1="436" y1="203" x2="420" y2="219"/>
+          <text class="tx-r" x="428" y="248" text-anchor="middle">この道は通れない</text>
+        </svg>
+      </div>
+      <figcaption>AI が出すのは「候補」と「根拠」と「リスクの目安」まで。決定に至る線は、必ず人を経由します。</figcaption>
+    </figure>
+
+    <div class="two" style="margin-top:.5rem">
+      <div class="rule">
+        <b>「似ている度」は、侵害率ではありません。</b>
+        <p>AI が出す類似度は、人が見る場所を絞るための目印です。権利を侵害しているかどうかの判断ではありません。</p>
+      </div>
+      <div class="rule" style="border-left-color:var(--blue)">
+        <b>答えは、必ず出どころまでたどれます。</b>
+        <p>どの特許の、どの請求項の、どの一文か。いつ、どこから取ってきたか。AI の回答は全部そこまで遡れます。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 境界 ═════════════════════════════════════ -->
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">Boundary<span class="jp">ここまでが、このシステム</span></p>
+    <h2>契約からは、となりのシステムの仕事。</h2>
+
+    <figure>
+      <div class="plate">
+        <svg viewBox="0 0 900 272" role="img" aria-label="技術と知財の調査・評価はこのプラットフォームが担い、NDA・交渉・契約・権利管理はConstruction-LegalOps-DXが担う、二つのシステムの責任境界図">
+          <text class="tx-b" x="40" y="42">Civil Technology &amp; IP Intelligence</text>
+          <rect class="fb sb" x="40" y="58" width="178" height="46" rx="4"/>
+          <text class="tx" x="129" y="87" text-anchor="middle">さがす</text>
+          <rect class="fb sb" x="232" y="58" width="178" height="46" rx="4"/>
+          <text class="tx" x="321" y="87" text-anchor="middle">くらべる</text>
+          <rect class="fb sb" x="40" y="116" width="178" height="46" rx="4"/>
+          <text class="tx" x="129" y="145" text-anchor="middle">評価する</text>
+          <rect class="fb sb" x="232" y="116" width="178" height="46" rx="4"/>
+          <text class="tx" x="321" y="145" text-anchor="middle">候補を出す</text>
+          <text class="tx-s" x="40" y="188">技術部門が「これで行こう」と決めるところまで</text>
+
+          <line class="dl dash" x1="450" y1="26" x2="450" y2="246"/>
+          <text class="tx-m" x="450" y="18" text-anchor="middle">BOUNDARY</text>
+
+          <text class="tx-a" x="490" y="42">Construction-LegalOps-DX</text>
+          <rect class="fa sa" x="490" y="58" width="178" height="46" rx="4"/>
+          <text class="tx" x="579" y="87" text-anchor="middle">NDA</text>
+          <rect class="fa sa" x="682" y="58" width="178" height="46" rx="4"/>
+          <text class="tx" x="771" y="87" text-anchor="middle">交渉</text>
+          <rect class="fa sa" x="490" y="116" width="178" height="46" rx="4"/>
+          <text class="tx" x="579" y="145" text-anchor="middle">契約</text>
+          <rect class="fa sa" x="682" y="116" width="178" height="46" rx="4"/>
+          <text class="tx" x="771" y="145" text-anchor="middle">権利・使用料の管理</text>
+          <text class="tx-s" x="490" y="188">法的な効力をもつ手続きは、すべてこちらが本体</text>
+
+          <line class="dl-2" x1="370" y1="222" x2="530" y2="222" marker-end="url(#ar)"/>
+          <text class="tx-s" x="450" y="252" text-anchor="middle">技術部門の GO が出てから、渡す</text>
+        </svg>
+      </div>
+      <figcaption>同じ「特許」を扱っても、役割は分けます。調べて評価するのがこちら、契約して権利を管理するのが向こう。境界をまたぐのは、人が GO を出したあとだけです。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ══ CLOSER ═══════════════════════════════════ -->
+<section class="band closer">
+  <div class="wrap">
+    <p class="eyebrow">In the end<span class="jp">つまり</span></p>
+    <p class="chain">さがす <em>→</em> わかる <em>→</em> くらべる <em>→</em> 考える <em>→</em> 発明する <em>→</em> 権利にする <em>→</em> 借りる <em>→</em> 現場で使う。</p>
+    <p class="lead">この一本を、途中で切らずにつなぐこと。それが「特許を検索するシステム」との、いちばん大きな違いです。</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>CIVIL-TECHNOLOGY-IP-INTELLIGENCE-PLATFORM</span>
+    <span>HANDOFF → CONSTRUCTION-LEGALOPS-DX</span>
+    <span>MIGRATED FROM CIVIL-RESEARCH-PATENT-SCOUT</span>
+  </div>
+</footer>
+</body>
+</html>

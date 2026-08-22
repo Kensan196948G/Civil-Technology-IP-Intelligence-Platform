@@ -1,0 +1,219 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Shippori+Mincho+B1:wght@700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;background:#EAEDEE;color:#16262E;-webkit-font-smoothing:antialiased;
+         font-family:"Zen Kaku Gothic New",'Hiragino Sans','Yu Gothic',system-ui,sans-serif;font-size:13px;line-height:1.7}
+    a{color:#0D6E8C;text-decoration:none}
+    a:hover{color:#095972;text-decoration:underline}
+    button{font:inherit;color:inherit;cursor:pointer;background:none;border:none;padding:0;text-align:left}
+  </style>
+</helmet>
+
+<div style="width:1120px;min-height:1240px;background:#EAEDEE;padding:30px 32px 40px;display:flex;flex-direction:column;gap:26px">
+
+  <div style="display:flex;align-items:flex-end;gap:14px;border-bottom:2px solid #16262E;padding-bottom:12px">
+    <h1 style="margin:0;font-family:'Shippori Mincho B1',serif;font-weight:700;font-size:24px">デザイントークン</h1>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8C93;padding-bottom:5px">CTIIP DESIGN TOKENS v0.1</span>
+    <span style="flex-grow:1"></span>
+    <span style="font-size:11.5px;color:#516268;padding-bottom:4px">出典：platform-overview.html / platform-proposal.html の配色・書体を継承</span>
+  </div>
+
+  <!-- 色 -->
+  <div style="display:flex;flex-direction:column;gap:11px">
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <h2 style="margin:0;font-size:15px;font-weight:900">色</h2>
+      <span style="font-size:11.5px;color:#516268">測量シアンを主色に、注意はアンバー、禁止はレンガ。彩度の高い色を並べない</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(6, minmax(0, 1fr));gap:10px">
+      <sc-for list="{{colors}}" as="c" hint-placeholder-count="12">
+        <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:56px;background:{{c.hex}};border-bottom:1px solid #BFCACD"></div>
+          <div style="padding:8px 10px 10px;display:flex;flex-direction:column;gap:2px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.04em;color:#16262E">{{c.hex}}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7C8C93">{{c.token}}</div>
+            <div style="font-size:11px;color:#516268;line-height:1.55">{{c.use}}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- 書体 -->
+  <div style="display:flex;flex-direction:column;gap:11px">
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <h2 style="margin:0;font-size:15px;font-weight:900">書体</h2>
+      <span style="font-size:11.5px;color:#516268">3書体。見出しは明朝で技術報告書の重み、注記と数値は等幅で製図の引出線</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:12px">
+      <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:15px 17px;display:flex;flex-direction:column;gap:7px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:#7C8C93">DISPLAY</div>
+        <div style="font-family:'Shippori Mincho B1',serif;font-weight:700;font-size:26px;line-height:1.4">技術と知財の司令塔</div>
+        <div style="font-size:11.5px;color:#516268">Shippori Mincho B1 700<br>画面見出し・帳票タイトル</div>
+      </div>
+      <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:15px 17px;display:flex;flex-direction:column;gap:7px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:#7C8C93">BODY</div>
+        <div style="font-size:16px;line-height:1.75">請求項を部品に分けて<br><b style="font-weight:900">一つずつ突き合わせる</b></div>
+        <div style="font-size:11.5px;color:#516268">Zen Kaku Gothic New 400 / 700 / 900<br>本文・ラベル・ボタン</div>
+      </div>
+      <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:15px 17px;display:flex;flex-direction:column;gap:7px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:#7C8C93">UTILITY</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:17px;line-height:1.55">0.842 / E02B 3/06<br>特開2024-512340</div>
+        <div style="font-size:11.5px;color:#516268">IBM Plex Mono 400 / 500<br>数値・分類記号・注記ラベル</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:12px 17px;flex-wrap:wrap">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:#7C8C93">SCALE</span>
+      <sc-for list="{{scale}}" as="s" hint-placeholder-count="8">
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span style="font-size:{{s.px}}px;line-height:1;color:#16262E">Aa</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7C8C93">{{s.px}}</span>
+        </div>
+      </sc-for>
+      <span style="flex-grow:1"></span>
+      <span style="font-size:11.5px;color:#516268">角丸 3px（製図的に角を立てる）／ ピルのみ 999px ／ 余白 4・8・12・16・24・32</span>
+    </div>
+  </div>
+
+  <!-- 部品 -->
+  <div style="display:flex;flex-direction:column;gap:11px">
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <h2 style="margin:0;font-size:15px;font-weight:900">部品</h2>
+      <span style="font-size:11.5px;color:#516268">docs/30-design/04-screen-design.md の共通UIコンポーネント</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:12px">
+
+      <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:15px 17px;display:flex;flex-direction:column;gap:11px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:#7C8C93">CLASSIFICATION BADGE</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <sc-for list="{{cls}}" as="c" hint-placeholder-count="4">
+            <span style="font-size:10.5px;font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;color:{{c.fg}};border:1px solid {{c.fg}};border-radius:999px;padding:2px 10px">{{c.k}}</span>
+          </sc-for>
+        </div>
+        <div style="font-size:11.5px;color:#516268;line-height:1.7">C3・C4 は権限のない利用者に対し、一覧・検索結果・件数のいずれにも出しません。</div>
+      </div>
+
+      <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:15px 17px;display:flex;flex-direction:column;gap:11px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:#7C8C93">BUTTONS / 32px・モバイル 44px以上</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span style="display:inline-flex;align-items:center;height:32px;padding:0 16px;background:#0D6E8C;color:#fff;border-radius:3px;font-size:13px;font-weight:700">主操作</span>
+          <span style="display:inline-flex;align-items:center;height:32px;padding:0 16px;border:1px solid #0D6E8C;color:#0D6E8C;border-radius:3px;font-size:13px">副操作</span>
+          <span style="display:inline-flex;align-items:center;height:32px;padding:0 16px;border:1px solid #BFCACD;color:#516268;border-radius:3px;font-size:13px">通常</span>
+          <span style="display:inline-flex;align-items:center;height:32px;padding:0 16px;background:#DFE4E5;color:#93A3A8;border:1px solid #CBD4D6;border-radius:3px;font-size:13px">不可</span>
+        </div>
+        <div style="font-size:11.5px;color:#516268;line-height:1.7">権限のない操作は「不可」ではなく<b style="font-weight:700">非表示</b>にします。「不可」は条件未達（人間確認が未完了など）にのみ使います。</div>
+      </div>
+
+      <div style="background:#F7F9F9;border:1px solid #9C3E24;border-left-width:3px;border-radius:3px;padding:15px 17px;display:flex;flex-direction:column;gap:9px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:#9C3E24">&lt;ClaimSimilarity&gt; — 注記を内蔵</div>
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:26px;line-height:1">50</span>
+          <span style="font-size:13px;color:#516268">% = 一致 2 / 全 4 要件</span>
+        </div>
+        <div style="font-size:11.5px;color:#7A2E17;line-height:1.7">類似度は権利侵害の判断ではありません。</div>
+        <div style="font-size:11px;color:#516268;line-height:1.65;border-top:1px dashed #D3A695;padding-top:8px">注記は prop で受け取らないため、<b style="font-weight:700">呼び出し側から消せません</b>。数値のみの表示も禁止です。</div>
+      </div>
+
+      <div style="background:#F7F9F9;border:1px solid #DDC08A;border-left-width:3px;border-radius:3px;padding:15px 17px;display:flex;flex-direction:column;gap:9px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:#A9700D">&lt;FieldScore&gt; — 軸別内訳を内蔵</div>
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:26px;line-height:1;color:#0D6E8C">74</span>
+          <span style="font-size:13px;color:#516268">/ 100</span>
+        </div>
+        <div style="display:flex;gap:5px">
+          <sc-for list="{{mini}}" as="m" hint-placeholder-count="6">
+            <span style="flex-grow:1;height:6px;border-radius:999px;background:#E4E9EA;overflow:hidden"><span style="display:block;height:100%;width:{{m.pct}}%;background:{{m.col}}"></span></span>
+          </sc-for>
+        </div>
+        <div style="font-size:11px;color:#516268;line-height:1.65">スコア単独の表示は禁止。軸別内訳と、規則判定／AI推定の別を必ず併記します。</div>
+      </div>
+
+      <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:15px 17px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:#7C8C93">&lt;EvidenceLink&gt; / &lt;JobStatus&gt;</div>
+        <a href="#" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#516268;border-bottom:1px dotted #93A3A8;align-self:flex-start">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v7h-7"/><path d="M3 10V3h7"/></svg>
+          出典 JPO ／ 請求項1 第53–112字 ／ 取得 2026-08-20
+        </a>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 11px;background:#EFF3F3;border:1px solid #D6DEDF;border-radius:3px">
+          <span style="width:13px;height:13px;border-radius:999px;border:2px solid #0D6E8C;border-top-color:transparent"></span>
+          <span style="font-size:12px">AI模擬審査 実行中</span>
+          <span style="flex-grow:1;height:5px;background:#DFE4E5;border-radius:999px;overflow:hidden"><span style="display:block;height:100%;width:62%;background:#0D6E8C"></span></span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#516268">残り約 2分</span>
+        </div>
+      </div>
+
+      <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:15px 17px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:#7C8C93">ICONS — 線画・16/20/24px・絵文字を使わない</div>
+        <div style="display:flex;gap:14px;align-items:center;color:#2E4048;flex-wrap:wrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 20h18"/><path d="M6 20V9l6-5 6 5v11"/><path d="M10 20v-5h4v5"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 6 9 17l-5-5"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+        </div>
+        <div style="font-size:11px;color:#516268;line-height:1.65">絵文字・記号文字は使いません（拡大縮小と再着色ができないため）。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 表示上の禁止事項 -->
+  <div style="background:#F2DDD6;border:1px solid #D3A695;border-left:3px solid #9C3E24;border-radius:3px;padding:16px 19px;display:flex;flex-direction:column;gap:9px">
+    <div style="font-size:14px;font-weight:900;color:#7A2E17">表示上の禁止事項</div>
+    <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:6px 24px">
+      <sc-for list="{{bans}}" as="b" hint-placeholder-count="6">
+        <div style="display:flex;gap:8px;align-items:baseline;font-size:12px;color:#7A2E17;line-height:1.7">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#9C3E24;flex:none">{{b.n}}</span>
+          <span>{{b.t}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1120,"height":1240}}'>
+class Component extends DCLogic {
+  renderVals(){
+    return {
+      colors:[
+        {hex:'#EAEDEE',token:'--paper',use:'画面の地。製図紙'},
+        {hex:'#F7F9F9',token:'--surface',use:'カード・パネル'},
+        {hex:'#DFE4E5',token:'--sunk',use:'表ヘッダ・サイドナビ'},
+        {hex:'#16262E',token:'--ink',use:'本文・トップバー'},
+        {hex:'#516268',token:'--ink-2',use:'副次テキスト'},
+        {hex:'#BFCACD',token:'--line',use:'罫線・枠'},
+        {hex:'#0D6E8C',token:'--blue',use:'主色。測量シアン。リンク・主操作'},
+        {hex:'#D8E9EF',token:'--blue-soft',use:'一致・ハイライト地'},
+        {hex:'#A9700D',token:'--amber',use:'注意・AI推定・要対応'},
+        {hex:'#F2E7D0',token:'--amber-soft',use:'注意の地'},
+        {hex:'#9C3E24',token:'--brick',use:'禁止・相違・不可'},
+        {hex:'#2F6B4F',token:'--green',use:'一致・完了・良'}
+      ],
+      scale:[{px:11},{px:12},{px:13},{px:15},{px:17},{px:22},{px:26},{px:34}],
+      cls:[{k:'C1 公開',fg:'#2F6B4F'},{k:'C2 社内',fg:'#0D6E8C'},{k:'C3 機密',fg:'#A9700D'},{k:'C4 最高機密',fg:'#9C3E24'}],
+      mini:[{pct:100,col:'#0D6E8C'},{pct:60,col:'#0D6E8C'},{pct:90,col:'#0D6E8C'},{pct:50,col:'#A9700D'},{pct:50,col:'#A9700D'},{pct:90,col:'#0D6E8C'}],
+      bans:[
+        {n:'01',t:'AI出力を注記なしで表示すること'},
+        {n:'02',t:'類似度を数値のみで表示すること'},
+        {n:'03',t:'スコアを軸別内訳なしで表示すること'},
+        {n:'04',t:'権限のないモジュールをグレーアウトで見せること'},
+        {n:'05',t:'非同期処理の進捗を示さずに待たせること'},
+        {n:'06',t:'エラーの原因と次の操作を示さないこと'}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="土木技術・知財インテリジェンスプラットフォームの導入企画書。8部署別の提供価値、役割分担、権限設計、導入フェーズ、KPI、リスク、決裁依頼事項をまとめた社内提案文書。">
+<title>知財プラットフォーム導入企画書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%93%8B%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Shippori+Mincho+B1:wght@700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+img,svg{display:block;max-width:100%}
+table{border-collapse:collapse}
+</style>
+<style>
+:root{
+  --paper:#EAEDEE; --surface:#F7F9F9; --sunk:#DFE4E5; --hi:#FFFFFF;
+  --ink:#16262E; --ink-2:#516268; --line:#BFCACD; --line-2:#93A3A8;
+  --blue:#0D6E8C; --blue-soft:#D8E9EF;
+  --amber:#A9700D; --amber-soft:#F2E7D0;
+  --brick:#9C3E24; --brick-soft:#F2DDD6;
+  --green:#2F6B4F; --green-soft:#D9E9DF;
+  --f-disp:"Shippori Mincho B1",'Hiragino Mincho ProN','Yu Mincho',serif;
+  --f-body:"Zen Kaku Gothic New",'Hiragino Sans','Yu Gothic',system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+  --gut:clamp(1.1rem,4vw,2.6rem);
+  --wrap:1060px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0D1A20; --surface:#152730; --sunk:#0A1418; --hi:#1B303A;
+  --ink:#DEE9EC; --ink-2:#93A8B0; --line:#2B434E; --line-2:#3E5E6C;
+  --blue:#63C2E0; --blue-soft:#123240;
+  --amber:#E0AE4E; --amber-soft:#33280F;
+  --brick:#E38263; --brick-soft:#3A1F16;
+  --green:#7EC49C; --green-soft:#122A20;
+}}
+:root[data-theme="dark"]{
+  --paper:#0D1A20; --surface:#152730; --sunk:#0A1418; --hi:#1B303A;
+  --ink:#DEE9EC; --ink-2:#93A8B0; --line:#2B434E; --line-2:#3E5E6C;
+  --blue:#63C2E0; --blue-soft:#123240;
+  --amber:#E0AE4E; --amber-soft:#33280F;
+  --brick:#E38263; --brick-soft:#3A1F16;
+  --green:#7EC49C; --green-soft:#122A20;
+}
+
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);line-height:1.9;font-size:.96rem;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--gut)}
+
+/* 表紙 */
+.cover{border-bottom:2px solid var(--ink);padding:clamp(2.4rem,6vw,4rem) 0 clamp(1.6rem,4vw,2.4rem)}
+.cover .wrap{display:flex;flex-direction:column;gap:1.3rem}
+.docno{font-family:var(--f-mono);font-size:.66rem;letter-spacing:.2em;color:var(--ink-2)}
+.cover h1{font-family:var(--f-disp);font-weight:700;font-size:clamp(1.7rem,4.4vw,2.9rem);line-height:1.4;margin:0;text-wrap:balance}
+.cover h1 small{display:block;font-family:var(--f-body);font-weight:500;font-size:clamp(.85rem,1.8vw,1rem);color:var(--ink-2);letter-spacing:.04em;margin-top:.7rem;line-height:1.8}
+.abst{border-left:3px solid var(--blue);padding-left:1.1rem;max-width:46em;font-size:1rem}
+
+/* 章 */
+section.ch{padding:clamp(2.4rem,5vw,3.6rem) 0;border-top:1px solid var(--line)}
+section.ch>.wrap{display:flex;flex-direction:column;gap:1.15rem}
+h2{font-family:var(--f-body);font-weight:900;font-size:clamp(1.15rem,2.4vw,1.5rem);margin:0;display:flex;gap:.75rem;align-items:baseline;text-wrap:balance}
+h2 .no{font-family:var(--f-mono);font-weight:400;font-size:.78em;color:var(--blue);flex:none}
+h3{font-family:var(--f-body);font-weight:700;font-size:1.02rem;margin:1.1rem 0 0}
+h4{font-family:var(--f-body);font-weight:700;font-size:.9rem;margin:0;color:var(--ink-2)}
+p{margin:0;max-width:52em}
+.note{font-size:.86rem;color:var(--ink-2);max-width:52em}
+
+/* 表 */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:3px;background:var(--surface)}
+table{width:100%;min-width:640px;font-size:.86rem;line-height:1.75}
+caption{caption-side:top;text-align:left;font-size:.8rem;color:var(--ink-2);padding:.6rem .85rem;border-bottom:1px solid var(--line);background:var(--sunk)}
+th,td{text-align:left;vertical-align:top;padding:.6rem .85rem;border-top:1px solid var(--line)}
+thead th{border-top:none;background:var(--sunk);font-weight:700;font-size:.78rem;letter-spacing:.04em;white-space:nowrap}
+tbody th{font-weight:700;white-space:nowrap;color:var(--ink)}
+td.c,th.c{text-align:center}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--blue)}
+.mono{font-family:var(--f-mono);font-size:.8em;letter-spacing:.06em}
+.tbl-meta table{min-width:auto}
+.tbl-meta tbody th{width:9.5rem;background:var(--sunk)}
+
+/* 部署カード */
+.dept{border:1px solid var(--line);border-radius:3px;background:var(--surface);overflow:hidden}
+.dept+.dept{margin-top:.75rem}
+.dept-hd{display:flex;align-items:center;gap:.85rem;padding:.75rem 1rem;background:var(--sunk);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.dept-hd .id{font-family:var(--f-mono);font-size:.92rem;color:var(--blue);font-weight:500}
+.dept-hd b{font-size:1rem}
+.dept-hd .role{margin-left:auto;font-size:.78rem;color:var(--ink-2);border:1px solid var(--line-2);border-radius:999px;padding:.05rem .7rem;white-space:nowrap}
+.dept-bd{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+.dept-bd>div{background:var(--surface);padding:.85rem 1rem;display:flex;flex-direction:column;gap:.4rem}
+.dept-bd .full{grid-column:1/-1}
+.dept-bd p,.dept-bd ul{font-size:.87rem;line-height:1.8;color:var(--ink)}
+.dept-bd ul{margin:0;padding-left:1.15rem}
+.dept-bd li{margin:.1rem 0}
+@media(max-width:720px){.dept-bd{grid-template-columns:1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:.3rem}
+.chips b{font-weight:500;font-size:.74rem;letter-spacing:.02em;color:var(--blue);background:var(--blue-soft);border-radius:2px;padding:.12rem .5rem;white-space:nowrap}
+.kpi{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.25rem}
+.kpi li{font-size:.85rem;padding-left:1.1rem;position:relative}
+.kpi li::before{content:"";position:absolute;left:0;top:.72em;width:6px;height:6px;background:var(--blue)}
+
+/* 図 */
+figure{margin:0;display:flex;flex-direction:column;gap:.7rem}
+.plate{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:clamp(.8rem,2vw,1.4rem);overflow-x:auto}
+figure svg{width:100%;min-width:600px;height:auto;color:var(--ink-2)}
+figcaption{font-size:.83rem;color:var(--ink-2);max-width:52em}
+.dl{stroke:currentColor;stroke-width:1;fill:none}
+.dl-2{stroke:currentColor;stroke-width:1.6;fill:none}
+.dash{stroke-dasharray:4 5}
+.fs{fill:var(--surface)}.fp{fill:var(--paper)}.fb{fill:var(--blue-soft)}.fa{fill:var(--amber-soft)}.fg{fill:var(--green-soft)}.fk{fill:var(--sunk)}
+.sb{stroke:var(--blue);fill:none;stroke-width:1.3}
+.sa{stroke:var(--amber);fill:none;stroke-width:1.3}
+.sg{stroke:var(--green);fill:none;stroke-width:1.3}
+.tx{fill:var(--ink);font-family:var(--f-body);font-size:13px}
+.tx-s{fill:var(--ink-2);font-family:var(--f-body);font-size:11.5px}
+.tx-b{fill:var(--blue);font-family:var(--f-body);font-size:12px;font-weight:700}
+.tx-a{fill:var(--amber);font-family:var(--f-body);font-size:12px;font-weight:700}
+.tx-g{fill:var(--green);font-family:var(--f-body);font-size:12px;font-weight:700}
+.tx-m{fill:var(--ink-2);font-family:var(--f-mono);font-size:9.5px;letter-spacing:.13em}
+.b14{font-size:14px;font-weight:700}
+
+/* 判定・注意 */
+.flag{display:inline-block;font-family:var(--f-mono);font-size:.66rem;letter-spacing:.1em;padding:.1rem .5rem;border-radius:2px;border:1px solid currentColor;white-space:nowrap}
+.f-must{color:var(--brick)}.f-todo{color:var(--amber)}.f-ok{color:var(--green)}
+.callout{border:1px solid var(--line);border-left:3px solid var(--brick);border-radius:3px;background:var(--brick-soft);padding:.9rem 1.1rem;display:flex;flex-direction:column;gap:.4rem}
+.callout b{font-size:.95rem}
+.callout p{font-size:.87rem}
+.callout.info{border-left-color:var(--blue);background:var(--blue-soft)}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+@media(max-width:720px){.cols2{grid-template-columns:1fr}}
+
+/* 決裁 */
+.approve{border:2px solid var(--ink);border-radius:3px;background:var(--surface)}
+.approve h3{margin:0;padding:.8rem 1.1rem;border-bottom:1px solid var(--line);background:var(--sunk);font-size:.95rem}
+.approve ol{margin:0;padding:.9rem 1.1rem .9rem 2.4rem;display:flex;flex-direction:column;gap:.45rem}
+.approve li{font-size:.9rem}
+.sign{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
+.sign div{border-left:1px solid var(--line);padding:.5rem .7rem 2.6rem;font-family:var(--f-mono);font-size:.62rem;letter-spacing:.14em;color:var(--ink-2)}
+.sign div:first-child{border-left:none}
+
+footer{border-top:1px solid var(--line);padding:1.5rem 0 3rem;font-family:var(--f-mono);font-size:.64rem;letter-spacing:.13em;color:var(--ink-2)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem}
+</style>
+</head>
+<body>
+
+<!-- ══ 表紙 ══ -->
+<header class="cover">
+  <div class="wrap">
+    <p class="docno">PROPOSAL / CIVIL-TECHNOLOGY-IP-INTELLIGENCE-PLATFORM / DRAFT v0.1</p>
+    <h1>土木技術・知財インテリジェンスプラットフォーム 導入企画書
+      <small>Civil Technology &amp; IP Intelligence Platform ／ 対象：01 経営・統治・委員会 ／ 02 営業・案件形成 ／ 03 施工・調達・作業所 ／ 04 技術・研究開発 ／ 05 安全・品質・環境 ／ 06 管理本部・経営企画 ／ 07 支店・営業支店・営業所 ／ 08 船舶事業部</small>
+    </h1>
+    <div class="tw tbl-meta">
+      <table>
+        <caption>文書情報</caption>
+        <tbody>
+          <tr><th>文書区分</th><td>社内提案書（投資・体制の決裁を伴う）</td></tr>
+          <tr><th>作成日</th><td class="num">2026-08-22</td></tr>
+          <tr><th>版</th><td class="num">v0.1（原案・関係部署レビュー前）</td></tr>
+          <tr><th>主管部署（案）</th><td>04 技術・研究開発</td></tr>
+          <tr><th>システムオーナー（案）</th><td>06 管理本部・経営企画</td></tr>
+          <tr><th>決裁機関（案）</th><td>01 経営・統治・委員会（技術委員会 → 経営会議）</td></tr>
+          <tr><th>関連システム</th><td class="mono">Construction-LegalOps-DX（法務・契約の正本）／ Civil-Research-Patent-Scout（現行・移管元）</td></tr>
+          <tr><th>本書で決めること</th><td>導入可否、主管・オーナー部署、フェーズ計画、予算枠、旧システムの扱い、職務発明規程の見直し着手</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="abst"><b>要旨</b>　国内外の特許・論文・NETIS・工法情報を一つの基盤に集約し、AI が「調べる・分解する・比べる」までを担い、人が「決める」。現場の施工課題から、技術の発見・比較・発明・権利化・ライセンス・現場適用までを一本の業務としてつなぐ。本書は 8 部署それぞれの利用場面・責任・権限・効果指標を定義し、段階導入の可否を諮るものである。</p>
+  </div>
+</header>
+
+<!-- ══ 1 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">1</span>提案の要旨</h2>
+    <p>当社は土木・海洋工事の実績と保有技術を持つ一方、それらを裏づける外部技術情報（特許・論文・NETIS）の調査は、案件ごと・担当者ごとに分散して行われている。調べた結果は個人のフォルダに残り、次の案件で再利用されない。他社が今どこへ出願しているかは、体系的には把握できていない。</p>
+    <p>本提案は、この状態を「全社で一つの技術・知財の正本を持つ」形に改める。</p>
+    <div class="cols2">
+      <div class="callout info">
+        <b>本システムが担うこと</b>
+        <p>技術を探す／理解する／比べる／評価する／発明として整理する／ライセンス候補を挙げる。すなわち<b>人が判断するための材料を、根拠つきで揃えるところまで</b>。</p>
+      </div>
+      <div class="callout">
+        <b>本システムが担わないこと</b>
+        <p>権利侵害の判断、契約締結、法的鑑定。これらは有資格者および <span class="mono">Construction-LegalOps-DX</span> の領域とし、本システムからは越境しない。<span class="flag f-must">境界の明文化 必須</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 2 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">2</span>現状の課題（部署別）</h2>
+    <p class="note">導入判断の出発点として、各部署で実際に起きている事象を整理する。※ 数値は関係部署ヒアリングで確定させる（本版は未計測）。</p>
+    <div class="tw">
+      <table>
+        <caption>表 2-1　部署別の現状課題と、放置した場合の影響</caption>
+        <thead><tr><th>部署</th><th>現状で起きていること</th><th>放置した場合の影響</th></tr></thead>
+        <tbody>
+          <tr><th>01 経営・統治・委員会</th><td>技術投資と知財の全体像を示す資料が、都度手作業で作られる。他社の技術シフトを定量的に把握できない。</td><td>R&amp;D 投資配分と特許維持判断が、根拠の薄いまま継続する。</td></tr>
+          <tr><th>02 営業・案件形成</th><td>総合評価落札方式の技術提案で、使える自社技術・NETIS 登録技術を都度探し直している。</td><td>提案の技術点が伸びず、価格競争に引き込まれる。</td></tr>
+          <tr><th>03 施工・調達・作業所</th><td>現場の困りごとに対し「他社や国が既に持っている解」に到達できない。現場の工夫が記録されず失われる。</td><td>再発明と手戻り。発明の機会損失。</td></tr>
+          <tr><th>04 技術・研究開発</th><td>先行技術調査に人手と時間がかかり、調査範囲・検索式が残らない。出願後に近い先行文献が見つかる。</td><td>調査品質が担当者依存。出願費用の空振り。</td></tr>
+          <tr><th>05 安全・品質・環境</th><td>新技術の導入判断が、性能情報だけで進みがち。安全・品質・環境の観点が後追いになる。</td><td>導入後の不具合・事故リスク。CO₂ 削減施策の根拠不足。</td></tr>
+          <tr><th>06 管理本部・経営企画</th><td>知財の費用（出願・維持年金・ライセンス料）と資産価値の対応が見えない。調査業務の証跡が残らない。</td><td>費用対効果を説明できない。監査対応が属人化する。</td></tr>
+          <tr><th>07 支店・営業支店・営業所</th><td>知財の専任がおらず、地域案件の技術検討で本社に都度照会。地域固有のニーズが本社に届かない。</td><td>支店の技術提案力が本社依存のまま固定化する。</td></tr>
+          <tr><th>08 船舶事業部</th><td>作業船・船上装置の改良は日常的に行われるが、技術情報として登録されず、発明としても扱われない。</td><td>当社の中核である海洋施工技術が、権利としても資産としても蓄積されない。</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 3 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">3</span>目的と到達目標</h2>
+    <div class="tw">
+      <table>
+        <caption>表 3-1　三つの目的と到達状態</caption>
+        <thead><tr><th style="width:12rem">目的</th><th>到達状態</th><th style="width:11rem">主たる受益部署</th></tr></thead>
+        <tbody>
+          <tr><th>① 正本を一つにする</th><td>技術・特許・論文・NETIS・過去調査・発明・施工事例が、単一の基盤で検索・参照できる。「誰が・いつ・何を調べたか」が残る。</td><td>04 / 06</td></tr>
+          <tr><th>② 現場に届ける</th><td>現場の施工課題を入力すると、適用可能な技術が現場条件つきで提示される（Field Applicability Score）。</td><td>03 / 07 / 08 / 02</td></tr>
+          <tr><th>③ 判断を速くする</th><td>出願・投資・導入の判断材料が、根拠（特許番号・請求項・該当文・取得日時）まで遡れる形で自動的に揃う。</td><td>01 / 04 / 05</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <b>設計上の絶対条件：AI は決定しない</b>
+      <p>AI が出力するのは候補・根拠・リスクの目安まで。出願可否、現場導入可否、契約可否はすべて人が決める。とくに Claim 類似度は「見るべき箇所を絞る指標」であり、<b>権利侵害の判定ではない</b>。この一線を運用ルールと画面表示の双方で担保する。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 4 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">4</span>全社での位置づけと部署の役割構造</h2>
+    <figure>
+      <div class="plate">
+        <svg viewBox="0 0 900 404" role="img" aria-label="現場・支店・営業・船舶事業部が課題と技術情報を入力し、技術研究開発と管理本部が運営するプラットフォームが調査分析を行い、経営委員会と安全品質環境部門が決裁と導入可否を決める三層構造の図">
+          <defs>
+            <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+          </defs>
+
+          <text class="tx-m" x="450" y="18" text-anchor="middle">EXTERNAL OPEN DATA</text>
+          <rect class="fk dl" x="300" y="26" width="64" height="28" rx="3"/><text class="tx-s" x="332" y="45" text-anchor="middle">特許</text>
+          <rect class="fk dl" x="372" y="26" width="64" height="28" rx="3"/><text class="tx-s" x="404" y="45" text-anchor="middle">論文</text>
+          <rect class="fk dl" x="444" y="26" width="64" height="28" rx="3"/><text class="tx-s" x="476" y="45" text-anchor="middle">NETIS</text>
+          <rect class="fk dl" x="516" y="26" width="74" height="28" rx="3"/><text class="tx-s" x="553" y="45" text-anchor="middle">技術基準</text>
+          <line class="dl-2" x1="445" y1="56" x2="445" y2="84" marker-end="url(#a1)"/>
+
+          <text class="tx-b" x="30" y="80">入れる</text>
+          <text class="tx-m" x="30" y="94">SUPPLY</text>
+          <rect class="fs dl" x="30" y="106" width="190" height="44" rx="3"/><text class="tx" x="125" y="133" text-anchor="middle">03 作業所：現場の課題</text>
+          <rect class="fs dl" x="30" y="160" width="190" height="44" rx="3"/><text class="tx" x="125" y="187" text-anchor="middle">08 船舶：船・装置の改良</text>
+          <rect class="fs dl" x="30" y="214" width="190" height="44" rx="3"/><text class="tx" x="125" y="241" text-anchor="middle">07 支店：地域のニーズ</text>
+          <rect class="fs dl" x="30" y="268" width="190" height="44" rx="3"/><text class="tx" x="125" y="295" text-anchor="middle">02 営業：発注者の要求</text>
+          <line class="dl" x1="224" y1="128" x2="294" y2="150" marker-end="url(#a1)"/>
+          <line class="dl" x1="224" y1="182" x2="294" y2="182" marker-end="url(#a1)"/>
+          <line class="dl" x1="224" y1="236" x2="294" y2="214" marker-end="url(#a1)"/>
+          <line class="dl" x1="224" y1="290" x2="294" y2="246" marker-end="url(#a1)"/>
+
+          <rect class="fb sb" x="300" y="88" width="290" height="244" rx="4"/>
+          <text class="tx b14" x="445" y="118" text-anchor="middle">プラットフォーム</text>
+          <text class="tx-s" x="445" y="140" text-anchor="middle">調べる・分解する・比べる・整える</text>
+          <rect class="fs sb" x="320" y="158" width="250" height="40" rx="3"/><text class="tx" x="445" y="183" text-anchor="middle">04 技術・研究開発（主管）</text>
+          <rect class="fs sb" x="320" y="208" width="250" height="40" rx="3"/><text class="tx" x="445" y="233" text-anchor="middle">06 管理本部（基盤・権限・監査）</text>
+          <text class="tx-s" x="445" y="278" text-anchor="middle">検索／Claim 分解／模擬審査／地図化</text>
+          <text class="tx-m" x="445" y="300" text-anchor="middle">EVIDENCE ALWAYS ATTACHED</text>
+
+          <line class="dl-2" x1="594" y1="160" x2="656" y2="160" marker-end="url(#a1)"/>
+          <line class="dl-2" x1="594" y1="252" x2="656" y2="252" marker-end="url(#a1)"/>
+
+          <text class="tx-a" x="662" y="80">決める・止める</text>
+          <text class="tx-m" x="662" y="94">DECIDE</text>
+          <rect class="fa sa" x="662" y="118" width="208" height="84" rx="3"/>
+          <text class="tx" x="766" y="150" text-anchor="middle">01 経営・統治・委員会</text>
+          <text class="tx-s" x="766" y="174" text-anchor="middle">投資・出願・維持の決裁</text>
+          <rect class="fa sa" x="662" y="212" width="208" height="84" rx="3"/>
+          <text class="tx" x="766" y="244" text-anchor="middle">05 安全・品質・環境</text>
+          <text class="tx-s" x="766" y="268" text-anchor="middle">現場導入の可否ゲート</text>
+
+          <line class="dl-2" x1="766" y1="300" x2="766" y2="330" marker-end="url(#a1)"/>
+          <rect class="fg sg" x="662" y="334" width="208" height="42" rx="3"/>
+          <text class="tx-g" x="766" y="360" text-anchor="middle">Construction-LegalOps-DX</text>
+
+          <path class="dl dash" d="M445 336 L445 384 L125 384 L125 318" marker-end="url(#a1)"/>
+          <text class="tx-s" x="290" y="400" text-anchor="middle">現場へ返す：使える技術とスコア</text>
+        </svg>
+      </div>
+      <figcaption>図 4-1　三層の役割構造。左が情報を「入れる」部署、中央が「調べて整える」運営部署、右が「決める・止める」部署。安全・品質・環境は経営とは別に、現場導入を止められる位置に置く。破線は現場への還元経路で、これが働かなければ導入は失敗と判断する。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ══ 5 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">5</span>部署別の利用場面・責任・効果</h2>
+    <p class="note">各部署について「①何を入力するか ②何を受け取るか ③何を決めるか」を定義する。機能はこの三点に紐づく結果であり、全機能を全部署へ配布はしない。</p>
+
+    <div class="dept">
+      <div class="dept-hd"><span class="id">01</span><b>経営・統治・委員会</b><span class="role">決裁者</span></div>
+      <div class="dept-bd">
+        <div><h4>入力するもの</h4><p>技術戦略の方針、重点分野、投資枠、知財方針（防衛重視／活用重視）。委員会の審議結果と決裁記録。</p></div>
+        <div><h4>受け取るもの</h4><p>経営ビューのダッシュボード。競合の出願トレンド、当社の技術ポジション、ホワイトスペース、未活用特許の一覧、維持年金の負担見通し。</p></div>
+        <div><h4>決めること</h4><p>R&amp;D テーマの優先順位と投資配分／出願・維持・放棄の方針／Build・Buy・Partner の選択／本システムの継続投資。</p></div>
+        <div><h4>主に使う機能</h4><div class="chips"><b>Executive Dashboard</b><b>Patent Landscape</b><b>Competitor Intelligence</b><b>IP Portfolio</b><b>Reporting（経営サマリー）</b></div></div>
+        <div class="full"><h4>効果指標（案）</h4><ul class="kpi"><li>保有特許の活用率（利用現場に紐づく特許の割合）</li><li>未活用特許の棚卸し実施率と、放棄・ライセンスアウト判断の件数</li><li>重点分野における当社出願ポジション（競合比）</li><li>知財の裏づけを持つ R&amp;D テーマの割合</li></ul></div>
+        <div class="full"><h4>運用上の要点</h4><p>技術委員会・知財委員会の<b>定例議題として四半期レビューを制度化</b>する。ダッシュボードを見るだけの運用にせず、「見て決める場」を先に作ることが前提。</p></div>
+      </div>
+    </div>
+
+    <div class="dept">
+      <div class="dept-hd"><span class="id">02</span><b>営業・案件形成</b><span class="role">利用者／情報提供者</span></div>
+      <div class="dept-bd">
+        <div><h4>入力するもの</h4><p>入札公告・発注者が示す技術課題、顧客からの技術要求、競合が提案してきた技術の情報。</p></div>
+        <div><h4>受け取るもの</h4><p>案件の技術課題に適合する自社技術・NETIS 登録技術・ライセンス導入候補の一覧と、その根拠資料。技術提案書の素材。</p></div>
+        <div><h4>決めること</h4><p>提案に用いる技術の選定（技術部門と協議）。提案書に記載する技術的主張の範囲。</p></div>
+        <div><h4>主に使う機能</h4><div class="chips"><b>Universal Search</b><b>NETIS / Public Technology</b><b>Technology Intelligence</b><b>Field Application</b><b>Reporting</b></div></div>
+        <div class="full"><h4>効果指標（案）</h4><ul class="kpi"><li>技術提案書の素材収集リードタイム</li><li>総合評価方式における技術評価点の推移</li><li>提案に自社技術・NETIS 技術を織り込んだ案件の割合</li></ul></div>
+        <div class="full"><h4>運用上の要点 <span class="flag f-must">遵守事項</span></h4><p>AI の出力を<b>そのまま顧客提出資料へ転記することを禁止</b>する。社外に出る文書は必ず技術部門の確認を経る。他社技術への言及は事実の記載にとどめ、権利に関する評価を提案書に書かない。</p></div>
+      </div>
+    </div>
+
+    <div class="dept">
+      <div class="dept-hd"><span class="id">03</span><b>施工・調達・作業所</b><span class="role">起点／利用者</span></div>
+      <div class="dept-bd">
+        <div><h4>入力するもの</h4><p>現場の施工課題（軟弱地盤、狭隘ヤード、工期逼迫、近接施工、労務不足など）、現場条件、施工実績、現場での工夫・改良のアイデア。</p></div>
+        <div><h4>受け取るもの</h4><p>その現場条件で適用可能な技術の候補と Field Applicability Score。過去の類似現場での検討結果。調達検討時の権利状態の確認結果。</p></div>
+        <div><h4>決めること</h4><p>候補技術の中から検討対象を絞る（導入可否は 05 のゲートを経る）。発明として届け出るかどうか。</p></div>
+        <div><h4>主に使う機能</h4><div class="chips"><b>Field Application Intelligence</b><b>NETIS</b><b>Technology Intelligence</b><b>Invention Management</b><b>Knowledge / RAG</b></div></div>
+        <div class="full"><h4>効果指標（案）</h4><ul class="kpi"><li>現場課題の登録件数と、技術提示に至った割合</li><li>作業所からの発明届の件数</li><li>技術導入による工期・省人化・手戻りの改善（案件単位で測定）</li></ul></div>
+        <div class="full"><h4>運用上の要点 <span class="flag f-todo">設計要件</span></h4><p>作業所の入力負担を増やさないことが導入成否を分ける。<b>入力項目は最小限（課題を文章で書けば足りる）とし、整形・分類は AI 側が行う</b>。スマートフォンからの入力と写真添付に対応させる。現場の工夫が「発明」であることに気づいていない場合が多いため、システム側から発明届を促す設計とする。</p></div>
+      </div>
+    </div>
+
+    <div class="dept">
+      <div class="dept-hd"><span class="id">04</span><b>技術・研究開発</b><span class="role">主管部署</span></div>
+      <div class="dept-bd">
+        <div><h4>入力するもの</h4><p>自社の技術台帳・工法・材料・保有特許、研究テーマ、調査依頼への回答、AI 出力の検証結果。</p></div>
+        <div><h4>受け取るもの</h4><p>全モジュール。先行技術調査結果、Claim 分解と Claim Chart、AI 模擬審査、Patent Landscape、ホワイトスペース、競合分析。</p></div>
+        <div><h4>決めること</h4><p>調査の完了判定、AI 出力の採否、発明の技術評価、出願候補への昇格、R&amp;D テーマの起案。<b>本システムの技術的正しさに対する責任を負う。</b></p></div>
+        <div><h4>主に使う機能</h4><div class="chips"><b>全モジュール</b><b>Prior Art</b><b>Claim Intelligence</b><b>AI Patent Examiner</b><b>R&amp;D Intelligence</b><b>Data Management</b></div></div>
+        <div class="full"><h4>効果指標（案）</h4><ul class="kpi"><li>先行技術調査のリードタイムと、調査範囲・検索式の記録率 100%</li><li>出願前レビューでの手戻り率、出願後に近接先行文献が発見される件数</li><li>ホワイトスペース起点で起案された R&amp;D テーマ数</li><li>技術台帳の整備率（保有技術のうち登録済みの割合）</li></ul></div>
+        <div class="full"><h4>運用上の要点</h4><p>主管部署として<b>データ品質（名寄せ・分類・出典管理）に責任を持つ</b>。AI の出力を検証せず下流へ流さないこと、および「類似率＝侵害率ではない」旨を利用部署へ周知することを、本部署の業務として明記する。</p></div>
+      </div>
+    </div>
+
+    <div class="dept">
+      <div class="dept-hd"><span class="id">05</span><b>安全・品質・環境</b><span class="role">導入ゲート</span></div>
+      <div class="dept-bd">
+        <div><h4>入力するもの</h4><p>安全基準・品質基準・環境要求、過去の不具合事例、技術基準や関係法令の改定情報、CO₂ 削減目標。</p></div>
+        <div><h4>受け取るもの</h4><p>導入候補技術の適用条件・制約条件・必要資格・必要設備。安全／品質／環境／CO₂ の評価軸で見た Field Application の内訳。技術基準・公開情報の更新通知。</p></div>
+        <div><h4>決めること</h4><p><b>新技術の現場導入の可否</b>。適用条件の追加、試行導入の範囲、導入時の管理措置。</p></div>
+        <div><h4>主に使う機能</h4><div class="chips"><b>Technology Intelligence（適用条件）</b><b>Field Application</b><b>Monitoring &amp; Watch</b><b>Knowledge / RAG</b><b>Workflow / Approval</b></div></div>
+        <div class="full"><h4>効果指標（案）</h4><ul class="kpi"><li>新技術導入案件のうち、事前の安全・品質・環境評価を経た割合 100%</li><li>導入後の不具合・事故件数（目標ゼロ）</li><li>CO₂ 削減効果を定量評価した技術の件数</li></ul></div>
+        <div class="full"><h4>運用上の要点 <span class="flag f-must">設計思想</span></h4><p>Field Applicability Score が高いことは、導入許可を意味しない。<b>スコアが免罪符にならないよう、承認フロー上に本部署の可否判断を必須ステップとして置く</b>。スコアの内訳（安全・品質・環境の各軸）を本部署が個別に確認できる画面を用意する。</p></div>
+      </div>
+    </div>
+
+    <div class="dept">
+      <div class="dept-hd"><span class="id">06</span><b>管理本部・経営企画</b><span class="role">システムオーナー</span></div>
+      <div class="dept-bd">
+        <div><h4>入力するもの</h4><p>組織・人事情報（権限付与の基礎）、規程類、出願・維持年金・ライセンスの費用情報、他システムとの連携方針。</p></div>
+        <div><h4>受け取るもの</h4><p>監査ログ（ログイン・検索・閲覧・AI 利用・エクスポート・承認・権限変更）、権限棚卸しの状況、費用の可視化、利用状況の統計。</p></div>
+        <div><h4>決めること</h4><p>アカウント・権限の付与と剥奪、データ分類と機密区分、外部連携の可否、システム予算、規程の改定発議。</p></div>
+        <div><h4>主に使う機能</h4><div class="chips"><b>Administration / Security / Audit</b><b>Data Management</b><b>Workflow / Approval</b><b>IP Portfolio（費用）</b><b>Reporting</b></div></div>
+        <div class="full"><h4>効果指標（案）</h4><ul class="kpi"><li>権限レビューの定期実施率（半期ごと）</li><li>監査での指摘件数（目標ゼロ）</li><li>知財関連費用の可視化率と、費用対効果の説明可能性</li><li>全社の利用率（対象者に対するアクティブ利用者の割合）</li></ul></div>
+        <div class="full"><h4>運用上の要点 <span class="flag f-todo">要整備</span></h4><p>未公開の発明情報は社内最高機密に相当する。<b>職務発明規程（報奨金・権利の帰属）の見直し</b>と、<b>AI へ送信してよい情報の範囲を定めたポリシー</b>の整備を、システム稼働前に完了させる必要がある。法務・人事との調整事項。</p></div>
+      </div>
+    </div>
+
+    <div class="dept">
+      <div class="dept-hd"><span class="id">07</span><b>支店・営業支店・営業所</b><span class="role">利用者／情報提供者</span></div>
+      <div class="dept-bd">
+        <div><h4>入力するもの</h4><p>地域固有の施工条件と発注者ニーズ（寒冷地、離島、地方自治体案件など）、地域の協力会社・研究機関の情報、支店発の技術ニーズ。</p></div>
+        <div><h4>受け取るもの</h4><p>支店単位のダッシュボード。地域案件で使える技術・NETIS 登録技術の候補。本社技術部門への照会結果とその履歴。</p></div>
+        <div><h4>決めること</h4><p>地域案件での技術検討の起案。本社へエスカレーションするか、支店内で完結するかの判断。</p></div>
+        <div><h4>主に使う機能</h4><div class="chips"><b>Universal Search</b><b>NETIS</b><b>Technology Intelligence</b><b>支店ダッシュボード</b><b>Knowledge / RAG</b></div></div>
+        <div class="full"><h4>効果指標（案）</h4><ul class="kpi"><li>支店発の技術ニーズ登録件数・発明届件数</li><li>本社照会のリードタイム短縮</li><li>支店のアクティブ利用率（導入の成否を最も端的に示す指標）</li></ul></div>
+        <div class="full"><h4>運用上の要点</h4><p>支店には知財の専任がおらず、AI の一次レビューが最も効く層である。一方で<b>専門知識がないまま AI の出力を確定情報として扱う危険も最も高い</b>。支店向け画面では「これは一次情報であり、判断は本社技術・知財部門が行う」旨を常時表示し、エスカレーション導線を標準装備とする。</p></div>
+      </div>
+    </div>
+
+    <div class="dept">
+      <div class="dept-hd"><span class="id">08</span><b>船舶事業部</b><span class="role">起点／利用者</span></div>
+      <div class="dept-bd">
+        <div><h4>入力するもの</h4><p>保有船舶・起重機船・浚渫船・作業船の諸元と装備、船上装置の改良履歴、海象条件下での施工実績、船の改造・新造の計画。</p></div>
+        <div><h4>受け取るもの</h4><p>船舶・海洋施工分野の特許動向（造船・建機メーカーを含む競合分析）、浚渫・ケーソン据付・海上作業の自動化に関する技術情報、海象条件を織り込んだ適用評価。</p></div>
+        <div><h4>決めること</h4><p>船の改造・新造における技術仕様の方向性。船上での改良を発明として届け出るかどうか。</p></div>
+        <div><h4>主に使う機能</h4><div class="chips"><b>Technology Intelligence（機械台帳）</b><b>Field Application（海象）</b><b>Patent Intelligence</b><b>Competitor Intelligence</b><b>Invention Management</b></div></div>
+        <div class="full"><h4>効果指標（案）</h4><ul class="kpi"><li>保有船舶・船上装置の技術情報整備率</li><li>船舶・海洋施工分野の発明届および出願件数</li><li>改造・新造の技術検討で本システムを参照した割合</li></ul></div>
+        <div class="full"><h4>運用上の要点 <span class="flag f-ok">重点領域</span></h4><p>作業船・船上装置は当社の中核的な技術資産であり、かつ<b>日常的な改良が発明として記録されずに失われている領域</b>である。機械台帳（保有船）を Technology Intelligence 上に整備することを Phase 2 の重点とし、船舶事業部を発明届の主要な供給源として位置づける。港湾・海洋・浚渫は Civil Engineering Intelligence の分類でも独立して扱う。</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 6 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">6</span>部署横断の役割分担</h2>
+    <div class="tw">
+      <table>
+        <caption>表 6-1　主要業務における役割分担（R=実行責任／A=最終責任・承認／C=協議／I=情報共有）</caption>
+        <thead><tr><th>業務</th><th class="c">01 経営</th><th class="c">02 営業</th><th class="c">03 作業所</th><th class="c">04 技術</th><th class="c">05 安品環</th><th class="c">06 管理</th><th class="c">07 支店</th><th class="c">08 船舶</th></tr></thead>
+        <tbody>
+          <tr><th>技術情報の整備・品質管理</th><td class="c">I</td><td class="c">C</td><td class="c">C</td><td class="c"><b>A/R</b></td><td class="c">C</td><td class="c">C</td><td class="c">C</td><td class="c">C</td></tr>
+          <tr><th>先行技術調査</th><td class="c">I</td><td class="c">I</td><td class="c">I</td><td class="c"><b>A/R</b></td><td class="c">I</td><td class="c">I</td><td class="c">C</td><td class="c">C</td></tr>
+          <tr><th>発明の発掘・届出</th><td class="c">I</td><td class="c">C</td><td class="c"><b>R</b></td><td class="c"><b>A</b></td><td class="c">I</td><td class="c">C</td><td class="c"><b>R</b></td><td class="c"><b>R</b></td></tr>
+          <tr><th>出願可否の判断</th><td class="c"><b>A</b></td><td class="c">I</td><td class="c">I</td><td class="c"><b>R</b></td><td class="c">I</td><td class="c">C</td><td class="c">I</td><td class="c">C</td></tr>
+          <tr><th>新技術の現場導入可否</th><td class="c">I</td><td class="c">C</td><td class="c"><b>R</b></td><td class="c">C</td><td class="c"><b>A</b></td><td class="c">I</td><td class="c">C</td><td class="c">C</td></tr>
+          <tr><th>技術提案（入札）への活用</th><td class="c">I</td><td class="c"><b>R</b></td><td class="c">C</td><td class="c"><b>A</b></td><td class="c">C</td><td class="c">I</td><td class="c"><b>R</b></td><td class="c">C</td></tr>
+          <tr><th>ライセンス導入の検討</th><td class="c"><b>A</b></td><td class="c">C</td><td class="c">C</td><td class="c"><b>R</b></td><td class="c">C</td><td class="c">C</td><td class="c">I</td><td class="c">C</td></tr>
+          <tr><th>権限・監査・セキュリティ</th><td class="c">I</td><td class="c">I</td><td class="c">I</td><td class="c">C</td><td class="c">I</td><td class="c"><b>A/R</b></td><td class="c">I</td><td class="c">I</td></tr>
+          <tr><th>投資・継続の判断</th><td class="c"><b>A/R</b></td><td class="c">I</td><td class="c">I</td><td class="c">C</td><td class="c">I</td><td class="c"><b>R</b></td><td class="c">I</td><td class="c">I</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">※ 一つの業務に A（最終責任）は原則一つ。「発明の発掘・届出」は各現場部門が実行し、技術・研究開発が全体の質に責任を持つ構成としている。</p>
+  </div>
+</section>
+
+<!-- ══ 7 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">7</span>標準業務フロー（発明の発生から権利化まで）</h2>
+    <figure>
+      <div class="plate">
+        <svg viewBox="0 0 900 336" role="img" aria-label="現場と船舶事業部と支店が課題や発明を登録し、技術研究開発が先行技術調査とAI模擬審査を行い、技術・知財・安全品質部門が社内レビューし、経営委員会が決裁し、Construction-LegalOps-DXが契約と権利化を担う部署横断フロー">
+          <defs>
+            <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+          </defs>
+          <rect class="fk" x="0" y="40" width="900" height="48"/>
+          <rect class="fk" x="0" y="152" width="900" height="48"/>
+          <rect class="fk" x="0" y="264" width="900" height="48"/>
+
+          <text class="tx-m" x="16" y="30">SWIMLANE / DEPARTMENT</text>
+          <text class="tx-s" x="16" y="62">03 作業所 ／ 08 船舶</text><text class="tx-s" x="16" y="78">07 支店</text>
+          <text class="tx-s" x="16" y="126">04 技術・研究開発</text>
+          <text class="tx-s" x="16" y="174">04 技術 ＋ 05 安品環</text><text class="tx-s" x="16" y="190">＋ 06 管理本部</text>
+          <text class="tx-s" x="16" y="238">01 経営・統治・委員会</text>
+          <text class="tx-g" x="16" y="286">Construction-</text><text class="tx-g" x="16" y="302">LegalOps-DX</text>
+
+          <rect class="fb sb" x="190" y="48" width="108" height="40" rx="3"/><text class="tx" x="244" y="73" text-anchor="middle">①課題・発明</text>
+          <rect class="fb sb" x="310" y="104" width="108" height="40" rx="3"/><text class="tx" x="364" y="129" text-anchor="middle">②先行技術調査</text>
+          <rect class="fb sb" x="430" y="104" width="108" height="40" rx="3"/><text class="tx" x="484" y="129" text-anchor="middle">③AI模擬審査</text>
+          <rect class="fa sa" x="550" y="160" width="108" height="40" rx="3"/><text class="tx" x="604" y="185" text-anchor="middle">④社内レビュー</text>
+          <rect class="fa sa" x="670" y="216" width="108" height="40" rx="3"/><text class="tx" x="724" y="241" text-anchor="middle">⑤決裁</text>
+          <rect class="fg sg" x="790" y="272" width="100" height="40" rx="3"/><text class="tx" x="840" y="297" text-anchor="middle">⑥権利化</text>
+
+          <path class="dl-2" d="M244 92 L244 124 L304 124" marker-end="url(#a2)"/>
+          <path class="dl-2" d="M418 124 L424 124" marker-end="url(#a2)"/>
+          <path class="dl-2" d="M484 148 L484 180 L544 180" marker-end="url(#a2)"/>
+          <path class="dl-2" d="M604 204 L604 236 L664 236" marker-end="url(#a2)"/>
+          <path class="dl-2" d="M724 260 L724 292 L784 292" marker-end="url(#a2)"/>
+
+          <path class="dl dash" d="M598 160 L598 148 L370 148 L370 92 L250 92" marker-end="url(#a2)"/>
+          <text class="tx-s" x="430" y="163" text-anchor="end">差戻し</text>
+          <line class="dl dash" x1="778" y1="20" x2="778" y2="326"/>
+          <text class="tx-m" x="782" y="20">RESPONSIBILITY BOUNDARY</text>
+        </svg>
+      </div>
+      <figcaption>図 7-1　発明の発生から権利化までの部署横断フロー。①〜③までがシステム上で完結し、④以降は人の判断が入る。右端の破線が責任境界で、これを越えると <span class="mono">Construction-LegalOps-DX</span> の管轄になる。差戻し経路（破線）を必ず設け、レビューで否となった案件が現場へ理由つきで戻ることを保証する。</figcaption>
+    </figure>
+    <p class="note">同じ骨格を、現場技術の選定（③の代わりに Field Application 評価、④で 05 が可否判断）と、ライセンス導入（③の代わりにライセンス評価、⑤決裁後に LegalOps へ）にも適用する。</p>
+  </div>
+</section>
+
+<!-- ══ 8 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">8</span>権限設計（RBAC と部署の対応）</h2>
+    <div class="tw">
+      <table>
+        <caption>表 8-1　ロールと部署の対応、および閲覧範囲</caption>
+        <thead><tr><th>ロール</th><th>該当部署</th><th>できること</th><th>できないこと</th></tr></thead>
+        <tbody>
+          <tr><th>経営者</th><td>01</td><td>全社集計・ダッシュボード・レポートの閲覧、決裁</td><td>個別の未公開発明の詳細閲覧（必要時は都度付与）</td></tr>
+          <tr><th>一般技術者</th><td>02 / 03 / 07 / 08</td><td>公開情報の検索、自部署・自現場の情報閲覧、発明届の提出</td><td>他部署の未公開発明、知財台帳の編集、一括エクスポート</td></tr>
+          <tr><th>技術管理者</th><td>04 / 05 / 支店技術長</td><td>技術台帳の編集、調査の実行と承認、Claim 解析、AI 模擬審査</td><td>権限付与、監査ログの改変</td></tr>
+          <tr><th>R&amp;D 担当</th><td>04</td><td>R&amp;D テーマ管理、Landscape、ホワイトスペース分析</td><td>権限付与</td></tr>
+          <tr><th>知財担当</th><td>04 / 06</td><td>IP ポートフォリオ管理、出願・維持の記録、ライセンス候補評価</td><td>正式な法的判断・契約締結</td></tr>
+          <tr><th>法務担当</th><td>06 ／ LegalOps 連携</td><td>法務確認事項の受領、レビュー依頼の処理</td><td>技術評価の確定</td></tr>
+          <tr><th>システム管理者</th><td>06</td><td>アカウント・権限・連携設定、監査ログの参照</td><td>業務データの内容改変、承認行為</td></tr>
+          <tr><th>閲覧専用</th><td>監査・外部委託等</td><td>指定範囲の閲覧のみ</td><td>編集・エクスポート・AI 実行</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cols2">
+      <div class="callout">
+        <b>最重要の機密：未公開の発明情報</b>
+        <p>出願前の発明が外部へ漏れると新規性を失い、権利化できなくなる。プロジェクト単位の権限分離、エクスポート制限、AI への送信範囲の明文化を必須要件とする。<span class="flag f-must">Phase 1 必須</span></p>
+      </div>
+      <div class="callout info">
+        <b>越境させない運用</b>
+        <p>本システムの出力は社内の意思決定支援に限定し、社外への鑑定・法的判断の提供は行わない。有資格者の業務範囲に関わるため、運用ルールとして明文化する。<span class="flag f-todo">法務確認事項</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 9 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">9</span>システム構成（目的別の整理）</h2>
+    <p class="note">25 のモジュールを、部署から見た目的で 5 群に整理する。導入は群単位で進める。</p>
+    <div class="tw">
+      <table>
+        <caption>表 9-1　機能群と主たる利用部署</caption>
+        <thead><tr><th style="width:9rem">機能群</th><th>含まれるモジュール</th><th style="width:10rem">主な利用部署</th></tr></thead>
+        <tbody>
+          <tr><th>基盤</th><td>Universal Search／Data Management／Administration・Security・Audit／Workflow・Approval／Knowledge・RAG</td><td>全部署（06 が管理）</td></tr>
+          <tr><th>情報の器</th><td>Technology Intelligence／Patent Intelligence／Research &amp; Paper Intelligence／NETIS・Public Technology／Civil Engineering Intelligence</td><td>04 / 02 / 03 / 07 / 08</td></tr>
+          <tr><th>分析</th><td>Prior Art／Claim Intelligence／AI Patent Examiner／Competitor Intelligence／Patent Landscape</td><td>04 / 01</td></tr>
+          <tr><th>活用</th><td>Field Application／R&amp;D Intelligence／Invention Management／Licensing／IP Portfolio</td><td>03 / 05 / 08 / 01 / 04</td></tr>
+          <tr><th>連携・自律</th><td>Legal Intelligence／Monitoring &amp; Watch／Autonomous AI Agents／Reporting／External Integration</td><td>全部署 ＋ LegalOps-DX</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>外部連携先は、JPO / J-PlatPat 系、WIPO、公開論文・研究情報、NETIS・国土交通省の公開情報、および <span class="mono">Construction-LegalOps-DX</span> を想定する。<span class="flag f-todo">各データ源の利用条件・取得方式は Phase 1 で確定</span></p>
+  </div>
+</section>
+
+<!-- ══ 10 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">10</span>導入計画</h2>
+    <div class="tw">
+      <table>
+        <caption>表 10-1　段階導入計画（期間は決裁後に確定）</caption>
+        <thead><tr><th style="width:5.5rem">フェーズ</th><th style="width:9rem">目的</th><th>導入する機能群</th><th style="width:9rem">参加部署</th><th style="width:11rem">完了判定</th></tr></thead>
+        <tbody>
+          <tr><th class="num">Phase 0</th><td>準備・合意形成</td><td>体制決定、規程整備（職務発明・AI 利用ポリシー）、データ移管方針、外部データ源の利用条件確定</td><td>04 / 06 / 01</td><td>規程が承認され、主管・オーナーが確定していること</td></tr>
+          <tr><th class="num">Phase 1</th><td>基盤の確立</td><td>基盤群 ＋ 情報の器（特許・技術・NETIS・論文）。認証・権限・監査を同時に立ち上げる</td><td>04 / 06</td><td>技術台帳が整備され、検索が単一窓口で機能し、監査ログが取得できていること</td></tr>
+          <tr><th class="num">Phase 2</th><td>現場への展開</td><td>Field Application／Invention Management／Knowledge・RAG／支店ダッシュボード。<b>船舶の機械台帳整備を重点</b></td><td>03 / 07 / 08 / 02 / 05</td><td>現場課題の登録と発明届が実運用で流れ、05 の導入ゲートが機能していること</td></tr>
+          <tr><th class="num">Phase 3</th><td>分析の高度化</td><td>Prior Art／Claim Intelligence／AI Patent Examiner／Competitor／Patent Landscape／R&amp;D Intelligence</td><td>04 / 01</td><td>委員会の四半期レビューが本システムの出力で行われていること</td></tr>
+          <tr><th class="num">Phase 4</th><td>連携と自律化</td><td>Licensing／Legal Intelligence／Monitoring &amp; Watch／Autonomous AI Agents／LegalOps-DX 連携</td><td>全部署</td><td>技術ウォッチの通知が定常運用され、法務連携が責任境界どおりに動作すること</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>現行システムからの移管</h3>
+    <p><span class="mono">Civil-Research-Patent-Scout</span> の資産は、機能だけでなくデータ・設計書・API・DB 定義・テスト・CI/CD・Issue・Git 履歴・運用資料まで評価対象とし、有効なものを新基盤へ移管する。移管完了後にアーカイブし、並行稼働期間を経て廃止する。<span class="flag f-todo">移管対象の棚卸しは Phase 0 で実施</span></p>
+  </div>
+</section>
+
+<!-- ══ 11 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">11</span>効果測定</h2>
+    <div class="tw">
+      <table>
+        <caption>表 11-1　全社レベルの評価指標（目標値は Phase 0 のベースライン測定後に設定）</caption>
+        <thead><tr><th>区分</th><th>指標</th><th>測定方法</th><th style="width:7rem">現状値</th><th style="width:7rem">目標値</th></tr></thead>
+        <tbody>
+          <tr><th>利用</th><td>対象者に対するアクティブ利用率（部署別）</td><td>システムログ</td><td class="num">未計測</td><td class="num">要設定</td></tr>
+          <tr><th>速度</th><td>先行技術調査のリードタイム</td><td>調査依頼〜報告の実測</td><td class="num">未計測</td><td class="num">要設定</td></tr>
+          <tr><th>品質</th><td>出願後に近接先行文献が発見された件数</td><td>知財台帳</td><td class="num">未計測</td><td class="num">要設定</td></tr>
+          <tr><th>創出</th><td>発明届の件数（部署別・とくに 03 / 08）</td><td>Invention Management</td><td class="num">未計測</td><td class="num">要設定</td></tr>
+          <tr><th>活用</th><td>保有特許のうち利用現場に紐づく割合</td><td>IP Portfolio</td><td class="num">未計測</td><td class="num">要設定</td></tr>
+          <tr><th>営業</th><td>技術提案に自社技術・NETIS 技術を織り込んだ案件の割合</td><td>案件管理と突合</td><td class="num">未計測</td><td class="num">要設定</td></tr>
+          <tr><th>安全</th><td>新技術導入案件のうち事前評価を経た割合</td><td>Workflow ログ</td><td class="num">未計測</td><td class="num">100%</td></tr>
+          <tr><th>統制</th><td>監査指摘件数／権限レビュー実施率</td><td>Audit ログ</td><td class="num">未計測</td><td class="num">0 件／100%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note"><span class="flag f-must">前提</span>　Phase 0 でベースラインを測定しないと効果を主張できない。導入前の実測を Phase 0 の完了要件に含めている。</p>
+  </div>
+</section>
+
+<!-- ══ 12 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">12</span>リスクと対策</h2>
+    <div class="tw">
+      <table>
+        <caption>表 12-1　主要リスクと対策</caption>
+        <thead><tr><th style="width:11rem">リスク</th><th>内容</th><th>対策</th><th style="width:7rem">責任部署</th></tr></thead>
+        <tbody>
+          <tr><th>AI 出力の誤り</th><td>要約・分類・類似度が誤り、誤った前提で判断が下される。</td><td>全出力に根拠（特許番号・請求項・該当文・取得元・取得日時）を付す。人の検証を経ない出力を下流へ流さない運用を規定する。</td><td>04</td></tr>
+          <tr><th>類似率の誤用</th><td>Claim 類似度が「侵害の可能性」として社内外で扱われる。</td><td>画面・帳票に注記を常時表示。社外文書への転記を禁止。教育を導入時に必須化。</td><td>04 / 06</td></tr>
+          <tr><th>未公開情報の漏えい</th><td>出願前の発明情報が外部流出し、新規性を喪失する。</td><td>プロジェクト単位の権限分離、エクスポート制限、AI への送信範囲のポリシー化、監査ログ。</td><td>06</td></tr>
+          <tr><th>データ品質の劣化</th><td>出願人・発明者の表記ゆれ、分類の誤り、重複により分析結果が歪む。</td><td>名寄せ・正規化・出典管理を Data Management で継続実施。品質指標を定点観測する。</td><td>04</td></tr>
+          <tr><th>使われない</th><td>現場の入力負担が大きく、ダッシュボードを誰も見ない。</td><td>入力項目を最小化し AI 側で整形。利用率を KPI に含め、四半期で改善サイクルを回す。委員会の定例議題として「見る場」を制度化。</td><td>04 / 01</td></tr>
+          <tr><th>スコアの独り歩き</th><td>Field Applicability Score が高いことが導入許可と誤解される。</td><td>05 の可否判断を承認フロー上の必須ステップとする。スコアの内訳を必ず併記する。</td><td>05</td></tr>
+          <tr><th>責任境界の越境</th><td>社内で法的判断・鑑定に相当する行為が行われる。</td><td>本システムの出力は意思決定支援に限定。正式判断は有資格者と <span class="mono">Construction-LegalOps-DX</span> へ引き渡す旨を規程化。</td><td>06</td></tr>
+          <tr><th>移管の失敗</th><td>旧 Scout のデータ・履歴が失われる、または二重管理が続く。</td><td>Phase 0 で棚卸し。並行稼働期間と廃止判定基準を先に定義する。</td><td>04 / 06</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 13 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">13</span>推進体制と会議体</h2>
+    <div class="tw">
+      <table>
+        <caption>表 13-1　体制と会議体</caption>
+        <thead><tr><th style="width:11rem">体制</th><th>構成</th><th>役割・頻度</th></tr></thead>
+        <tbody>
+          <tr><th>技術委員会／知財委員会</th><td>01 主宰、04・05・06 常任、02・07・08 は案件に応じて参加</td><td>四半期レビュー（ポートフォリオ、R&amp;D テーマ、出願方針）と決裁</td></tr>
+          <tr><th>推進事務局</th><td>04 技術・研究開発（主管）＋ 06 管理本部（オーナー）</td><td>日次運用、データ品質、利用促進、月次の進捗報告</td></tr>
+          <tr><th>部署別キーパーソン</th><td>02・03・05・07・08 に各 1 名以上</td><td>現場要望の集約、部署内の利用促進、月次の連絡会</td></tr>
+          <tr><th>導入ゲート会議</th><td>05 主宰、03・04・08 が参加</td><td>新技術の現場導入可否を審議（案件発生の都度）</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 14 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">14</span>費用と前提</h2>
+    <p class="note"><span class="flag f-must">本版では金額を記載していない</span>　見積の根拠となる利用者数・データ源の契約条件・インフラ構成が未確定のため、費目のみを提示する。Phase 0 で確定させ、次版で金額を記入する。</p>
+    <div class="tw">
+      <table>
+        <caption>表 14-1　費目一覧（金額は Phase 0 で確定）</caption>
+        <thead><tr><th style="width:11rem">区分</th><th>費目</th><th style="width:8rem">初期／継続</th><th style="width:7rem">金額</th></tr></thead>
+        <tbody>
+          <tr><th>開発</th><td>基盤構築、モジュール開発、旧 Scout からの移管</td><td>初期</td><td class="num">要記入</td></tr>
+          <tr><th>データ</th><td>特許データベース、論文データベースの利用契約</td><td>継続</td><td class="num">要記入</td></tr>
+          <tr><th>AI</th><td>言語モデル・ベクトル検索の利用料（利用量に依存）</td><td>継続</td><td class="num">要記入</td></tr>
+          <tr><th>インフラ</th><td>サーバ、ストレージ、バックアップ、監視</td><td>継続</td><td class="num">要記入</td></tr>
+          <tr><th>運用</th><td>推進事務局の要員、データ品質管理、利用者教育</td><td>継続</td><td class="num">要記入</td></tr>
+          <tr><th>その他</th><td>規程改定、セキュリティ監査、外部専門家への相談</td><td>初期／継続</td><td class="num">要記入</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>前提条件</h3>
+    <ul>
+      <li>外部データ源（特許・論文）の利用契約が、社内利用の範囲で締結できること</li>
+      <li>職務発明規程および AI 利用ポリシーが Phase 1 開始前に整備されること</li>
+      <li><span class="mono">Construction-LegalOps-DX</span> が Phase 4 の時点で連携可能な状態にあること</li>
+      <li>推進事務局に専任相当の要員を配置できること（兼任のみでは Phase 2 以降が停滞する）</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══ 15 ══ -->
+<section class="ch">
+  <div class="wrap">
+    <h2><span class="no">15</span>決裁依頼事項</h2>
+    <div class="approve">
+      <h3>以下について承認を求める</h3>
+      <ol>
+        <li>本企画（土木技術・知財インテリジェンスプラットフォームの段階導入）の実施</li>
+        <li>主管部署を <b>04 技術・研究開発</b>、システムオーナーを <b>06 管理本部・経営企画</b> とすること</li>
+        <li>Phase 0（準備・合意形成）の着手と、そのための要員配置</li>
+        <li>新技術の現場導入可否を <b>05 安全・品質・環境</b> の承認事項として承認フローに組み込むこと</li>
+        <li>職務発明規程および AI 利用ポリシーの見直し着手（06 発議、法務・人事と調整）</li>
+        <li><span class="mono">Civil-Research-Patent-Scout</span> の資産移管とアーカイブ方針</li>
+        <li>技術委員会・知財委員会における四半期レビューの定例議題化</li>
+        <li>Phase 1 以降の予算枠（金額は Phase 0 完了後に別途上程）</li>
+      </ol>
+      <div class="sign"><div>作成</div><div>主管部署長</div><div>担当役員</div><div>決裁</div></div>
+    </div>
+    <p class="note">本書は原案（v0.1）である。関係 8 部署のレビューを経て v1.0 とし、経営会議に上程する。レビューでは特に、部署別の効果指標（第 5 章・第 11 章）と役割分担（第 6 章）について、各部署の合意を得ることを重視する。</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>CIVIL-TECHNOLOGY-IP-INTELLIGENCE-PLATFORM</span>
+    <span>PROPOSAL v0.1 / 2026-08-22</span>
+    <span>DRAFT — 関係部署レビュー前</span>
+  </div>
+</footer>
+</body>
+</html>

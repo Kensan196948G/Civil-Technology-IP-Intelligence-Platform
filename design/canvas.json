@@ -1,0 +1,19 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",       "x": 0,    "y": 0,    "w": 1440, "h": 900,  "title": "S-02/03 横断検索" },
+    { "file": "ClaimChart.dc.html", "x": 1560, "y": 0,    "w": 1440, "h": 960,  "title": "S-13 Claim Chart" },
+    { "file": "FieldScore.dc.html", "x": 0,    "y": 1100, "w": 1440, "h": 940,  "title": "S-19 現場適用スコア" },
+    { "file": "Approvals.dc.html",  "x": 1560, "y": 1100, "w": 1440, "h": 920,  "title": "S-29 承認・案件一覧" },
+    { "file": "SiteIssue.dc.html",  "x": 3120, "y": 0,    "w": 390,  "h": 844,  "title": "S-18 現場課題（スマホ）" },
+    { "file": "Tokens.dc.html",     "x": 3120, "y": 1100, "w": 1120, "h": 1240, "title": "デザイントークン" }
+  ],
+  "annotations": [
+    { "id": "brief", "x": 0, "y": -220, "w": 620,
+      "text": "CTIIP WebUI ／ クリック可能プロトタイプ v0.1\n\n配色・書体は platform-overview.html / platform-proposal.html から継承。\n測量シアン #0D6E8C を主色、注意 #A9700D、禁止 #9C3E24。\nShippori Mincho B1（見出し）／ Zen Kaku Gothic New（本文）／ IBM Plex Mono（数値・注記）。\n\n押して動くところ：検索式の開閉・タブ切替・スコア内訳／Claim判定の変更・根拠の展開／\n適用軸の展開／課題フォームの送信・任意項目／承認一覧のフィルタと案件切替。" },
+    { "id": "rule-1", "x": 1560, "y": -220, "w": 560,
+      "text": "docs の「表示上の禁止事項」を構造で守っています。\n\n・Claim Chart の注記バーは閉じられない（消せる導線を作らない）\n・適用スコアは軸別内訳が常に隣にある。数値単独の表示経路がない\n・スコア画面から「導入決定」へ直接行くボタンを置かず、起票→承認へ回す\n・承認画面では自己承認・人間確認未完了のとき承認ボタンが不可になる\n・権限のない項目はグレーアウトではなく非表示" },
+    { "id": "todo", "x": 3120, "y": -220, "w": 460,
+      "text": "サンプル値について\n\n出願人は A社 / B建設 / C重工 と伏せています。\n実在企業の出願を捏造しないためです。\n特許番号・スコア・件数もすべてサンプルで、\n画面上部の MVP バナーがそれを常時明示します。\n\n実データ接続は本番環境（ctiip.…）の担当です。" }
+  ],
+  "launch": { "view": "canvas" }
+}

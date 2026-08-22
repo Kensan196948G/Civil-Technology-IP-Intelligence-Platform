@@ -1,0 +1,200 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Shippori+Mincho+B1:wght@700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;background:#EAEDEE;color:#16262E;-webkit-font-smoothing:antialiased;
+         font-family:"Zen Kaku Gothic New",'Hiragino Sans','Yu Gothic',system-ui,sans-serif;font-size:13px;line-height:1.7}
+    a{color:#0D6E8C;text-decoration:none}
+    a:hover{color:#095972;text-decoration:underline}
+    button{font:inherit;color:inherit;cursor:pointer;background:none;border:none;padding:0;text-align:left}
+  </style>
+</helmet>
+
+<div style="width:1440px;min-height:940px;display:flex;flex-direction:column;background:#EAEDEE">
+
+  <div style="display:flex;align-items:center;gap:14px;height:46px;padding:0 24px;background:#16262E;color:#93A8B0;flex:none;font-size:12px">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#63C2E0">CTIIP</span>
+    <span>現場</span><span style="color:#3E5E6C">›</span><span>◯◯港 岸壁改良工事</span><span style="color:#3E5E6C">›</span>
+    <span style="color:#DEE9EC">適用性評価</span>
+    <span style="flex-grow:1"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em">S-19 / FIELD APPLICATION</span>
+  </div>
+
+  <div style="padding:22px 24px 32px;display:flex;flex-direction:column;gap:18px">
+
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <h1 style="margin:0;font-family:'Shippori Mincho B1',serif;font-weight:700;font-size:22px">GNSS併用ケーソン据付支援システム</h1>
+      <span style="font-size:11px;font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;color:#A9700D;border:1px solid #DDC08A;background:#FBF4E6;border-radius:2px;padding:1px 7px">NETIS KT-230000-A</span>
+      <span style="flex-grow:1"></span>
+      <span style="font-size:12px;color:#516268">課題：有義波高2.0m前後でのケーソン据付精度の確保</span>
+    </div>
+
+    <div style="display:flex;gap:18px;align-items:stretch">
+
+      <!-- score panel -->
+      <div style="width:398px;flex:none;background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:18px 20px 20px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.18em;color:#7C8C93">FIELD APPLICABILITY SCORE</div>
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:56px;line-height:.9;color:#0D6E8C">{{score}}</span>
+          <span style="font-size:15px;color:#516268">/ 100</span>
+        </div>
+        <div style="height:9px;background:#DFE4E5;border-radius:999px;overflow:hidden">
+          <div style="height:100%;width:{{score}}%;background:#0D6E8C;border-radius:999px"></div>
+        </div>
+
+        <!-- 免罪符にしない注記 -->
+        <div style="display:flex;gap:9px;padding:11px 12px;background:#F2E7D0;border:1px solid #DDC08A;border-radius:3px;color:#7A5008">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A9700D" stroke-width="1.8" style="flex:none;margin-top:2px"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+          <div style="font-size:12px;line-height:1.7">
+            <b style="font-weight:700">このスコアは導入可否の判断を代替しません。</b>
+            安全・品質・環境部門の承認を経てはじめて導入できます。
+          </div>
+        </div>
+
+        <div style="height:1px;background:#DFE4E5"></div>
+
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div style="font-size:12px;font-weight:700">現場条件</div>
+          <sc-for list="{{conds}}" as="c" hint-placeholder-count="5">
+            <div style="display:flex;align-items:baseline;gap:10px;font-size:12px">
+              <span style="width:74px;flex:none;color:#516268">{{c.k}}</span>
+              <span style="color:#16262E">{{c.v}}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="flex-grow:1"></div>
+
+        <button style="display:flex;align-items:center;justify-content:center;gap:8px;height:40px;background:#0D6E8C;color:#fff;border-radius:3px;font-size:13px;font-weight:700">
+          導入検討を起票する
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+        <div style="font-size:11px;color:#516268;text-align:center;line-height:1.6">
+          起票であって決定ではありません。<br>次のステップは<b style="font-weight:700">05 安全・品質・環境</b>の可否判断です。
+        </div>
+      </div>
+
+      <!-- axes -->
+      <div style="flex-grow:1;min-width:0;background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid #BFCACD;background:#DFE4E5">
+          <span style="font-size:13px;font-weight:700">軸別の内訳</span>
+          <span style="font-size:11.5px;color:#516268">スコアだけの表示は禁止です。必ず内訳と根拠を併記します</span>
+          <span style="flex-grow:1"></span>
+          <div style="display:flex;align-items:center;gap:14px;font-size:11px;color:#516268">
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;background:#0D6E8C;border-radius:2px"></span>規則判定</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;background:#A9700D;border-radius:2px"></span>AI推定</span>
+          </div>
+        </div>
+
+        <div style="padding:6px 0">
+          <sc-for list="{{axes}}" as="a" hint-placeholder-count="8">
+            <div>
+              <button onClick="{{a.toggle}}" style="display:flex;align-items:center;gap:14px;width:100%;padding:9px 18px;border-bottom:1px solid #E8EDED">
+                <span style="width:118px;flex:none;font-size:12.5px;color:#16262E">{{a.name}}</span>
+                <span style="width:56px;flex:none;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:{{a.tagFg}};border:1px solid {{a.tagBd}};background:{{a.tagBg}};border-radius:2px;padding:1px 0;text-align:center">{{a.tag}}</span>
+                <span style="flex-grow:1;height:7px;background:#E4E9EA;border-radius:999px;overflow:hidden;min-width:60px">
+                  <span style="display:block;height:100%;width:{{a.pct}}%;background:{{a.barCol}};border-radius:999px"></span>
+                </span>
+                <span style="width:38px;flex:none;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#16262E">{{a.val}}</span>
+                <span style="width:52px;flex:none;text-align:right;font-size:11px;color:#7C8C93">重み {{a.w}}</span>
+                <span style="width:14px;flex:none;transform:rotate({{a.rot}}deg);display:inline-flex;color:#93A3A8">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m9 6 6 6-6 6"/></svg>
+                </span>
+              </button>
+              <sc-if value="{{a.open}}" hint-placeholder-val="{{ true }}">
+                <div style="padding:11px 18px 13px 150px;background:#EFF3F3;border-bottom:1px solid #E8EDED;font-size:12px;line-height:1.8;color:#2E4048">
+                  <b style="font-weight:700">算出根拠：</b>{{a.basis}}
+                  <sc-if value="{{a.est}}" hint-placeholder-val="{{ true }}">
+                    <div style="margin-top:6px;color:#7A5008;font-size:11.5px">※ この軸は規則で判定できないため AI が推定しています。実測値ではありません。</div>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="flex-grow:1"></div>
+
+        <div style="display:flex;align-items:center;gap:11px;padding:13px 18px;border-top:1px solid #BFCACD;background:#EFF3F3">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.8"><path d="M20 6 9 17l-5-5"/></svg>
+          <span style="font-size:12.5px">阻害要因（評価 0 の軸）：<b style="font-weight:700;color:#2F6B4F">なし</b></span>
+          <span style="color:#BFCACD">|</span>
+          <span style="font-size:11.5px;color:#516268">阻害要因がある場合、スコアに関わらず「要確認」として承認へ回ります</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- comparison strip -->
+    <div style="display:flex;gap:12px;align-items:stretch">
+      <sc-for list="{{alts}}" as="x" hint-placeholder-count="3">
+        <div style="flex-grow:1;flex-basis:0;background:#F7F9F9;border:1px solid {{x.bd}};border-radius:3px;padding:13px 15px;display:flex;flex-direction:column;gap:7px">
+          <div style="display:flex;align-items:baseline;gap:9px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:20px;color:{{x.fg}}">{{x.score}}</span>
+            <span style="font-size:12.5px;font-weight:700">{{x.name}}</span>
+          </div>
+          <div style="font-size:11.5px;color:#516268;line-height:1.7">{{x.note}}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":940}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { open:'marine' }; }
+  renderVals(){
+    const S = this.state;
+    const A = [
+      {id:'work',name:'工種適合性',val:1.0,w:3,est:false,basis:'技術の工種分類「港湾・海洋」と、現場の工種が一致。'},
+      {id:'marine',name:'海象',val:0.6,w:3,est:false,basis:'現場の有義波高 2.0m に対し、技術の適用限界は 2.5m。余裕は 0.5m で、荒天時の中断リスクが残る。'},
+      {id:'ground',name:'地盤',val:0.9,w:2,est:false,basis:'技術の適用条件「砂質土・N値10以上」に対し、現場は N値14。条件を満たす。'},
+      {id:'yard',name:'作業ヤード',val:0.7,w:2,est:false,basis:'必要ヤード 800m² に対し、現場の確保可能面積は 640m²。仮設計画の調整が必要。'},
+      {id:'equip',name:'必要設備・建機',val:0.8,w:2,est:false,basis:'必要な起重機船（吊能力 800t 以上）を自社保有。GNSS受信機は追加調達が必要。'},
+      {id:'term',name:'工期',val:0.5,w:2,est:true,basis:'導入教育と試験据付に約 2 週間を要すると推定。現行工程への影響は中程度。'},
+      {id:'cost',name:'コスト',val:0.5,w:2,est:true,basis:'類似技術の導入実績から、初期費用と稼働費を推定。実際の見積は取得していない。'},
+      {id:'safety',name:'安全',val:0.9,w:3,est:false,basis:'遠隔監視により、据付時の高所・水際作業の人員を削減できる。'},
+      {id:'env',name:'環境・CO₂',val:0.7,w:1,est:true,basis:'据付回数の減少により燃料消費の低減が見込まれるが、定量値は未確認。'},
+      {id:'skill',name:'導入難易度',val:0.6,w:1,est:false,basis:'必要資格は既存で充足。ただし社内実績が 0 件のため、初回は支援が必要。'}
+    ];
+    const num = A.reduce((s,a)=>s+a.val*a.w,0);
+    const den = A.reduce((s,a)=>s+a.w,0);
+    const score = Math.round(num/den*100);
+    const axes = A.map(a=>{
+      const op = S.open===a.id;
+      return {name:a.name, val:a.val.toFixed(2), w:a.w, pct:Math.round(a.val*100),
+        est:a.est, basis:a.basis, open:op, rot:op?90:0,
+        tag: a.est?'AI推定':'規則',
+        tagFg: a.est?'#A9700D':'#0D6E8C',
+        tagBd: a.est?'#DDC08A':'#9CC3D0',
+        tagBg: a.est?'#FBF4E6':'#EAF4F8',
+        barCol: a.est?'#A9700D':'#0D6E8C',
+        toggle:()=>this.setState({open:op?null:a.id})};
+    });
+    const conds = [
+      {k:'工種',v:'港湾・海洋 ／ 岸壁改良'},
+      {k:'海象',v:'有義波高 2.0m ／ 潮流 0.6kt'},
+      {k:'地盤',v:'砂質土 N値 14'},
+      {k:'作業ヤード',v:'640 m²（陸上）'},
+      {k:'工期',v:'2026-10 〜 2027-03'},
+      {k:'周辺環境',v:'航路近接・夜間作業制限あり'}
+    ];
+    const alts = [
+      {name:'現行工法（比較対象）',score:'—',fg:'#7C8C93',bd:'#BFCACD',note:'潜水士による目視誘導。波高 1.5m を超えると中断が発生している。'},
+      {name:'A社特許技術（ライセンス）',score:'68',fg:'#A9700D',bd:'#DDC08A',note:'動揺補償を含むため海象に強いが、権利者との交渉が前提。法務確認事項あり。'},
+      {name:'自社技術 TECH-0442',score:'52',fg:'#9C3E24',bd:'#D3A695',note:'動揺補償が未実装。適用条件が波高 1.5m 以下で、本現場の条件を満たさない。'}
+    ];
+    return {score, axes, conds, alts};
+  }
+}
+</script>
+</body>
+</html>

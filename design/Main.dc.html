@@ -1,0 +1,337 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Shippori+Mincho+B1:wght@700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;background:#EAEDEE;color:#16262E;-webkit-font-smoothing:antialiased;
+         font-family:"Zen Kaku Gothic New",'Hiragino Sans','Yu Gothic',system-ui,sans-serif;font-size:13px;line-height:1.7}
+    a{color:#0D6E8C;text-decoration:none}
+    a:hover{color:#095972;text-decoration:underline}
+    button{font:inherit;color:inherit;cursor:pointer;background:none;border:none;padding:0;text-align:left}
+    ::selection{background:#D8E9EF}
+  </style>
+</helmet>
+
+<div style="width:1440px;min-height:900px;display:flex;flex-direction:column;background:#EAEDEE">
+
+  <!-- topbar -->
+  <div style="display:flex;align-items:center;gap:16px;height:52px;padding:0 20px;background:#16262E;color:#DEE9EC;flex:none">
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#63C2E0" stroke-width="1.4">
+        <path d="M3 20h18"/><path d="M6 20V9l6-5 6 5v11"/><path d="M10 20v-5h4v5"/>
+      </svg>
+      <span style="font-family:'Shippori Mincho B1',serif;font-weight:700;font-size:15px;letter-spacing:.02em">土木技術・知財インテリジェンス</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8C93">CTIIP</span>
+    </div>
+    <div style="flex-grow:1"></div>
+    <button style="display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:1px solid #33505C;border-radius:3px;color:#93A8B0;font-size:12px">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 8A6 6 0 1 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      要対応 <span style="color:#E0AE4E;font-weight:700">3</span>
+    </button>
+    <div style="display:flex;align-items:center;gap:8px;padding-left:12px;border-left:1px solid #33505C">
+      <div style="width:26px;height:26px;border-radius:999px;background:#0D6E8C;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">技</div>
+      <div style="line-height:1.3">
+        <div style="font-size:12px">技術管理者</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:#7C8C93">04 技術・研究開発</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MVP banner -->
+  <div style="display:flex;align-items:center;gap:8px;height:30px;padding:0 20px;background:#F2E7D0;border-bottom:1px solid #E0CFA8;color:#7A5008;font-size:12px;flex:none">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+    <b style="font-weight:700">MVP環境</b> — 表示されているデータはサンプルです。この画面の数値で業務判断をしないでください。
+    <span style="flex-grow:1"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em">ctiip-mvp.mirai-dx-platform.com</span>
+  </div>
+
+  <div style="display:flex;flex-grow:1;align-items:stretch">
+
+    <!-- sidebar -->
+    <div style="width:214px;flex:none;background:#DFE4E5;border-right:1px solid #BFCACD;display:flex;flex-direction:column;padding:14px 0">
+      <sc-for list="{{nav}}" as="n" hint-placeholder-count="6">
+        <button onClick="{{n.pick}}" style="display:flex;align-items:center;gap:9px;height:32px;padding:0 14px 0 {{n.pad}}px;color:{{n.fg}};background:{{n.bg}};border-left:3px solid {{n.mark}};font-weight:{{n.fw}};font-size:12.5px">
+          <span style="width:16px;height:16px;flex:none;color:{{n.icon}}">
+            <sc-if value="{{n.isSearch}}" hint-placeholder-val="{{ true }}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            </sc-if>
+            <sc-if value="{{n.isDot}}" hint-placeholder-val="{{ true }}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg>
+            </sc-if>
+          </span>
+          {{n.label}}
+          <span style="flex-grow:1"></span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#A9700D;font-weight:500">{{n.badge}}</span>
+        </button>
+      </sc-for>
+      <div style="flex-grow:1"></div>
+      <div style="margin:0 14px;padding:10px;border:1px dashed #A9B6BA;border-radius:3px;color:#516268;font-size:11px;line-height:1.65">
+        権限のないモジュールは<b style="font-weight:700">項目自体を表示しません</b>（グレーアウトにしない）
+      </div>
+    </div>
+
+    <!-- main -->
+    <div style="flex-grow:1;padding:22px 26px 30px;display:flex;flex-direction:column;gap:16px;min-width:0">
+
+      <!-- heading -->
+      <div style="display:flex;align-items:baseline;gap:12px">
+        <h1 style="margin:0;font-family:'Shippori Mincho B1',serif;font-weight:700;font-size:22px;letter-spacing:.01em">横断検索</h1>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8C93">S-02 / UNIVERSAL SEARCH</span>
+        <span style="flex-grow:1"></span>
+        <span style="font-size:11.5px;color:#516268">検索対象の最終取得：<b style="font-family:'IBM Plex Mono',monospace;font-weight:500">2026-08-21 02:14</b></span>
+      </div>
+
+      <!-- search box -->
+      <div style="display:flex;flex-direction:column;gap:0;background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#0D6E8C" stroke-width="1.7" style="flex:none"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <div style="flex-grow:1;font-size:15px;color:#16262E">港湾工事のケーソン据付を自動化したい</div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:#7C8C93">自然文で入力できます</span>
+          <button style="height:32px;padding:0 18px;background:#0D6E8C;color:#fff;border-radius:3px;font-size:13px;font-weight:700">検索</button>
+        </div>
+
+        <!-- AI query strip -->
+        <div style="border-top:1px solid #CFD9DB;background:#D8E9EF">
+          <button onClick="{{toggleQuery}}" style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 14px;color:#0A5B75;font-size:12px">
+            <span style="transform:rotate({{qRot}}deg);display:inline-flex;transition:transform .15s">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 6 6 6-6 6"/></svg>
+            </span>
+            <b style="font-weight:700">AI が組み立てた検索式</b>
+            <span style="color:#3A7E95">— 内容を確認・編集できます。検索をブラックボックスにしません</span>
+            <span style="flex-grow:1"></span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:#3A7E95">{{qState}}</span>
+          </button>
+          <sc-if value="{{queryOpen}}" hint-placeholder-val="{{ true }}">
+            <div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px">
+              <div style="padding:11px 13px;background:#F7F9F9;border:1px solid #9CC3D0;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.9;color:#16262E">
+                (<span style="color:#0D6E8C">ケーソン</span> OR <span style="color:#0D6E8C">caisson</span> OR 函体)<br>
+                AND (据付 OR 設置 OR installation)<br>
+                AND (自動 OR 自律 OR 遠隔 OR 動揺補償)<br>
+                AND IPC:(<span style="color:#A9700D">E02B</span> OR <span style="color:#A9700D">E02D</span> OR <span style="color:#A9700D">B63B</span>)<br>
+                AND 公開日 &gt;= 2015-01-01
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <button style="height:28px;padding:0 12px;border:1px solid #0D6E8C;color:#0D6E8C;border-radius:3px;font-size:12px">検索式を編集</button>
+                <button style="height:28px;padding:0 12px;border:1px solid #BFCACD;color:#516268;border-radius:3px;font-size:12px">この条件を保存</button>
+                <span style="flex-grow:1"></span>
+                <span style="font-size:11.5px;color:#3A7E95">この検索は実行者・日時・条件とともに記録されます（FR-M02-011）</span>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <!-- tabs -->
+      <div style="display:flex;align-items:stretch;gap:0;border-bottom:1px solid #BFCACD">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+          <button onClick="{{t.pick}}" style="display:flex;align-items:baseline;gap:7px;padding:9px 16px;margin-bottom:-1px;border-bottom:2px solid {{t.bd}};color:{{t.fg}};font-weight:{{t.fw}};font-size:13px">
+            {{t.label}}
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:{{t.cfg}}">{{t.count}}</span>
+          </button>
+        </sc-for>
+        <span style="flex-grow:1"></span>
+        <div style="display:flex;align-items:center;gap:8px;padding-bottom:6px">
+          <span style="font-size:11.5px;color:#516268">並び順</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#16262E;border-bottom:1px solid #93A3A8">RRF 融合スコア</span>
+        </div>
+      </div>
+
+      <!-- filter chips -->
+      <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+        <span style="font-size:11.5px;color:#516268;margin-right:2px">絞り込み</span>
+        <sc-for list="{{chips}}" as="c" hint-placeholder-count="5">
+          <button onClick="{{c.pick}}" style="display:flex;align-items:center;gap:5px;height:26px;padding:0 10px;border:1px solid {{c.bd}};background:{{c.bg}};color:{{c.fg}};border-radius:999px;font-size:11.5px">
+            {{c.label}}
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:{{c.xfg}}">{{c.mark}}</span>
+          </button>
+        </sc-for>
+      </div>
+
+      <!-- results -->
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <sc-for list="{{results}}" as="r" hint-placeholder-count="3">
+          <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px">
+            <div style="display:flex;gap:14px;padding:13px 15px">
+              <!-- rank -->
+              <div style="width:30px;flex:none;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#93A3A8;padding-top:2px">{{r.rank}}</div>
+              <div style="flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap">
+                  <span style="font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.12em;color:{{r.kindFg}};border:1px solid {{r.kindBd}};background:{{r.kindBg}};border-radius:2px;padding:1px 6px">{{r.kind}}</span>
+                  <a href="#" style="font-size:15px;font-weight:700;color:#0D6E8C">{{r.title}}</a>
+                  <span style="font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;color:{{r.clsFg}};border:1px solid {{r.clsFg}};border-radius:999px;padding:0 7px">{{r.cls}}</span>
+                </div>
+                <div style="font-size:12.5px;color:#2E4048;line-height:1.85">
+                  {{r.pre}}<span style="background:#D8E9EF;border-bottom:1px solid #6FA9BC;padding:0 1px">{{r.hit}}</span>{{r.post}}
+                </div>
+                <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#516268">
+                  <span>{{r.meta1}}</span>
+                  <span style="color:#BFCACD">|</span>
+                  <span style="font-family:'IBM Plex Mono',monospace">{{r.meta2}}</span>
+                  <span style="color:#BFCACD">|</span>
+                  <a href="#" style="display:inline-flex;align-items:center;gap:4px;color:#516268;border-bottom:1px dotted #93A3A8">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v7h-7"/><path d="M3 10V3h7"/></svg>
+                    出典 {{r.src}} ／ 取得 {{r.got}}
+                  </a>
+                </div>
+              </div>
+              <!-- score -->
+              <div style="width:132px;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:19px;color:#16262E;line-height:1">{{r.score}}</div>
+                <div style="width:100%;height:5px;background:#DFE4E5;border-radius:999px;overflow:hidden">
+                  <div style="height:100%;width:{{r.bar}}%;background:#0D6E8C"></div>
+                </div>
+                <button onClick="{{r.toggle}}" style="display:flex;align-items:center;gap:4px;font-size:11px;color:#0D6E8C">
+                  <span style="transform:rotate({{r.rot}}deg);display:inline-flex">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m9 6 6 6-6 6"/></svg>
+                  </span>
+                  スコア内訳
+                </button>
+              </div>
+            </div>
+            <sc-if value="{{r.open}}" hint-placeholder-val="{{ true }}">
+              <div style="border-top:1px dashed #BFCACD;background:#EFF3F3;padding:12px 15px 13px 59px;display:flex;gap:34px;align-items:flex-start">
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:#7C8C93">LEXICAL / pg_trgm</div>
+                  <div style="font-size:13px">順位 <b style="font-family:'IBM Plex Mono',monospace;font-weight:500">{{r.lex}}</b> 位</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:#7C8C93">SEMANTIC / pgvector</div>
+                  <div style="font-size:13px">順位 <b style="font-family:'IBM Plex Mono',monospace;font-weight:500">{{r.sem}}</b> 位</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:#7C8C93">MATCHED FIELD</div>
+                  <div style="font-size:13px">{{r.field}}</div>
+                </div>
+                <div style="flex-grow:1"></div>
+                <div style="max-width:340px;font-size:11.5px;color:#516268;line-height:1.7;border-left:2px solid #BFCACD;padding-left:11px">
+                  字句検索と意味検索の順位を <b style="font-family:'IBM Plex Mono',monospace;font-weight:500">RRF</b> で融合した値です。文献の重要度そのものではありません。
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;padding-top:2px">
+        <button style="height:30px;padding:0 16px;border:1px solid #BFCACD;background:#F7F9F9;border-radius:3px;font-size:12.5px;color:#516268">さらに表示</button>
+        <span style="font-size:11.5px;color:#7C8C93">機密区分 C3・C4 の情報は、権限のない利用者には件数にも含まれません</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p){
+    super(p);
+    this.state = { tab:'patent', queryOpen:true, open:'p1', chips:{ipc:true,port:true,y2015:false,jp:false} };
+  }
+  renderVals(){
+    const S = this.state;
+    const K = {
+      patent:{label:'特許',fg:'#0D6E8C',bd:'#9CC3D0',bg:'#EAF4F8'},
+      paper:{label:'論文',fg:'#2F6B4F',bd:'#A8CBB8',bg:'#EAF3EE'},
+      netis:{label:'NETIS',fg:'#A9700D',bd:'#DDC08A',bg:'#FBF4E6'},
+      tech:{label:'自社技術',fg:'#5C4B8A',bd:'#BDB2D6',bg:'#F1EEF7'}
+    };
+    const DATA = {
+      patent:[
+        {id:'p1',kind:'特許',k:'patent',title:'ケーソン据付装置および据付方法',cls:'C1',
+         pre:'吊具の姿勢を計測しながら',hit:'ケーソン',post:'の据付位置を自動補正する据付装置であって、動揺補償機構と…',
+         meta1:'A社 ／ 特開2024-512340 ／ 公開 2024-03-12',meta2:'IPC E02B 3/06',src:'JPO',got:'2026-08-20',
+         score:'0.842',bar:84,lex:3,sem:1,field:'請求項1'},
+        {id:'p2',kind:'特許',k:'patent',title:'水中構造物の据付位置計測システム',cls:'C1',
+         pre:'水中に沈設される',hit:'ケーソン',post:'等の構造物について、音響測位と慣性計測を併用して位置を求める…',
+         meta1:'B建設 ／ 特開2023-448821 ／ 公開 2023-11-30',meta2:'IPC E02D 27/18',src:'JPO',got:'2026-08-20',
+         score:'0.774',bar:77,lex:1,sem:6,field:'要約'},
+        {id:'p3',kind:'特許',k:'patent',title:'起重機船の動揺補償装置',cls:'C1',
+         pre:'波浪による船体の動揺を打ち消し、',hit:'吊荷',post:'の対地位置を一定に保つ補償装置。海上施工の精度向上に…',
+         meta1:'C重工 ／ 特開2022-390115 ／ 公開 2022-06-08',meta2:'IPC B63B 27/10',src:'JPO',got:'2026-08-20',
+         score:'0.691',bar:69,lex:12,sem:2,field:'明細書 段落0034'}
+      ],
+      paper:[
+        {id:'r1',kind:'論文',k:'paper',title:'港湾工事における自動据付技術の適用性評価',cls:'C1',
+         pre:'本研究では、',hit:'ケーソン据付',post:'工程を対象に、動揺補償と測位の組合せが施工精度に与える影響を…',
+         meta1:'土木学会論文集 B3（海洋開発） ／ 2025',meta2:'DOI 10.0000/sample.2025.041',src:'学会公開',got:'2026-08-19',
+         score:'0.812',bar:81,lex:5,sem:1,field:'要旨'},
+        {id:'r2',kind:'論文',k:'paper',title:'動揺補償制御を用いた海上施工の高精度化',cls:'C1',
+         pre:'有義波高2.0mまでの条件下で、',hit:'据付誤差',post:'を±50mm以内に抑える制御則を提案し、実海域で検証した…',
+         meta1:'海洋工学シンポジウム ／ 2024',meta2:'DOI 10.0000/sample.2024.117',src:'学会公開',got:'2026-08-19',
+         score:'0.733',bar:73,lex:9,sem:2,field:'要旨'}
+      ],
+      netis:[
+        {id:'n1',kind:'NETIS',k:'netis',title:'GNSS併用ケーソン据付支援システム',cls:'C1',
+         pre:'RTK-GNSS と傾斜計を併用し、',hit:'据付位置',post:'をリアルタイム表示する支援システム。従来工法比で据付時間を短縮…',
+         meta1:'登録 2023年度 ／ 活用促進技術',meta2:'KT-230000-A',src:'NETIS',got:'2026-08-18',
+         score:'0.758',bar:76,lex:2,sem:4,field:'技術概要'}
+      ],
+      tech:[
+        {id:'t1',kind:'自社技術',k:'tech',title:'ケーソン据付管理システム（自社保有）',cls:'C2',
+         pre:'当社が港湾工事で運用する据付管理技術。',hit:'動揺補償',post:'は未実装で、有義波高1.5m以下を適用条件としている…',
+         meta1:'技術台帳 ／ 工種：港湾・海洋 ／ 成熟度：実用',meta2:'TECH-0442',src:'社内台帳',got:'2026-08-14',
+         score:'0.704',bar:70,lex:4,sem:5,field:'技術概要'}
+      ]
+    };
+    const counts = {patent:412,paper:88,netis:7,tech:12,past:5};
+    const tabDefs = [
+      {key:'patent',label:'特許'},{key:'paper',label:'論文'},{key:'netis',label:'NETIS'},
+      {key:'tech',label:'自社技術'},{key:'past',label:'過去調査'}
+    ];
+    const tabs = tabDefs.map(t=>{
+      const on = S.tab===t.key;
+      return {label:t.label,count:counts[t.key],
+        bd:on?'#0D6E8C':'transparent',fg:on?'#0D6E8C':'#516268',fw:on?'700':'400',
+        cfg:on?'#0D6E8C':'#93A3A8',
+        pick:()=>this.setState({tab:t.key,open:null})};
+    });
+    const chipDefs = [
+      {key:'ipc',label:'IPC E02B'},{key:'port',label:'工種：港湾・海洋'},
+      {key:'y2015',label:'2015年以降'},{key:'jp',label:'日本'},{key:'add',label:'条件を追加',add:true}
+    ];
+    const chips = chipDefs.map(c=>{
+      if(c.add) return {label:c.label,bd:'#BFCACD',bg:'transparent',fg:'#516268',mark:'+',xfg:'#93A3A8',pick:()=>{}};
+      const on = !!S.chips[c.key];
+      return {label:c.label,bd:on?'#0D6E8C':'#BFCACD',bg:on?'#D8E9EF':'#F7F9F9',fg:on?'#0A5B75':'#516268',
+        mark:on?'×':'+',xfg:on?'#3A7E95':'#93A3A8',
+        pick:()=>this.setState({chips:{...S.chips,[c.key]:!on}})};
+    });
+    const list = DATA[S.tab] || [];
+    const results = list.map((r,i)=>{
+      const kk = K[r.k];
+      const op = S.open===r.id;
+      return {...r, rank:String(i+1).padStart(2,'0'),
+        kindFg:kk.fg,kindBd:kk.bd,kindBg:kk.bg,
+        clsFg:r.cls==='C1'?'#2F6B4F':'#A9700D',
+        open:op, rot:op?90:0,
+        toggle:()=>this.setState({open:op?null:r.id})};
+    });
+    const navDefs = [
+      {label:'ダッシュボード'},{label:'横断検索',search:true},{label:'技術台帳'},
+      {label:'特許'},{label:'論文'},{label:'NETIS'},{label:'先行技術調査'},
+      {label:'現場適用'},{label:'発明届',badge:'2'},{label:'承認・案件',badge:'3'},{label:'ナレッジ'}
+    ];
+    const nav = navDefs.map(n=>{
+      const on = !!n.search;
+      return {label:n.label,badge:n.badge||'',pad:'11',
+        fg:on?'#0D6E8C':'#2E4048',bg:on?'#F7F9F9':'transparent',
+        mark:on?'#0D6E8C':'transparent',fw:on?'700':'400',
+        icon:on?'#0D6E8C':'#7C8C93',isSearch:on,isDot:!on,pick:()=>{}};
+    });
+    return {nav,tabs,chips,results,
+      queryOpen:S.queryOpen, qRot:S.queryOpen?90:0,
+      qState:S.queryOpen?'OPEN':'CLOSED',
+      toggleQuery:()=>this.setState({queryOpen:!S.queryOpen})};
+  }
+}
+</script>
+</body>
+</html>

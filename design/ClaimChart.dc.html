@@ -1,0 +1,203 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Shippori+Mincho+B1:wght@700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;background:#EAEDEE;color:#16262E;-webkit-font-smoothing:antialiased;
+         font-family:"Zen Kaku Gothic New",'Hiragino Sans','Yu Gothic',system-ui,sans-serif;font-size:13px;line-height:1.7}
+    a{color:#0D6E8C;text-decoration:none}
+    a:hover{color:#095972;text-decoration:underline}
+    button{font:inherit;color:inherit;cursor:pointer;background:none;border:none;padding:0;text-align:left}
+  </style>
+</helmet>
+
+<div style="width:1440px;min-height:960px;display:flex;flex-direction:column;background:#EAEDEE">
+
+  <div style="display:flex;align-items:center;gap:14px;height:46px;padding:0 24px;background:#16262E;color:#93A8B0;flex:none;font-size:12px">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#63C2E0">CTIIP</span>
+    <span>特許</span><span style="color:#3E5E6C">›</span><span>特開2024-512340</span><span style="color:#3E5E6C">›</span>
+    <span style="color:#DEE9EC">Claim Chart</span>
+    <span style="flex-grow:1"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em">S-13 / CLAIM INTELLIGENCE</span>
+  </div>
+
+  <!-- 消せない注記バー -->
+  <div style="display:flex;align-items:flex-start;gap:11px;padding:12px 24px;background:#F2DDD6;border-bottom:2px solid #9C3E24;color:#7A2E17;flex:none">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9C3E24" stroke-width="1.8" style="flex:none;margin-top:1px">
+      <circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16h.01"/>
+    </svg>
+    <div style="line-height:1.7">
+      <b style="font-weight:900;font-size:14px">類似度は権利侵害の判断ではありません。</b>
+      <span style="font-size:12.5px">AI が算出した一致率は、専門家が確認すべき箇所を絞るための目印です。本表を侵害可能性の結論として社外へ提示しないでください。</span>
+    </div>
+    <span style="flex-grow:1"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:#A56048;white-space:nowrap;padding-top:3px">FR-M06-020 / 非表示にできません</span>
+  </div>
+
+  <div style="padding:20px 24px 30px;display:flex;flex-direction:column;gap:16px">
+
+    <!-- header row -->
+    <div style="display:flex;align-items:flex-end;gap:22px">
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <h1 style="margin:0;font-family:'Shippori Mincho B1',serif;font-weight:700;font-size:22px">ケーソン据付装置および据付方法</h1>
+        <div style="font-size:12px;color:#516268">A社 ／ 特開2024-512340 ／ 請求項1（独立） vs. 自社案「据付管理システム 改良案 v3」</div>
+      </div>
+      <span style="flex-grow:1"></span>
+
+      <!-- similarity block -->
+      <div style="display:flex;align-items:flex-end;gap:16px;padding:11px 16px;background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:#7C8C93">CLAIM SIMILARITY</div>
+          <div style="display:flex;align-items:baseline;gap:6px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:30px;line-height:1;color:#16262E">{{simPct}}</span>
+            <span style="font-size:13px;color:#516268">%</span>
+            <span style="font-size:12px;color:#516268;margin-left:4px">= 一致 {{matchN}} / 全 {{totalN}} 要件</span>
+          </div>
+        </div>
+        <div style="max-width:230px;font-size:11px;color:#7A2E17;line-height:1.6;border-left:2px solid #9C3E24;padding-left:10px">
+          数値のみの表示は禁止です。<br>必ず内訳と注記を伴います。
+        </div>
+      </div>
+    </div>
+
+    <!-- table -->
+    <div style="border:1px solid #BFCACD;border-radius:3px;overflow:hidden;background:#F7F9F9">
+      <!-- head -->
+      <div style="display:flex;background:#DFE4E5;border-bottom:1px solid #BFCACD;font-size:11.5px;font-weight:700;color:#2E4048">
+        <div style="width:52px;flex:none;padding:9px 12px">要件</div>
+        <div style="flex-grow:1;flex-basis:0;padding:9px 14px;border-left:1px solid #CBD4D6">他社の特許（請求項1の構成）</div>
+        <div style="flex-grow:1;flex-basis:0;padding:9px 14px;border-left:1px solid #CBD4D6">自社案 v3</div>
+        <div style="width:186px;flex:none;padding:9px 14px;border-left:1px solid #CBD4D6">判定</div>
+        <div style="width:96px;flex:none;padding:9px 14px;border-left:1px solid #CBD4D6">根拠</div>
+      </div>
+
+      <sc-for list="{{rows}}" as="row" hint-placeholder-count="4">
+        <div>
+          <div style="display:flex;align-items:stretch;border-bottom:1px solid #E1E7E8;background:{{row.rowBg}}">
+            <div style="width:52px;flex:none;padding:13px 12px;font-family:'IBM Plex Mono',monospace;font-size:15px;color:#516268;border-right:1px solid #E1E7E8">{{row.label}}</div>
+            <div style="flex-grow:1;flex-basis:0;padding:13px 14px;font-size:12.5px;line-height:1.85;border-right:1px solid #E1E7E8">{{row.left}}</div>
+            <div style="flex-grow:1;flex-basis:0;padding:13px 14px;font-size:12.5px;line-height:1.85;color:{{row.rightFg}};border-right:1px solid #E1E7E8">{{row.right}}</div>
+            <div style="width:186px;flex:none;padding:11px 14px;border-right:1px solid #E1E7E8;display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;gap:4px">
+                <sc-for list="{{row.opts}}" as="o" hint-placeholder-count="3">
+                  <button onClick="{{o.pick}}" style="height:24px;padding:0 9px;border:1px solid {{o.bd}};background:{{o.bg}};color:{{o.fg}};border-radius:2px;font-size:11.5px;font-weight:{{o.fw}}">{{o.label}}</button>
+                </sc-for>
+              </div>
+              <div style="font-size:10.5px;color:#7C8C93;line-height:1.5">{{row.editedBy}}</div>
+            </div>
+            <div style="width:96px;flex:none;padding:11px 14px">
+              <button onClick="{{row.toggle}}" style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:#0D6E8C">
+                <span style="transform:rotate({{row.rot}}deg);display:inline-flex">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m9 6 6 6-6 6"/></svg>
+                </span>
+                原文 {{row.citeN}}
+              </button>
+            </div>
+          </div>
+          <sc-if value="{{row.open}}" hint-placeholder-val="{{ true }}">
+            <div style="padding:13px 14px 15px 66px;background:#EFF3F3;border-bottom:1px solid #E1E7E8;display:flex;flex-direction:column;gap:9px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#516268" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#7C8C93">EVIDENCE — 原文からの機械的な切り出し</span>
+              </div>
+              <div style="padding:11px 14px;background:#F7F9F9;border-left:3px solid #0D6E8C;font-size:12.5px;line-height:1.95;color:#16262E">{{row.quote}}</div>
+              <div style="display:flex;align-items:center;gap:14px;font-size:11px;color:#516268;flex-wrap:wrap">
+                <span style="font-family:'IBM Plex Mono',monospace">特開2024-512340 ／ 請求項1 ／ 第{{row.charFrom}}–{{row.charTo}}字</span>
+                <span style="color:#BFCACD">|</span>
+                <span style="font-family:'IBM Plex Mono',monospace">取得 2026-08-20 02:14</span>
+                <span style="color:#BFCACD">|</span>
+                <a href="#">原文全体を開く</a>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- footer actions -->
+    <div style="display:flex;align-items:center;gap:12px">
+      <button style="display:flex;align-items:center;gap:7px;height:32px;padding:0 15px;background:#0D6E8C;color:#fff;border-radius:3px;font-size:12.5px;font-weight:700">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+        Claim Chart を出力
+      </button>
+      <div style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:#7A2E17;background:#F2DDD6;border:1px solid #D9B5A8;border-radius:3px;padding:6px 11px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        出力物には透かし・注記・出典が強制付与されます
+      </div>
+      <span style="flex-grow:1"></span>
+      <span style="font-size:11.5px;color:#516268">判定の修正は履歴に残ります（修正者・日時・修正前後）</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  constructor(p){
+    super(p);
+    this.state = {
+      kinds:{A:'match',B:'similar',C:'differ',D:'match'},
+      open:'B'
+    };
+  }
+  renderVals(){
+    const S = this.state;
+    const KIND = {
+      match:{label:'一致',fg:'#2F6B4F',bg:'#D9E9DF',bd:'#8FBBA3'},
+      similar:{label:'類似',fg:'#A9700D',bg:'#F2E7D0',bd:'#D9BF8C'},
+      differ:{label:'相違',fg:'#9C3E24',bg:'#F2DDD6',bd:'#D3A695'}
+    };
+    const ORDER = ['match','similar','differ'];
+    const DEFS = [
+      {label:'A',left:'ケーソンを吊り下げる吊具と、当該吊具の姿勢を計測する計測手段と、を備える据付装置。',
+       right:'吊具＋姿勢計測（傾斜計・IMU）を搭載。同一構成。',
+       quote:'ケーソンを吊り下げる吊具と、当該吊具の姿勢を計測する計測手段と、を備える据付装置であって、',
+       cf:1,ct:52,edited:'AI判定のまま'},
+      {label:'B',left:'前記計測手段の出力に基づき、据付目標位置との偏差を算出する演算手段。',
+       right:'偏差算出は行うが、目標位置は作業員が都度入力する方式。自動追従は未実装。',
+       quote:'前記計測手段の出力に基づいて据付目標位置との偏差を算出する演算手段を有し、当該偏差に応じて',
+       cf:53,ct:112,edited:'2026-08-21 高橋（知財）が修正'},
+      {label:'C',left:'前記偏差を打ち消す向きに吊具を移動させる動揺補償機構。',
+       right:'該当構成なし。自社案は動揺補償機構を持たない。',
+       quote:'前記偏差を打ち消す向きに前記吊具を移動させる動揺補償機構を備えることを特徴とする、',
+       cf:113,ct:168,edited:'AI判定のまま'},
+      {label:'D',left:'据付完了後に据付位置の実測値を記録する記録手段。',
+       right:'施工管理システムへ自動記録。同一構成。',
+       quote:'据付完了後に据付位置の実測値を記録する記録手段をさらに備える、請求項1に記載の据付装置。',
+       cf:169,ct:214,edited:'AI判定のまま'}
+    ];
+    const rows = DEFS.map(d=>{
+      const cur = S.kinds[d.label];
+      const op = S.open===d.label;
+      return {
+        label:d.label,left:d.left,right:d.right,quote:d.quote,
+        charFrom:d.cf,charTo:d.ct,citeN:'1件',editedBy:d.edited,
+        rightFg: cur==='differ' ? '#9C3E24' : '#16262E',
+        rowBg: cur==='differ' ? '#FCF6F4' : '#F7F9F9',
+        open:op, rot:op?90:0,
+        toggle:()=>this.setState({open:op?null:d.label}),
+        opts: ORDER.map(k=>{
+          const on = cur===k;
+          return {label:KIND[k].label,
+            fg:on?KIND[k].fg:'#7C8C93', bg:on?KIND[k].bg:'transparent',
+            bd:on?KIND[k].bd:'#CBD4D6', fw:on?'700':'400',
+            pick:()=>this.setState({kinds:{...S.kinds,[d.label]:k}})};
+        })
+      };
+    });
+    const vals = Object.values(S.kinds);
+    const matchN = vals.filter(v=>v==='match').length;
+    const totalN = vals.length;
+    return {rows, matchN, totalN, simPct: Math.round(matchN/totalN*100)};
+  }
+}
+</script>
+</body>
+</html>

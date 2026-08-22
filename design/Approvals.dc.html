@@ -1,0 +1,235 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Shippori+Mincho+B1:wght@700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;background:#EAEDEE;color:#16262E;-webkit-font-smoothing:antialiased;
+         font-family:"Zen Kaku Gothic New",'Hiragino Sans','Yu Gothic',system-ui,sans-serif;font-size:13px;line-height:1.7}
+    a{color:#0D6E8C;text-decoration:none}
+    a:hover{color:#095972;text-decoration:underline}
+    button{font:inherit;color:inherit;cursor:pointer;background:none;border:none;padding:0;text-align:left}
+  </style>
+</helmet>
+
+<div style="width:1440px;min-height:920px;display:flex;flex-direction:column;background:#EAEDEE">
+
+  <div style="display:flex;align-items:center;gap:14px;height:46px;padding:0 24px;background:#16262E;color:#93A8B0;flex:none;font-size:12px">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#63C2E0">CTIIP</span>
+    <span style="color:#DEE9EC">承認・案件一覧</span>
+    <span style="flex-grow:1"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em">S-29 / WORKFLOW</span>
+  </div>
+
+  <div style="padding:22px 24px 30px;display:flex;flex-direction:column;gap:16px">
+
+    <div style="display:flex;align-items:baseline;gap:14px">
+      <h1 style="margin:0;font-family:'Shippori Mincho B1',serif;font-weight:700;font-size:22px">承認・案件一覧</h1>
+      <span style="font-size:12px;color:#516268">高橋 実（知財担当 ／ 04 技術・研究開発）</span>
+      <span style="flex-grow:1"></span>
+      <div style="display:flex;gap:0;border:1px solid #BFCACD;border-radius:3px;overflow:hidden">
+        <sc-for list="{{filters}}" as="f" hint-placeholder-count="3">
+          <button onClick="{{f.pick}}" style="display:flex;align-items:baseline;gap:6px;height:30px;padding:0 14px;background:{{f.bg}};color:{{f.fg}};font-weight:{{f.fw}};font-size:12.5px;border-left:1px solid #BFCACD">
+            {{f.label}}
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{f.cfg}}">{{f.n}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:16px;align-items:flex-start">
+
+      <!-- list -->
+      <div style="width:560px;flex:none;display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{cases}}" as="c" hint-placeholder-count="4">
+          <button onClick="{{c.pick}}" style="display:flex;flex-direction:column;gap:8px;padding:13px 15px;background:{{c.bg}};border:1px solid {{c.bd}};border-left:3px solid {{c.mark}};border-radius:3px">
+            <div style="display:flex;align-items:baseline;gap:9px;width:100%">
+              <span style="font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;color:{{c.kindFg}};border:1px solid {{c.kindBd}};background:{{c.kindBg}};border-radius:2px;padding:1px 6px">{{c.kind}}</span>
+              <span style="font-size:14px;font-weight:700;color:#16262E">{{c.title}}</span>
+              <span style="flex-grow:1"></span>
+              <span style="font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;color:{{c.clsFg}};border:1px solid {{c.clsFg}};border-radius:999px;padding:0 7px">{{c.cls}}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;width:100%;font-size:11.5px;color:#516268">
+              <span style="display:inline-flex;align-items:center;gap:5px">
+                <span style="width:7px;height:7px;border-radius:999px;background:{{c.dot}}"></span>{{c.status}}
+              </span>
+              <span style="color:#BFCACD">|</span>
+              <span>起案 {{c.author}}</span>
+              <span style="color:#BFCACD">|</span>
+              <span style="font-family:'IBM Plex Mono',monospace">期限 {{c.due}}</span>
+              <span style="flex-grow:1"></span>
+              <span style="color:{{c.roleFg}};font-weight:{{c.roleFw}}">{{c.roleNote}}</span>
+            </div>
+          </button>
+        </sc-for>
+      </div>
+
+      <!-- detail -->
+      <div style="flex-grow:1;min-width:0;background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;display:flex;flex-direction:column">
+
+        <div style="padding:16px 20px 14px;border-bottom:1px solid #BFCACD">
+          <div style="display:flex;align-items:baseline;gap:10px">
+            <h2 style="margin:0;font-size:17px;font-weight:700">{{sel.title}}</h2>
+            <span style="font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;color:{{sel.clsFg}};border:1px solid {{sel.clsFg}};border-radius:999px;padding:0 7px">{{sel.cls}}</span>
+          </div>
+          <div style="font-size:12px;color:#516268;margin-top:4px">起案 {{sel.author}} ／ 現在 {{sel.status}} ／ 期限 {{sel.due}}</div>
+        </div>
+
+        <!-- steps -->
+        <div style="padding:16px 20px;border-bottom:1px solid #E1E7E8;display:flex;flex-direction:column;gap:0">
+          <sc-for list="{{steps}}" as="s" hint-placeholder-count="5">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <div style="width:20px;flex:none;display:flex;flex-direction:column;align-items:center">
+                <span style="width:13px;height:13px;border-radius:999px;border:2px solid {{s.ring}};background:{{s.fill}};margin-top:3px"></span>
+                <span style="width:2px;flex-grow:1;min-height:{{s.lineH}}px;background:{{s.line}}"></span>
+              </div>
+              <div style="flex-grow:1;padding-bottom:14px;display:flex;flex-direction:column;gap:3px">
+                <div style="display:flex;align-items:baseline;gap:9px">
+                  <span style="font-size:13px;font-weight:{{s.fw}};color:{{s.fg}}">{{s.name}}</span>
+                  <span style="font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;color:{{s.tagFg}};border:1px solid {{s.tagBd}};background:{{s.tagBg}};border-radius:2px;padding:0 6px">{{s.tag}}</span>
+                  <span style="flex-grow:1"></span>
+                  <span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:#93A3A8">{{s.at}}</span>
+                </div>
+                <div style="font-size:11.5px;color:#516268;line-height:1.7">{{s.note}}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- AI step result -->
+        <div style="padding:14px 20px;background:#EFF3F3;border-bottom:1px solid #E1E7E8;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0D6E8C" stroke-width="1.8"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M9 3v3M15 3v3M9 13h6M9 17h4"/></svg>
+            <span style="font-size:12.5px;font-weight:700">AI模擬審査の結果</span>
+            <span style="font-size:11px;color:#516268">— 判断ではありません。人が確認するための材料です</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{risks}}" as="r" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:8px;padding:5px 11px;background:#F7F9F9;border:1px solid {{r.bd}};border-radius:3px">
+                <span style="font-size:12px;color:#2E4048">{{r.k}}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;color:{{r.fg}}">{{r.v}}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:9px;padding:11px 13px;background:#F2E7D0;border:1px solid #DDC08A;border-radius:3px;color:#7A5008">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A9700D" stroke-width="1.9" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+            <div style="font-size:12px;line-height:1.75">
+              <b style="font-weight:700">人間確認事項が 1 件 未完了です。</b><br>
+              請求項1の構成B・Cについて、先行文献A との技術的類似性が高いため専門家の確認を推奨します。
+              <a href="#" style="margin-left:4px">確認画面を開く</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- approval panel -->
+        <div style="padding:16px 20px 18px;display:flex;flex-direction:column;gap:12px">
+          <sc-if value="{{blocked}}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:10px;padding:12px 14px;background:#F2DDD6;border:1px solid #D3A695;border-left:3px solid #9C3E24;border-radius:3px;color:#7A2E17">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9C3E24" stroke-width="1.9" style="flex:none;margin-top:2px"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <div style="font-size:12.5px;line-height:1.75">
+                <b style="font-weight:700">{{blockTitle}}</b><br>{{blockBody}}
+              </div>
+            </div>
+          </sc-if>
+          <div style="display:flex;align-items:center;gap:10px">
+            <button style="height:36px;padding:0 20px;background:{{approveBg}};color:{{approveFg}};border:1px solid {{approveBd}};border-radius:3px;font-size:13px;font-weight:700;cursor:{{cursor}}">承認</button>
+            <button style="height:36px;padding:0 18px;background:#F7F9F9;color:{{sendBackFg}};border:1px solid #BFCACD;border-radius:3px;font-size:13px;cursor:{{cursor}}">差戻し</button>
+            <button style="height:36px;padding:0 18px;background:#F7F9F9;color:{{sendBackFg}};border:1px solid #BFCACD;border-radius:3px;font-size:13px;cursor:{{cursor}}">保留</button>
+            <span style="flex-grow:1"></span>
+            <span style="font-size:11.5px;color:#516268">差戻しには理由の入力が必要です</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":920}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { filter:'toApprove', sel:'c1' }; }
+  renderVals(){
+    const S = this.state;
+    const ME = '高橋 実';
+    const KIND = {
+      invention:{label:'発明届',fg:'#5C4B8A',bd:'#BDB2D6',bg:'#F1EEF7'},
+      field:{label:'現場導入',fg:'#0D6E8C',bd:'#9CC3D0',bg:'#EAF4F8'},
+      license:{label:'ライセンス',fg:'#A9700D',bd:'#DDC08A',bg:'#FBF4E6'}
+    };
+    const CASES = [
+      {id:'c1',k:'invention',title:'吊具姿勢の自動補正による据付精度の向上',author:'佐藤 建（03 作業所）',
+       due:'2026-08-28',status:'IP Review',dot:'#A9700D',cls:'C3',mine:false},
+      {id:'c2',k:'field',title:'GNSS併用ケーソン据付支援システムの導入',author:'佐藤 建（03 作業所）',
+       due:'2026-08-25',status:'Technical Review',dot:'#0D6E8C',cls:'C2',mine:false},
+      {id:'c3',k:'invention',title:'浚渫土砂の含水比推定手法',author:ME+'（04 技術）',
+       due:'2026-09-04',status:'IP Review',dot:'#A9700D',cls:'C3',mine:true},
+      {id:'c4',k:'license',title:'A社 動揺補償特許のライセンス導入検討',author:'井上 章（04 技術）',
+       due:'2026-09-11',status:'Legal Review',dot:'#5C4B8A',cls:'C3',mine:false}
+    ];
+    const counts = {toApprove:3, mine:1, all:CASES.length};
+    const fdefs = [{key:'toApprove',label:'自分が承認者'},{key:'mine',label:'自分が起案'},{key:'all',label:'すべて'}];
+    const filters = fdefs.map(f=>{
+      const on = S.filter===f.key;
+      return {label:f.label,n:counts[f.key],bg:on?'#0D6E8C':'#F7F9F9',fg:on?'#fff':'#516268',
+        fw:on?'700':'400',cfg:on?'#BFE0EC':'#93A3A8',
+        pick:()=>this.setState({filter:f.key})};
+    });
+    let list = CASES;
+    if(S.filter==='toApprove') list = CASES.filter(c=>!c.mine);
+    if(S.filter==='mine') list = CASES.filter(c=>c.mine);
+    const cases = list.map(c=>{
+      const on = S.sel===c.id;
+      const kk = KIND[c.k];
+      return {...c, kind:kk.label, kindFg:kk.fg, kindBd:kk.bd, kindBg:kk.bg,
+        clsFg: c.cls==='C3' ? '#9C3E24' : '#A9700D',
+        bg:on?'#F7F9F9':'#F1F4F4', bd:on?'#0D6E8C':'#CBD4D6', mark:on?'#0D6E8C':'transparent',
+        roleNote: c.mine ? '自分の起案 — 承認不可' : '承認待ち',
+        roleFg: c.mine ? '#9C3E24' : '#516268',
+        roleFw: c.mine ? '700' : '400',
+        pick:()=>this.setState({sel:c.id})};
+    });
+    const sel = CASES.find(c=>c.id===S.sel) || CASES[0];
+    const selv = {...sel, clsFg: sel.cls==='C3' ? '#9C3E24' : '#A9700D'};
+    const STEP = (name,tag,tone,at,note,cur)=>{
+      const T = {done:{ring:'#2F6B4F',fill:'#2F6B4F',line:'#8FBBA3',fg:'#516268',fw:'400'},
+                 cur:{ring:'#0D6E8C',fill:'#F7F9F9',line:'#D6DEDF',fg:'#16262E',fw:'700'},
+                 todo:{ring:'#C3CDD0',fill:'#F7F9F9',line:'#E1E7E8',fg:'#93A3A8',fw:'400'}}[tone];
+      const G = {ai:{fg:'#0D6E8C',bd:'#9CC3D0',bg:'#EAF4F8',label:'AI'},
+                 human:{fg:'#9C3E24',bd:'#D3A695',bg:'#F2DDD6',label:'人が判断'}}[tag];
+      return {name,at,note,ring:T.ring,fill:T.fill,line:T.line,fg:T.fg,fw:T.fw,
+              tag:G.label,tagFg:G.fg,tagBd:G.bd,tagBg:G.bg,lineH:cur?26:14};
+    };
+    const steps = [
+      STEP('発明届の提出','human','done','08-14','佐藤 建（03 作業所）が提出'),
+      STEP('先行技術調査','ai','done','08-18','特許 24件・論文 6件を抽出。調査範囲と検索式を保存済み'),
+      STEP('AI模擬審査','ai','done','08-19','人間確認事項 1件を出力'),
+      STEP('技術レビュー','human','done','08-20','技術的に妥当と判断（田村 誠）'),
+      STEP('知財レビュー','human','cur','—','あなたの承認待ち。人間確認事項の完了が前提です',true),
+      STEP('決裁','human','todo','—','01 経営・統治・委員会')
+    ];
+    const risks = [
+      {k:'新規性',v:'低リスク',fg:'#2F6B4F',bd:'#8FBBA3'},
+      {k:'進歩性',v:'中リスク',fg:'#A9700D',bd:'#DDC08A'},
+      {k:'記載要件',v:'低リスク',fg:'#2F6B4F',bd:'#8FBBA3'},
+      {k:'競合との重複',v:'中リスク',fg:'#A9700D',bd:'#DDC08A'}
+    ];
+    const isMine = !!sel.mine;
+    const blocked = true;
+    return {filters, cases, sel:selv, steps, risks,
+      blocked,
+      blockTitle: isMine ? '起案者はご自身の案件を承認できません。' : '人間確認事項が未完了のため、承認できません。',
+      blockBody: isMine ? '別の承認者を指定してください（自己承認の禁止）。' : 'AI模擬審査の「人間確認事項」を完了すると承認できるようになります。',
+      approveBg:'#DFE4E5', approveFg:'#93A3A8', approveBd:'#CBD4D6',
+      sendBackFg: isMine ? '#93A3A8' : '#516268',
+      cursor:'not-allowed'};
+  }
+}
+</script>
+</body>
+</html>

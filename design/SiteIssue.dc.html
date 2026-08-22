@@ -1,0 +1,171 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;background:#EAEDEE;color:#16262E;-webkit-font-smoothing:antialiased;
+         font-family:"Zen Kaku Gothic New",'Hiragino Sans','Yu Gothic',system-ui,sans-serif;font-size:15px;line-height:1.75}
+    a{color:#0D6E8C;text-decoration:none}
+    a:hover{color:#095972;text-decoration:underline}
+    button{font:inherit;color:inherit;cursor:pointer;background:none;border:none;padding:0;text-align:left}
+  </style>
+</helmet>
+
+<div style="width:390px;min-height:844px;display:flex;flex-direction:column;background:#EAEDEE">
+
+  <!-- app bar（OSのステータスバーは描かない） -->
+  <div style="display:flex;align-items:center;gap:10px;height:52px;padding:0 14px;background:#16262E;color:#DEE9EC;flex:none">
+    <button style="width:44px;height:44px;margin-left:-12px;display:flex;align-items:center;justify-content:center;color:#93A8B0">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span style="font-size:15px;font-weight:700">現場の困りごと</span>
+    <span style="flex-grow:1"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:#63C2E0">CTIIP</span>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:7px;padding:8px 14px;background:#F2E7D0;border-bottom:1px solid #E0CFA8;color:#7A5008;font-size:11.5px;flex:none;line-height:1.5">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="flex:none"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+    <span><b style="font-weight:700">MVP環境</b> — サンプルです</span>
+  </div>
+
+  <div style="flex-grow:1;padding:16px 14px 20px;display:flex;flex-direction:column;gap:16px">
+
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <div style="font-size:19px;font-weight:900;line-height:1.5">困っていることを、<br>そのまま書いてください</div>
+      <div style="font-size:12.5px;color:#516268;line-height:1.7">整理と分類はこちらで行います。<b style="font-weight:700">入力は2項目だけ</b>です。</div>
+    </div>
+
+    <!-- 現場 -->
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div style="display:flex;align-items:baseline;gap:7px">
+        <span style="font-size:12.5px;font-weight:700">現場</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:#9C3E24;border:1px solid #D3A695;border-radius:2px;padding:0 5px">必須</span>
+      </div>
+      <button style="display:flex;align-items:center;gap:10px;height:48px;padding:0 14px;background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D6E8C" stroke-width="1.8" style="flex:none"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span style="flex-grow:1;font-size:15px">◯◯港 岸壁改良工事</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#93A3A8" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+    </div>
+
+    <!-- 本文 -->
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div style="display:flex;align-items:baseline;gap:7px">
+        <span style="font-size:12.5px;font-weight:700">何に困っていますか</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:#9C3E24;border:1px solid #D3A695;border-radius:2px;padding:0 5px">必須</span>
+        <span style="flex-grow:1"></span>
+        <span style="font-size:11px;color:#7C8C93">話し言葉で構いません</span>
+      </div>
+      <div style="min-height:132px;padding:13px 14px;background:#F7F9F9;border:1px solid #0D6E8C;border-radius:3px;font-size:14.5px;line-height:1.9;color:#16262E">
+        波が高い日にケーソンの据付がなかなか決まらない。潜水士の目視だと2.0mを超えると中断になってしまって、工程が押している。<span style="display:inline-block;width:1.5px;height:17px;background:#0D6E8C;vertical-align:-3px;margin-left:1px"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:#516268">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0D6E8C" stroke-width="1.8"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/></svg>
+        AI が工種・技術分類・キーワードを自動で付けます（あとから直せます）
+      </div>
+    </div>
+
+    <!-- 写真 -->
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:12.5px;font-weight:700">写真（任意）</div>
+      <div style="display:flex;gap:9px">
+        <sc-for list="{{photos}}" as="p" hint-placeholder-count="2">
+          <div style="width:74px;height:74px;flex:none;border-radius:3px;border:1px solid #BFCACD;background:{{p.bg}};display:flex;align-items:flex-end;justify-content:flex-start;padding:5px;position:relative">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#F7F9F9;background:#16262E;border-radius:2px;padding:0 4px">{{p.name}}</span>
+          </div>
+        </sc-for>
+        <button onClick="{{addPhoto}}" style="width:74px;height:74px;flex:none;border:1px dashed #93A3A8;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#516268;background:#F7F9F9">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14.5 4h-5L8 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-4l-1.5-2Z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          <span style="font-size:10.5px">撮影</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 任意項目（折りたたみ） -->
+    <div style="border:1px solid #BFCACD;border-radius:3px;background:#F7F9F9">
+      <button onClick="{{toggleOpt}}" style="display:flex;align-items:center;gap:9px;width:100%;height:46px;padding:0 14px">
+        <span style="transform:rotate({{optRot}}deg);display:inline-flex;color:#516268">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 6 6 6-6 6"/></svg>
+        </span>
+        <span style="font-size:13.5px;color:#2E4048">くわしく書く（任意）</span>
+        <span style="flex-grow:1"></span>
+        <span style="font-size:11px;color:#7C8C93">{{optHint}}</span>
+      </button>
+      <sc-if value="{{optOpen}}" hint-placeholder-val="{{ true }}">
+        <div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:11px;border-top:1px solid #E1E7E8;padding-top:13px">
+          <sc-for list="{{optFields}}" as="f" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:10px;height:44px;padding:0 12px;background:#EFF3F3;border:1px solid #D6DEDF;border-radius:3px">
+              <span style="width:88px;flex:none;font-size:12.5px;color:#516268">{{f.k}}</span>
+              <span style="font-size:14px;color:{{f.fg}}">{{f.v}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="flex-grow:1"></div>
+
+    <!-- 送信 -->
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onClick="{{send}}" style="display:flex;align-items:center;justify-content:center;gap:9px;height:52px;background:{{sendBg}};color:#fff;border-radius:3px;font-size:16px;font-weight:700">
+        {{sendLabel}}
+        <sc-if value="{{sent}}" hint-placeholder-val="{{ true }}">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg>
+        </sc-if>
+      </button>
+      <sc-if value="{{sent}}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;gap:9px;padding:12px 13px;background:#D9E9DF;border:1px solid #8FBBA3;border-radius:3px;color:#1F4D38">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2F6B4F" stroke-width="1.9" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          <div style="font-size:12.5px;line-height:1.7">
+            <b style="font-weight:700">受け付けました。</b><br>
+            適用できそうな技術を探しています。結果が出たら通知します（目安 3分）。
+          </div>
+        </div>
+      </sc-if>
+      <div style="font-size:11.5px;color:#7C8C93;text-align:center;line-height:1.6">
+        送信は 1 分以内で終わることを目標にしています
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { optOpen:false, sent:false, photos:2 }; }
+  renderVals(){
+    const S = this.state;
+    const shots = [
+      {name:'IMG_0412',bg:'linear-gradient(160deg,#7C9BA6 0%,#4E6E7B 55%,#2E4048 100%)'},
+      {name:'IMG_0413',bg:'linear-gradient(200deg,#9AA98F 0%,#6E8168 60%,#3A472F 100%)'},
+      {name:'IMG_0414',bg:'linear-gradient(140deg,#A6968A 0%,#7B6A5E 60%,#453A31 100%)'}
+    ];
+    return {
+      photos: shots.slice(0, S.photos),
+      addPhoto: ()=>this.setState({photos: Math.min(3, S.photos+1)}),
+      optOpen: S.optOpen,
+      optRot: S.optOpen?90:0,
+      optHint: S.optOpen?'すべて任意です':'工期・安全・費用など',
+      toggleOpt: ()=>this.setState({optOpen:!S.optOpen}),
+      optFields: [
+        {k:'工種',v:'港湾・海洋（自動判定）',fg:'#0D6E8C'},
+        {k:'いつまでに',v:'2026年10月まで',fg:'#16262E'},
+        {k:'安全上の懸念',v:'潜水作業の回数を減らしたい',fg:'#16262E'}
+      ],
+      sent: S.sent,
+      sendLabel: S.sent ? '送信しました' : 'この内容で送る',
+      sendBg: S.sent ? '#2F6B4F' : '#0D6E8C',
+      send: ()=>this.setState({sent:!S.sent})
+    };
+  }
+}
+</script>
+</body>
+</html>
