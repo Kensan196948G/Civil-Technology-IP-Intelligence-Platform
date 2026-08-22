@@ -9,6 +9,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Deep Debug Round2 で発見: permissions が未指定でリポジトリ既定（read/write混在の
+# 可能性あり）に依存していた。GITHUB_TOKEN の既定権限を read-only に固定し、
+# 各ジョブで書き込みが必要になった場合はジョブ単位で明示的に昇格させる方針とする。
+permissions:
+  contents: read
+
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -29,6 +35,27 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Dependency audit (pnpm audit)
+        # Deep Debug Round2 で発見: audit を全く実行しておらず、docs/50-development/04-cicd-pipeline.md
+        # の記載（audit必須）と実態が乖離していた。
+        # 本番依存(--prod)の critical は即ブロック（現状ゼロを維持する必須ゲート）。
+        # high は Next.js 14系のCVE等、メジャーアップグレードでのみ解消可能な既知・追跡中の
+        # 項目を含むため、この場ではCIを赤くせず警告として可視化するに留める
+        # （Next.js 14→15移行は別Issueで計画的に実施する方針）。
+        run: |
+          set -uo pipefail
+          echo "### Critical脆弱性チェック（本番依存・必須ゲート） ###"
+          pnpm audit --prod --audit-level=critical
+          CRITICAL_EXIT=$?
+          if [ "$CRITICAL_EXIT" -ne 0 ]; then
+            echo "::error::本番依存にcritical severityの脆弱性が検出されました。マージ前に解消してください。"
+            exit 1
+          fi
+          echo "OK: critical severityの脆弱性は検出されませんでした"
+
+          echo "### High以上の脆弱性チェック（本番依存・情報提供） ###"
+          pnpm audit --prod --audit-level=high || echo "::warning::本番依存にhigh severityの脆弱性があります（既知の追跡事項を含む可能性）。詳細はログを確認してください。"
+
       - name: Lint
         run: pnpm --filter @ctiip/web lint
 
@@ -37,6 +64,13 @@ jobs:
 
       - name: Build
         run: pnpm --filter @ctiip/web build
+
+      - name: Cloudflare Pages build (next-on-pages) verification
+        # Deep Debug Round2 で発見: CIは `next build` のみ実行しており、実際の本番デプロイ経路である
+        # `@cloudflare/next-on-pages`（Edge Runtime変換）を一度も検証していなかった。
+        # ローカルの `next build` は通っても cf:build 側で初めて失敗するケースを防ぐため、
+        # マージ前にCI上でも変換が成功することを確認する。
+        run: pnpm --filter @ctiip/web cf:build
 
       - name: Secret scan (簡易)
         # CodeRabbit指摘: 以前は origin/main との git diff に依存しており、
