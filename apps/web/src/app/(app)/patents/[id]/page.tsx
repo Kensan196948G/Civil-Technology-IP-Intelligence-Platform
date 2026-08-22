@@ -15,7 +15,7 @@ export default async function PatentDetailPage({ params }: { params: { id: strin
   const claims = await db.select().from(s.patentClaims).where(eq(s.patentClaims.patentId, patent.id)).orderBy(asc(s.patentClaims.claimNo));
   const claimIds = claims.map(c => c.id);
   const elements = claimIds.length
-    ? await db.select().from(s.claimElements).where(inArray(s.claimElements.claimId, claimIds))
+    ? await db.select().from(s.claimElements).where(inArray(s.claimElements.claimId, claimIds)).orderBy(asc(s.claimElements.seq))
     : [];
   const elementsByClaim = new Map<string, typeof elements>();
   for (const e of elements) {
