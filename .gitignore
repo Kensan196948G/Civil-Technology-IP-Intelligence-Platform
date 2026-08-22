@@ -20,3 +20,4 @@ playwright-report/
 
 # ローカルツール状態
 .claude/
+.vercel/

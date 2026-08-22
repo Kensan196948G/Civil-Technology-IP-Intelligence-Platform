@@ -1,3 +1,5 @@
+import { getDemoCookieSecret } from '@/lib/env';
+
 // デモ用Cookieの改ざん検知（HMAC署名）。
 // CodeRabbit指摘: Cookieの値（メールアドレス）を無署名で信用すると、
 // 利用者がブラウザの開発者ツールでCookieを直接書き換えるだけで、
@@ -7,17 +9,11 @@
 function getSecret(): string {
   // CodeRabbit指摘: 公開済みの固定フォールバック値があると、本番デプロイで
   // 環境変数の設定漏れがあった場合に攻撃者がその固定値で有効なCookieを
-  // 生成できてしまう。フォールバックを廃止し、未設定なら明確に失敗させる
-  // （ローカル/CI/本番のいずれでも .env.local または Secrets への設定を必須にする）。
-  const secret = process.env.CTIIP_DEMO_COOKIE_SECRET;
-  if (!secret) {
-    throw new Error(
-      'CTIIP_DEMO_COOKIE_SECRET が設定されていません。' +
-      '.env.local（ローカル）または Cloudflare Secrets（デプロイ環境）に、' +
-      'ランダムな文字列を設定してください。'
-    );
-  }
-  return secret;
+  // 生成できてしまう。フォールバックを廃止し、未設定なら明確に失敗させる。
+  // 実バグ修正: process.env のみを見ていたため、Cloudflare（next-on-pages）上では
+  // Secrets が process.env に載らず、実デプロイでログインが常に失敗していた。
+  // env.ts の Cloudflare env バインディング対応アクセサを使うよう修正。
+  return getDemoCookieSecret();
 }
 
 // Edge Runtime には Buffer が無いため、Web標準APIのみで base64url を組み立てる。
