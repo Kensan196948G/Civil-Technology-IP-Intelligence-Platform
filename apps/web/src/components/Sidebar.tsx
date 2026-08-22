@@ -5,9 +5,13 @@ import { usePathname } from 'next/navigation';
 const NAV = [
   { href: '/dashboard', label: 'ダッシュボード' },
   { href: '/search', label: '横断検索' },
+  { href: '/patents', label: '特許' },
+  { href: '/netis', label: 'NETIS・公開技術' },
   { href: '/claims', label: 'Claim解析' },
   { href: '/field', label: '現場適用' },
   { href: '/sites', label: '現場・課題' },
+  { href: '/inventions', label: '発明管理' },
+  { href: '/ai-runs', label: 'AI実行履歴・根拠' },
   { href: '/approvals', label: '承認・案件' }
 ];
 

@@ -166,6 +166,11 @@ async function main() {
      VALUES ($1,'KT-990000-A','GNSS併用ケーソン据付支援システム（デモ）','RTK-GNSSと傾斜計を併用し、据付位置をリアルタイム表示する支援システム（デモデータ）。','港湾・海洋','2023-09-01','デモ用サンプルデータ', now(), true)`,
     [netisId]
   );
+  await sql(
+    `INSERT INTO netis_technologies (id, netis_no, name, summary, category, registered_on, source, retrieved_at, is_sample)
+     VALUES ($1,'KK-000000-B','浚渫土砂の含水比自動計測装置（デモ）','浚渫土砂の含水比を現場でリアルタイム計測し、処分方法の判断を支援する装置のデモデータ。','土工・浚渫','2022-11-15','デモ用サンプルデータ', now(), true)`,
+    [uuid()]
+  );
 
   // 自社技術台帳
   const techId = uuid();
@@ -270,13 +275,27 @@ async function main() {
     [faWfId, fieldApplicationId, 'GNSS併用ケーソン据付支援システムの導入（デモ）', U('sato.ken@demo.ctiip.example')]
   );
 
-  // AI実行と根拠（Provenance の実演）
+  // AI実行と根拠（Provenance の実演。異なる機能から呼ばれたAI実行を横断的に一覧できることを示す）
   const runId = uuid();
   await sql(`INSERT INTO ai_runs (id, kind, status, target_type, target_id, model) VALUES ($1,'examine','succeeded','invention',$2,'demo-model-v1')`,
     [runId, inventionId]);
   await sql(
     `INSERT INTO ai_citations (id, ai_run_id, source_type, source_id, quoted_text) VALUES ($1,$2,'patent',$3,$4)`,
     [uuid(), runId, patentIds[0], '（デモ原文抜粋）ケーソンを吊り下げる吊具と、当該吊具の姿勢を計測する計測手段と']
+  );
+  const claimCompareRunId = uuid();
+  await sql(`INSERT INTO ai_runs (id, kind, status, target_type, target_id, model) VALUES ($1,'claim_compare','succeeded','claim_analysis',$2,'demo-model-v1')`,
+    [claimCompareRunId, analysisId]);
+  await sql(
+    `INSERT INTO ai_citations (id, ai_run_id, source_type, source_id, quoted_text) VALUES ($1,$2,'patent',$3,$4)`,
+    [uuid(), claimCompareRunId, patentIds[0], '（デモ原文抜粋）前記偏差を打ち消す向きに前記吊具を移動させる動揺補償機構と、を備える据付装置。']
+  );
+  const fieldScoreRunId = uuid();
+  await sql(`INSERT INTO ai_runs (id, kind, status, target_type, target_id, model) VALUES ($1,'field_score','succeeded','field_application',$2,'demo-model-v1')`,
+    [fieldScoreRunId, fieldApplicationId]);
+  await sql(
+    `INSERT INTO ai_citations (id, ai_run_id, source_type, source_id, quoted_text) VALUES ($1,$2,'technology',$3,$4)`,
+    [uuid(), fieldScoreRunId, techId2, '（デモ原文抜粋）NETIS登録技術のデモ複製。据付精度向上を目的とする。']
   );
 
   // 監査ログ
@@ -288,8 +307,8 @@ async function main() {
     await client.query('COMMIT');
     console.log('✅ シード完了');
     console.log(`   部署 ${depts.length} / 利用者 ${userDefs.length} / 特許 ${patentDefs.length} / 論文 ${paperDefs.length}`);
-    console.log(`   NETIS 1 / 自社技術 2 / Claim比較 1件（要件${rowDefs.length}） / 現場適用スコア ${score}`);
-    console.log(`   ワークフロー案件 3件（発明2・現場導入1） / AI実行1（根拠付き）`);
+    console.log(`   NETIS 2 / 自社技術 2 / Claim比較 1件（要件${rowDefs.length}） / 現場適用スコア ${score}`);
+    console.log(`   ワークフロー案件 3件（発明2・現場導入1） / AI実行3（根拠付き）`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;
