@@ -9,13 +9,29 @@ import { requireCurrentDbUser } from '@/lib/auth/require-user';
 
 const NEXT_STATUS: Record<string, string> = {
   draft: 'researching', researching: 'ai_reviewed', ai_reviewed: 'technical_review',
-  technical_review: 'ip_review', ip_review: 'legal_review', legal_review: 'approved'
+  technical_review: 'ip_review', ip_review: 'legal_review', legal_review: 'approved',
+  // CodeRabbit指摘: hold は元の段階を記録していないため、hold からの承認が
+  // NEXT_STATUS[instance.status] 未定義により何も進まず"詰む"バグがあった。
+  // MVPでは復帰先を technical_review に固定する（どの段階からの保留でも
+  // 技術レビューからやり直す、という単純化）。本番実装では held_from_status
+  // のような列を追加し、実際に保留した段階へ戻すことをバックログとする。
+  hold: 'technical_review'
 };
+
+// CodeRabbit指摘: rejected/approved は終端状態であり、そこからの遷移規則が
+// 定義されていなかった（hold からの再承認も進めなくなる不具合があった）。
+const TERMINAL_STATUSES = new Set(['approved', 'rejected']);
+const ALLOWED_DECISIONS = new Set(['approved', 'rejected', 'hold']);
 
 export async function decideAction(formData: FormData) {
   const instanceId = String(formData.get('instanceId'));
-  const decision = String(formData.get('decision')) as 'approved' | 'rejected' | 'hold';
+  const decisionRaw = String(formData.get('decision'));
   const comment = String(formData.get('comment') ?? '');
+
+  // CodeRabbit指摘: 型キャストのみでは実行時の任意値（'xyz'等）が
+  // approvals.decision へそのまま保存され、承認履歴が汚染されうる。
+  if (!ALLOWED_DECISIONS.has(decisionRaw)) return;
+  const decision = decisionRaw as 'approved' | 'rejected' | 'hold';
 
   const dbUrl = getDatabaseUrl();
   const db = getDb(dbUrl);
@@ -40,6 +56,15 @@ export async function decideAction(formData: FormData) {
     await db.insert(s.auditLogs).values({
       id: crypto.randomUUID(), actorUserId: approver.id, action: 'approve', targetType: 'workflow_instance',
       targetId: instanceId, result: 'denied', reason: 'human_check_incomplete', meta: {}
+    });
+    revalidatePath(`/approvals/${instanceId}`);
+    return;
+  }
+  // 終端状態（承認済み／却下済み）からは遷移しない
+  if (TERMINAL_STATUSES.has(instance.status)) {
+    await db.insert(s.auditLogs).values({
+      id: crypto.randomUUID(), actorUserId: approver.id, action: 'approve', targetType: 'workflow_instance',
+      targetId: instanceId, result: 'denied', reason: 'already_terminal', meta: { status: instance.status }
     });
     revalidatePath(`/approvals/${instanceId}`);
     return;
@@ -74,12 +99,17 @@ export async function decideAction(formData: FormData) {
 
 export async function completeHumanCheck(formData: FormData) {
   const instanceId = String(formData.get('instanceId'));
-  const db = getDb(getDatabaseUrl());
+  const dbUrl = getDatabaseUrl();
+  const db = getDb(dbUrl);
   const me = await requireCurrentDbUser(db);
-  await db.update(s.workflowInstances).set({ humanCheckCompletedAt: new Date() }).where(eq(s.workflowInstances.id, instanceId));
-  await db.insert(s.auditLogs).values({
-    id: crypto.randomUUID(), actorUserId: me.id, action: 'update', targetType: 'workflow_instance',
-    targetId: instanceId, result: 'success', meta: { field: 'human_check_completed' }
-  });
+
+  const auditId = crypto.randomUUID();
+  const rawSql = getRawSql(dbUrl);
+  await rawSql.transaction([
+    rawSql`update workflow_instances set human_check_completed_at = now() where id = ${instanceId}`,
+    rawSql`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
+            values (${auditId}, ${me.id}, 'update', 'workflow_instance', ${instanceId}, 'success', '{"field":"human_check_completed"}'::jsonb)`
+  ]);
+
   revalidatePath(`/approvals/${instanceId}`);
 }

@@ -2,7 +2,7 @@ import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { decideAction, completeHumanCheck } from '../actions';
 
@@ -10,14 +10,20 @@ export const runtime = 'edge';
 
 export default async function ApprovalDetail({ params }: { params: { id: string } }) {
   const db = getDb(getDatabaseUrl());
-  const user = (await getCurrentUser())!;
+  // CodeRabbit指摘: !アサーションだけでは実行時にセッションが失効した場合に
+  // TypeErrorで500になり、UIのisSelf判定もundefinedを暗黙にfalse扱いしてしまう
+  // （サーバー側decideActionは requireCurrentDbUser で再検証するため実害はないが、
+  //  UIとサーバーの判定がずれるのはユーザー体験として好ましくない）。
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
   const [w] = await db.select().from(s.workflowInstances).where(eq(s.workflowInstances.id, params.id)).limit(1);
   if (!w) notFound();
   const [author] = await db.select().from(s.users).where(eq(s.users.id, w.authorId)).limit(1);
   const history = await db.select().from(s.approvals).where(eq(s.approvals.instanceId, w.id)).orderBy(desc(s.approvals.decidedAt));
   const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
+  if (!me) redirect('/login');
 
-  const isSelf = me?.id === w.authorId;
+  const isSelf = me.id === w.authorId;
   const humanBlocked = w.humanCheckRequired && !w.humanCheckCompletedAt;
   const canDecide = !isSelf;
   const canApprove = canDecide && !humanBlocked;

@@ -5,9 +5,19 @@
 // 本番はCloudflare Access（SSO+MFA、署名済みJWT）に置き換える前提のため、
 // ここでは「MVPの範囲で偽装を防ぐ最小限の署名」を実装する。
 function getSecret(): string {
-  // ローカル/CIでは未設定でも動くよう既定値を用意する。
-  // 本番相当の秘匿性が必要になった時点で Cloudflare Secrets 経由の値に切り替える。
-  return process.env.CTIIP_DEMO_COOKIE_SECRET ?? 'ctiip-mvp-demo-secret-do-not-use-in-production';
+  // CodeRabbit指摘: 公開済みの固定フォールバック値があると、本番デプロイで
+  // 環境変数の設定漏れがあった場合に攻撃者がその固定値で有効なCookieを
+  // 生成できてしまう。フォールバックを廃止し、未設定なら明確に失敗させる
+  // （ローカル/CI/本番のいずれでも .env.local または Secrets への設定を必須にする）。
+  const secret = process.env.CTIIP_DEMO_COOKIE_SECRET;
+  if (!secret) {
+    throw new Error(
+      'CTIIP_DEMO_COOKIE_SECRET が設定されていません。' +
+      '.env.local（ローカル）または Cloudflare Secrets（デプロイ環境）に、' +
+      'ランダムな文字列を設定してください。'
+    );
+  }
+  return secret;
 }
 
 // Edge Runtime には Buffer が無いため、Web標準APIのみで base64url を組み立てる。

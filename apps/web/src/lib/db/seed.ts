@@ -41,13 +41,20 @@ async function main() {
   }
 
   const pool = new Pool({ connectionString: url });
-  // CodeRabbit指摘: pool.query() は呼び出しごとに別コネクションを使う可能性があり、
-  // BEGIN〜COMMITが同一セッションで完結する保証がない。専用クライアントを1本取得し、
-  // 全書き込みをそのクライアント上の単一トランザクションとして実行する。
-  const client = await pool.connect();
-  const sql = (text: string, params: any[] = []) => client.query(text, params);
+  // CodeRabbit指摘: pool.connect() が try の外にあると、接続取得自体が失敗した際に
+  // pool.end() が実行されずリークしうる。取得も try に含め、client を取得できた
+  // 場合のみ release() する。
+  // 型注釈: pool.connect() はコールバック版とPromise版のオーバーロードを持ち、
+  // ReturnTypeで正確な型を取れないため、ここでは意図的にanyとする。
+  let client: any;
 
   try {
+    client = await pool.connect();
+    // CodeRabbit指摘: pool.query() は呼び出しごとに別コネクションを使う可能性があり、
+    // BEGIN〜COMMITが同一セッションで完結する保証がない。専用クライアントを1本取得し、
+    // 全書き込みをそのクライアント上の単一トランザクションとして実行する。
+    const sql = (text: string, params: any[] = []) => client!.query(text, params);
+
     await client.query('BEGIN');
 
     console.log('🧹 既存データをクリア中... (接続先: ' + host + ')');
@@ -284,10 +291,10 @@ async function main() {
     console.log(`   NETIS 1 / 自社技術 2 / Claim比較 1件（要件${rowDefs.length}） / 現場適用スコア ${score}`);
     console.log(`   ワークフロー案件 3件（発明2・現場導入1） / AI実行1（根拠付き）`);
   } catch (e) {
-    await client.query('ROLLBACK');
+    if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;
   } finally {
-    client.release();
+    if (client) client.release();
     await pool.end();
   }
 }

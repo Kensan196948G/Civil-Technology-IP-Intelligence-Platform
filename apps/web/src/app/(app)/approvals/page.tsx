@@ -3,13 +3,11 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { sql } from 'drizzle-orm';
 import Link from 'next/link';
-import { getCurrentUser } from '@/lib/auth/current-user';
 
 export const runtime = 'edge';
 
 export default async function ApprovalsPage() {
   const db = getDb(getDatabaseUrl());
-  const user = (await getCurrentUser())!;
   const rows = await db.execute(sql`
     select wi.id, wi.kind, wi.title, wi.status, wi.classification, wi.due_on, u.display_name as author, wi.author_id
     from workflow_instances wi join users u on u.id = wi.author_id

@@ -78,11 +78,11 @@ jobs:
       - name: Check E2E database secrets are configured
         id: check
         run: |
-          if [ -n "${{ secrets.DATABASE_URL_MVP }}" ] && [ -n "${{ secrets.CTIIP_SEED_ALLOWED_HOST }}" ] && [ -n "${{ secrets.CTIIP_SEED_ALLOWED_DB }}" ]; then
+          if [ -n "${{ secrets.DATABASE_URL_MVP }}" ] && [ -n "${{ secrets.CTIIP_SEED_ALLOWED_HOST }}" ] && [ -n "${{ secrets.CTIIP_SEED_ALLOWED_DB }}" ] && [ -n "${{ secrets.CTIIP_DEMO_COOKIE_SECRET }}" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::DATABASE_URL_MVP / CTIIP_SEED_ALLOWED_HOST / CTIIP_SEED_ALLOWED_DB のいずれかがリポジトリSecretsに未設定のため、E2Eをスキップします。専用のE2E用Neonデータベースを用意し、Secretsへ設定してください。"
+            echo "::warning::DATABASE_URL_MVP / CTIIP_SEED_ALLOWED_HOST / CTIIP_SEED_ALLOWED_DB / CTIIP_DEMO_COOKIE_SECRET のいずれかがリポジトリSecretsに未設定のため、E2Eをスキップします。専用のE2E用Neonデータベースを用意し、Secretsへ設定してください。"
           fi
 
       - name: Install dependencies
@@ -97,9 +97,12 @@ jobs:
         if: steps.check.outputs.ready == 'true'
         working-directory: apps/web
         env:
+          CI: true
           DATABASE_URL: ${{ secrets.DATABASE_URL_MVP }}
           CTIIP_SEED_ALLOWED_HOST: ${{ secrets.CTIIP_SEED_ALLOWED_HOST }}
           CTIIP_SEED_ALLOWED_DB: ${{ secrets.CTIIP_SEED_ALLOWED_DB }}
+          CTIIP_DEMO_COOKIE_SECRET: ${{ secrets.CTIIP_DEMO_COOKIE_SECRET }}
+          CTIIP_ALLOW_SEED_TRUNCATE: 'true'
         run: pnpm exec playwright test --workers=1
 
       - name: Upload Playwright report

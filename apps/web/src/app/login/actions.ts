@@ -9,6 +9,16 @@ export async function loginAsAction(formData: FormData) {
   const user = DEMO_USERS.find(u => u.email === email);
   if (!user) throw new Error('不正な選択です');
   const signed = await signValue(email);
-  cookies().set(COOKIE_NAME, signed, { httpOnly: true, sameSite: 'lax', path: '/' });
+  cookies().set(COOKIE_NAME, signed, {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    // CodeRabbit指摘: 本番（HTTPS）ではCookieをHTTPS限定にする。
+    // 注意: `next start` は環境を問わず NODE_ENV=production を設定するため、
+    // NODE_ENV では「ローカル/CI(HTTP)」と「実デプロイ(HTTPS)」を区別できない。
+    // 実際にCloudflare上のHTTPS環境でのみ true にする専用フラグを使う
+    // （Cloudflareの環境変数で CTIIP_COOKIE_SECURE=true を設定する）。
+    secure: process.env.CTIIP_COOKIE_SECURE === 'true'
+  });
   redirect('/dashboard');
 }
