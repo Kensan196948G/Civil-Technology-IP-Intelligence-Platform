@@ -235,17 +235,23 @@ AIの出力をそのままお客様向けの資料に貼ることは禁止して
 
 詳細 → [技術選定](docs/20-architecture/02-technology-stack.md)
 
-## 🔧 11. リポジトリ構成（計画）
+## 🔧 11. リポジトリ構成
+
+**本番設計（`docs/20-architecture` が正）**は Next.js(web) + Hono(api) + 複数 Worker + パッケージ分割だが、
+**MVP実装（現状のコード）は Next.js 単体アプリに意図的に簡略化**している（垂直スライスを早く動かす判断。詳細は §16）。
 
 ```text
-apps/       web (Next.js) / api (Hono)
-workers/    ingest / embed / ai / report / notify / cron / orchestrator
-packages/   db (Drizzle) / core (権限・分類・スコア) / ai (プロンプト・Provenance)
-            search (trgm+vector+RRF) / ui (注記内蔵コンポーネント) / config
-docs/       設計・運用ドキュメント一式
+apps/web/               MVP実装（唯一の実装単位。Next.js App Router、Cloudflare Pages で稼働）
+  src/app/(app)/         認証後の画面（ダッシュボード・検索・Claim・現場適用・現場課題・承認）
+  src/app/login/         デモログイン（ロール切替）
+  src/app/api/           REST API（health・search）
+  src/lib/db/            Drizzle スキーマ・DDL・マイグレーション・シード
+  src/lib/auth/          デモ認証（本番はCloudflare Accessに置換）
+  e2e/                   Playwright E2E（主要6フロー）
+docs/                    設計・運用ドキュメント一式（本番設計の正）
 ```
 
-**依存の向き**: `apps` `workers` → `packages`。`packages/core` は DB・HTTP に依存しない（純粋関数）。
+**依存の向き**: `apps/web` → `Neon`。パッケージ分割（`packages/*`）は本番実装着手時に導入する（バックログ）。
 
 ## 🔧 12. 環境
 
@@ -260,20 +266,30 @@ docs/       設計・運用ドキュメント一式
 
 詳細 → [環境定義](docs/40-infrastructure/04-environments.md) / [DNS](docs/40-infrastructure/03-dns-and-domain.md)
 
-## 🔧 13. ローカル環境構築
+## 🔧 13. ローカル環境構築（MVP・現状動作する手順）
 
 ```bash
-git clone <repo-url> && cd Civil-Technology-IP-Intelligence-Platform
-nvm use && corepack enable && pnpm install
-cp .env.example .env.local && cp .dev.vars.example .dev.vars   # 実値は管理者から受領
-pnpm db:migrate && pnpm db:seed
-pnpm dev            # web:3000 / api:8787
+git clone https://github.com/Kensan196948G/Civil-Technology-IP-Intelligence-Platform.git
+cd Civil-Technology-IP-Intelligence-Platform
+corepack enable && pnpm install
+
+# apps/web/.env.local に DATABASE_URL=postgresql://... を設定（Neon の接続文字列。値は管理者から受領）
+pnpm --filter @ctiip/web db:migrate   # DDL適用（初回のみ）
+pnpm --filter @ctiip/web db:seed      # 架空ダミーデータ投入（何度でも再実行可・毎回洗い替え）
+
+pnpm dev                               # http://localhost:3000
 ```
 
-ローカルは Access を経由しないため擬似認証を使う（`DEV_AUTH_ENABLED`）。
-**本番ビルドに擬似認証を含めないこと**（CI で検証）。
+ログインはデモ利用者からロールを選ぶだけ（`src/lib/auth/demo.ts`）。
+**これはMVP専用の簡易認証であり、本番はCloudflare Access（SSO+MFA）に置換する（未実装・バックログ）。**
 
-詳細 → [ローカル環境構築](docs/50-development/05-local-setup.md)
+E2E（Playwright、主要6フローを実ブラウザで検証）:
+
+```bash
+pnpm --filter @ctiip/web exec playwright test   # 7 passed
+```
+
+詳細（目標とする本番アーキテクチャ） → [ローカル環境構築](docs/50-development/05-local-setup.md)
 
 ## 🔧 14. 実装上の必須ルール（違反は CI で落ちます）
 
@@ -308,7 +324,26 @@ PR close  → Neon ブランチ・preview Worker を自動削除
 
 詳細 → [CI/CDパイプライン](docs/50-development/04-cicd-pipeline.md) / [品質ゲート](docs/60-quality/03-quality-gates.md)
 
-## 🔧 16. 既知の技術的制約
+## 🔧 16. MVP実装の現状とバックログ
+
+MVPは「主要ユースケースを実際に操作できること」を優先し、本番設計から意図的に簡略化した。
+
+| MVPの実装 | 本番設計（バックログ） |
+|---|---|
+| Next.js 単体アプリ（Route + Server Actions） | Hono API を分離、複数Workerへ分割 |
+| デモログイン（cookie + ロール選択） | Cloudflare Access（SSO + MFA） |
+| ILIKE ベースの横断検索 | pg_trgm + pgvector + RRF のハイブリッド検索（[ADR-0003](docs/20-architecture/adr/ADR-0003-japanese-search.md)） |
+| Claim分解は事前投入データ（人手相当） | AI（Claude API）による自動分解・自動模擬審査 |
+| Field Applicability Score は事前計算値 | 規則＋AI推定によるオンライン算出（[検出設計 §3.4](docs/30-design/01-detailed-design.md)） |
+| 監査ログ（`audit_logs`）は主要操作のみ記録 | 全操作・拒否操作を含む完全な監査（[NFR-L-001](docs/10-requirements/03-non-functional-requirements.md)） |
+| RBAC は画面上の表示のみ（行レベル制御なし） | プロジェクト単位の行レベル制御・C3/C4の404秘匿（[詳細設計 §3.1](docs/30-design/01-detailed-design.md)） |
+| データ取り込みなし（シード投入のみ） | JPO/WIPO/NETIS等の自動取り込み（[データフロー](docs/20-architecture/03-data-flow.md)） |
+| Cloudflare Pages（Next.js on Pages） | Cloudflare Workers + Workflows + Queues 構成（[ADR-0001](docs/20-architecture/adr/ADR-0001-cloudflare-neon-github.md)） |
+
+これらは**MVPの評価が完了し本番実装フェーズへ進む際の実装バックログ**である。
+現時点でのP0（致命的な欠落・障害）はない。
+
+## 🔧 17. 既知の技術的制約
 
 | 制約 | 対応 | 参照 |
 |---|---|---|
@@ -319,7 +354,7 @@ PR close  → Neon ブランチ・preview Worker を自動削除
 | 特許明細書が LLM のトークン上限を超える | 章単位に分割して処理し結果を統合 | [AIエージェント構成](docs/20-architecture/04-ai-agent-architecture.md) |
 | エッジ実行と DB リージョンのレイテンシ | リージョン固定。N+1 を作らない | 同上 |
 
-## 🔧 17. 運用
+## 🔧 18. 運用
 
 | 作業 | 参照 |
 |---|---|
@@ -338,7 +373,7 @@ SELECT count(*) FROM ai_runs r WHERE r.status='succeeded'
 ```
 2. DLQ 件数（1件以上で調査）　3. AI トークン消費（月次予算比）
 
-## 🔧 18. 本番稼働に必要な会社側情報
+## 🔧 19. 本番稼働に必要な会社側情報
 
 インフラのアカウント、IdP、規程、外部データ源の契約、マスタデータなど、
 **社内から提供を受けないと本番を立ち上げられない情報**を一覧化しています。
@@ -353,7 +388,7 @@ SELECT count(*) FROM ai_runs r WHERE r.status='succeeded'
 | IdP 情報（テナント・グループ・シークレット） | 06 管理本部 | 本番を公開できない（認証なしでの公開は行わない） |
 | AI利用ポリシー・データ分類基準 | 06 管理本部 | AI機能を本番で使えない。権限設計が確定しない |
 
-## 🔧 19. ドキュメント索引
+## 🔧 20. ドキュメント索引
 
 → **[docs/README.md](docs/README.md)**（49ファイル・読む順序つき）
 

@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.1.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm --filter @ctiip/web lint
+
+      - name: Typecheck
+        run: pnpm --filter @ctiip/web typecheck
+
+      - name: Build
+        run: pnpm --filter @ctiip/web build
+
+      - name: Secret scan (簡易)
+        run: |
+          if git diff --name-only origin/main...HEAD 2>/dev/null | xargs grep -lE "(sk-ant-|AKIA[0-9A-Z]{16}|-----BEGIN (RSA|EC) PRIVATE KEY-----)" 2>/dev/null; then
+            echo "::error::シークレットらしき文字列が検出されました"
+            exit 1
+          fi
+          echo "OK: 既知のシークレットパターンは検出されませんでした"
