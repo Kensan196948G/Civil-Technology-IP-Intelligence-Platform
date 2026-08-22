@@ -1,0 +1,34 @@
+import { getDb } from '@/lib/db/client';
+import { getDatabaseUrl } from '@/lib/env';
+import * as s from '@/lib/db/schema';
+import { desc } from 'drizzle-orm';
+import { ListView } from '@/components/ListView';
+import {
+  LICENSE_KIND_LABEL, licenseSubjectLabel, resolveLicenseSubjects, termField
+} from '@/lib/legal-license-subjects';
+
+export const runtime = 'edge';
+
+export default async function LegalSublicensePage() {
+  const db = getDb(getDatabaseUrl());
+  const licenses = await db.select().from(s.licenses).orderBy(desc(s.licenses.createdAt));
+  const maps = await resolveLicenseSubjects(db, licenses);
+
+  return (
+    <ListView
+      title="サブライセンス"
+      moduleCode="S-12 / SUBLICENSE"
+      description="ライセンス案件（licenses.terms）のサブライセンス（再実施許諾）可否条件を確認する画面です。"
+      rows={licenses}
+      emptyMessage="ライセンス案件がまだありません。"
+      fields={[
+        { key: 'counterpart', grow: true, render: row => <span style={{ fontWeight: 700 }}>{row.counterpartName}</span> },
+        { key: 'kind', render: row => (
+          <span className="badge" style={{ color: 'var(--ink-2)', border: '1px solid var(--line-2)' }}>{LICENSE_KIND_LABEL[row.kind] ?? row.kind}</span>
+        ) },
+        { key: 'subject', render: row => licenseSubjectLabel(maps, row.subjectType, row.subjectId) },
+        { key: 'sublicense', render: row => <span className="mono">{termField(row.terms, 'sublicense')}</span> }
+      ]}
+    />
+  );
+}
