@@ -8,7 +8,7 @@ export const runtime = 'edge';
 
 export default async function ResearchMlitPage() {
   const db = getDb(getDatabaseUrl());
-  const rows = await db.select().from(s.netisTechnologies).orderBy(desc(s.netisTechnologies.registeredOn));
+  const rows = await db.select().from(s.netisTechnologies).orderBy(desc(s.netisTechnologies.registeredOn)).limit(100);
 
   return (
     <ListView

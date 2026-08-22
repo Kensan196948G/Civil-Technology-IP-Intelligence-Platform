@@ -5,10 +5,10 @@ import { ListView } from '@/components/ListView';
 
 export const runtime = 'edge';
 
-// 特許ファミリー = 同一発明について国・地域をまたいで出願された特許群。
-// MVPでは明示的なファミリーIDを保持しないため、同一タイトルで出願された
-// 特許をまとめてファミリーとして扱う（現状のサンプルデータでは1件=1ファミリー
-// になるが、同一発明が複数国に出願されるとそのままファミリーとして集約される）。
+// CodeRabbit指摘: titleでのgroup byは、無関係な特許を誤って同一ファミリーに
+// 統合したり（表記揺れ）、真に同一発明でも表記差異で別集計になったりする
+// （書誌データ由来のファミリーID・優先権関係がMVPスキーマに無いため）。
+// 正式な「特許ファミリー」を名乗らず、実際の集計方法をそのまま画面名にする。
 type FamilyRow = {
   id: string;
   title: string;
@@ -42,9 +42,10 @@ export default async function PatentFamiliesPage() {
 
   return (
     <ListView
-      title="特許ファミリー"
-      moduleCode="S-03 / PATENT FAMILIES"
-      description="同一タイトル（同一発明）で複数国・地域に出願された特許をファミリー単位でまとめた一覧です。1件のみのファミリーは詳細ページへ遷移できます。"
+      title="同一タイトル集計（特許ファミリー簡易表示）"
+      moduleCode="S-03 / TITLE-BASED GROUPING"
+      description="タイトル文字列が完全一致する特許をまとめた簡易集計です。書誌データ上の正式なファミリーID・優先権関係には基づいていないため、表記違いの同一発明は別集計に、無関係な同名特許は同一集計になる場合があります。1件のみの集計は詳細ページへ遷移できます。"
+      badge="簡易集計"
       rows={rows}
       emptyMessage="特許データがまだありません。"
       rowHref={row => row.ids.length === 1 ? `/patents/${row.ids[0]}` : ''}

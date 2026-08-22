@@ -6,10 +6,13 @@ import { ListView } from '@/components/ListView';
 
 export const runtime = 'edge';
 
+// CodeRabbit指摘: 要約有無・請求項数だけでは特許法36条（記載要件）の充足を
+// 確定できない。「充足」という確定的な法的結論ではなく、形式データの有無を
+// 示す書式チェック結果として表示する（最終判断は専門家が行う）。
 function verdict(hasAbstract: boolean, claimCount: number): { label: string; color: string } {
-  if (claimCount === 0) return { label: '要件不足の懸念（請求項なし）', color: 'var(--brick)' };
-  if (!hasAbstract) return { label: '要確認（要約なし）', color: 'var(--amber)' };
-  return { label: '記載要件 充足（AI簡易判定）', color: 'var(--green)' };
+  if (claimCount === 0) return { label: '請求項未登録（要確認）', color: 'var(--brick)' };
+  if (!hasAbstract) return { label: '要約未登録（要確認）', color: 'var(--amber)' };
+  return { label: '要約・請求項とも登録済み', color: 'var(--blue)' };
 }
 
 export default async function DescriptionReviewPage() {
@@ -27,8 +30,8 @@ export default async function DescriptionReviewPage() {
     <ListView
       title="記載要件レビュー"
       moduleCode="S-14 / AI PATENT REVIEW"
-      description="特許明細書の要約・請求項の記載状況から、記載要件（特許法36条相当）の充足度をAIが簡易判定した一覧です。"
-      badge="MVP"
+      description="特許明細書の要約・請求項が登録されているかを機械的に確認した一覧です。特許法36条の記載要件充足を確定するものではなく、専門家によるレビューの要否を絞り込むための書式チェックです。"
+      badge="書式チェック"
       rows={patents}
       emptyMessage="記載要件レビュー対象の特許データがまだありません。"
       rowHref={row => `/patents/${row.id}`}

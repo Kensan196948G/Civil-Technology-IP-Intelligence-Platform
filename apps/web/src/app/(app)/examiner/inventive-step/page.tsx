@@ -1,12 +1,12 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { desc } from 'drizzle-orm';
+import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
 export const runtime = 'edge';
 
-const KIND_LABEL: Record<string, string> = { invention: '発明届', field_adoption: '現場導入', license_in: 'ライセンスIN' };
+const KIND_LABEL: Record<string, string> = { invention: '発明届', field_adoption: '現場導入' };
 const RATING_LABEL: Record<string, string> = { low: '弱い（拒絶リスク高）', medium: '中程度', high: '強い（進歩性あり）' };
 const RATING_COLOR: Record<string, string> = { low: 'var(--brick)', medium: 'var(--amber)', high: 'var(--green)' };
 
@@ -14,7 +14,11 @@ type RiskSummary = { inventive?: string };
 
 export default async function InventiveStepReviewPage() {
   const db = getDb(getDatabaseUrl());
-  const workflows = await db.select().from(s.workflowInstances).orderBy(desc(s.workflowInstances.createdAt));
+  // CodeRabbit指摘: 全workflowInstancesを取得するとlicense_in（ライセンス案件）も
+  // 進歩性レビュー対象に混入する。画面の説明文（発明届・現場導入案件）と一致させる。
+  const workflows = await db.select().from(s.workflowInstances)
+    .where(inArray(s.workflowInstances.kind, ['invention', 'field_adoption']))
+    .orderBy(desc(s.workflowInstances.createdAt));
 
   return (
     <ListView

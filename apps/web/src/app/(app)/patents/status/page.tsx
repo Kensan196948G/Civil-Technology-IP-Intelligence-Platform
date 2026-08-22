@@ -12,14 +12,16 @@ export const runtime = 'edge';
 // 公式データベース照会が必要）。
 const YEARS_20_MS = 20 * 365.25 * 24 * 60 * 60 * 1000;
 
+// CodeRabbit指摘: publicationDate（公開日）だけでは「登録」「存続中」を断定できない
+// （未収録・未公開・取下げ等と区別できないため）。取得済みの日付事実のみを中立的に示す。
 function estimateStatus(applicationDate: string | null, publicationDate: string | null) {
   if (!applicationDate) return { label: '出願日不明', color: 'var(--ink-2)' };
   const applied = new Date(applicationDate).getTime();
   if (Number.isNaN(applied)) return { label: '出願日不明', color: 'var(--ink-2)' };
   const expiryEstimate = applied + YEARS_20_MS;
-  if (Date.now() > expiryEstimate) return { label: '存続期間満了（推定）', color: 'var(--brick)' };
-  if (publicationDate) return { label: '登録・公開済み（存続中と推定）', color: 'var(--green)' };
-  return { label: '出願中（推定）', color: 'var(--amber)' };
+  if (Date.now() > expiryEstimate) return { label: '出願から20年経過', color: 'var(--ink-2)' };
+  if (publicationDate) return { label: '公開日収録済み', color: 'var(--blue)' };
+  return { label: '公開日未収録', color: 'var(--ink-2)' };
 }
 
 export default async function PatentStatusPage() {

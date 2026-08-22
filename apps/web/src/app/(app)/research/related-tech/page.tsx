@@ -22,6 +22,7 @@ export default async function ResearchRelatedTechPage() {
       (select count(*) from field_applications fa where fa.candidate_type = 'technology' and fa.candidate_id = t.id) as field_link_count
     from technologies t
     order by t.created_at desc
+    limit 100
   `);
   const rows = result.rows as TechRelevanceRow[];
 

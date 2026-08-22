@@ -11,19 +11,21 @@ async function nlSearch(q: string): Promise<NlRow[]> {
   if (!q) return [];
   const db = getDb(getDatabaseUrl());
   const like = `%${q}%`;
+  // CodeRabbit指摘: UNION ALL全体にlimitをかけると、特許だけで上限に達した場合に
+  // 自社技術・NETIS・論文の候補が一切表示されなくなる（横断検索の説明と不整合）。
+  // 種別ごとに独立してlimitし、常に各種別の候補が出る余地を残す。
   const r = await db.execute(sql`
-    select 'patent' as kind, id, title, applicant_name as sub, abstract as snippet from patents
-      where title ilike ${like} or abstract ilike ${like}
+    (select 'patent' as kind, id, title, applicant_name as sub, abstract as snippet from patents
+      where title ilike ${like} or abstract ilike ${like} limit 5)
     union all
-    select 'tech' as kind, id, name as title, kind as sub, summary as snippet from technologies
-      where name ilike ${like} or summary ilike ${like}
+    (select 'tech' as kind, id, name as title, kind as sub, summary as snippet from technologies
+      where name ilike ${like} or summary ilike ${like} limit 5)
     union all
-    select 'netis' as kind, id, name as title, category as sub, summary as snippet from netis_technologies
-      where name ilike ${like} or summary ilike ${like}
+    (select 'netis' as kind, id, name as title, category as sub, summary as snippet from netis_technologies
+      where name ilike ${like} or summary ilike ${like} limit 5)
     union all
-    select 'paper' as kind, id, title, venue as sub, abstract as snippet from papers
-      where title ilike ${like} or abstract ilike ${like}
-    limit 20
+    (select 'paper' as kind, id, title, venue as sub, abstract as snippet from papers
+      where title ilike ${like} or abstract ilike ${like} limit 5)
   `);
   return r.rows as unknown as NlRow[];
 }

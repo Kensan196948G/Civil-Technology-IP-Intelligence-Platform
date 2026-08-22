@@ -10,7 +10,8 @@ export default async function TechMaterialsPage() {
   const db = getDb(getDatabaseUrl());
   const rows = await db.select().from(s.technologies)
     .where(eq(s.technologies.kind, 'material'))
-    .orderBy(desc(s.technologies.createdAt));
+    .orderBy(desc(s.technologies.createdAt))
+    .limit(100);
 
   return (
     <ListView

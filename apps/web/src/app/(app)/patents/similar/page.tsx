@@ -34,6 +34,7 @@ export default async function PatentSimilarPage() {
     join technologies t on t.id = a.technology_id
     left join claim_chart_rows r on r.analysis_id = a.id
     group by a.id, p.title, t.name
+    having count(r.id) filter (where r.kind in ('match', 'similar')) > 0
     order by (count(*) filter (where r.kind in ('match','similar'))) desc
   `);
   const rows: SimilarRow[] = (result.rows as any[]).map(r => ({

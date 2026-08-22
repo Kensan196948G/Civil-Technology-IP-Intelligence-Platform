@@ -23,7 +23,9 @@ export default async function SimilarityPage() {
     join technologies t on t.id = a.technology_id
     left join claim_chart_rows r on r.analysis_id = a.id
     group by a.id, p.title, p.applicant_name, t.name
-    order by match_n desc nulls last
+    order by
+      count(r.id) filter (where r.kind = 'match')::numeric
+        / nullif(count(r.id), 0) desc nulls last
   `);
   const rows = result.rows as unknown as Row[];
 

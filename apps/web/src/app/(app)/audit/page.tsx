@@ -14,8 +14,10 @@ const ACTION_LABEL: Record<string, string> = {
 export default async function AuditPage({ searchParams }: { searchParams: { action?: string } }) {
   const db = getDb(getDatabaseUrl());
   const action = searchParams.action;
-  const all = await db.select().from(s.auditLogs).orderBy(desc(s.auditLogs.occurredAt));
-  const rows = action ? all.filter(r => r.action === action) : all;
+  const base = db.select().from(s.auditLogs);
+  const rows = await (action ? base.where(eq(s.auditLogs.action, action)) : base)
+    .orderBy(desc(s.auditLogs.occurredAt))
+    .limit(200);
 
   const actorIds = [...new Set(rows.map(r => r.actorUserId).filter((v): v is string => !!v))];
   const actors = actorIds.length ? await db.select().from(s.users).where(inArray(s.users.id, actorIds)) : [];

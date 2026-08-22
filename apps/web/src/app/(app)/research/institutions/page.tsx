@@ -14,15 +14,22 @@ type InstitutionRow = {
 
 export default async function ResearchInstitutionsPage() {
   const db = getDb(getDatabaseUrl());
-  // 「当社」を含む所属（自社の技術研究所）は社内組織であり大学・研究機関ではないため除外する。
+  // CodeRabbit指摘: 「当社を含まない」という除外条件だけでは、大学・研究機関以外の
+  // 外部組織（取引先企業等）も「大学・研究機関」として表示されてしまう。
+  // 組織種別マスタが無いMVPでは、大学・研究機関を示す語を含む所属だけを積極的に抽出する。
   const result = await db.execute(sql`
     select affiliation as id, affiliation,
       count(*) as researcher_count,
       string_agg(distinct field, '、' order by field) as fields
     from researchers
-    where affiliation is not null and affiliation not like '%当社%'
+    where affiliation is not null
+      and (
+        affiliation ilike '%大学%' or affiliation ilike '%university%' or affiliation ilike '%univ.%'
+        or affiliation ilike '%研究機関%' or affiliation ilike '%institute%'
+      )
     group by affiliation
     order by count(*) desc, affiliation asc
+    limit 100
   `);
   const rows = (result.rows as InstitutionRow[]).map(r => ({ ...r, id: r.affiliation }));
 

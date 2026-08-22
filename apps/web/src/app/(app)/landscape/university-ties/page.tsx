@@ -10,7 +10,8 @@ export default async function LandscapeUniversityTiesPage() {
   const db = getDb(getDatabaseUrl());
   const rows = await db.select().from(s.researchers)
     .where(or(ilike(s.researchers.affiliation, '%大学%'), ilike(s.researchers.affiliation, '%univ%')))
-    .orderBy(asc(s.researchers.affiliation), asc(s.researchers.name));
+    .orderBy(asc(s.researchers.affiliation), asc(s.researchers.name))
+    .limit(100);
 
   return (
     <ListView

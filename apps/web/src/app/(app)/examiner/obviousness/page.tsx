@@ -6,11 +6,12 @@ import { ListView } from '@/components/ListView';
 
 export const runtime = 'edge';
 
-// 一致(match)・類似(similar)の要件は、先行技術から容易に想到し得たと
-// AIが疑義を示す対象として抽出する（相違(differ)は対象外）。
+// CodeRabbit指摘: 構成要件単位の一致・類似は容易想到性（特許法29条2項）の
+// 確定判断ではない（複数文献の組合せ・動機付け等、専門家による総合判断が必要）。
+// 確定ラベルではなく、専門家確認が必要なスクリーニング結果として表示する。
 const OBVIOUSNESS_LABEL: Record<string, string> = {
-  match: '容易想到（先行技術と同一）',
-  similar: '容易想到の疑いあり（先行技術から想到可能）'
+  match: '構成一致（要専門家確認）',
+  similar: '構成類似（要専門家確認）'
 };
 const OBVIOUSNESS_COLOR: Record<string, string> = { match: 'var(--brick)', similar: 'var(--amber)' };
 
@@ -46,8 +47,8 @@ export default async function ObviousnessReviewPage() {
     <ListView
       title="容易想到性分析"
       moduleCode="S-14 / AI PATENT REVIEW"
-      description="先行文献に一致・類似する構成要件を抽出し、当業者が容易に想到し得たか（特許法29条2項）をAIが分析した一覧です。"
-      badge="MVP"
+      description="先行文献に一致・類似する構成要件を抽出した一次スクリーニング結果です。容易想到性（特許法29条2項）の確定判断ではなく、専門家が確認すべき箇所を絞るためのものです。"
+      badge="AIスクリーニング"
       rows={rows}
       emptyMessage="容易想到性の懸念がある構成要件は検出されていません。"
       rowHref={row => `/claims/${row.analysisId}`}

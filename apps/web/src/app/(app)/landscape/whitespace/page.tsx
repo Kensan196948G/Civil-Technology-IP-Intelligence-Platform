@@ -18,6 +18,7 @@ export default async function LandscapeWhitespacePage() {
     group by cluster
     having count(distinct applicant_name) <= 1
     order by n asc, cluster asc
+    limit 100
   `);
   const rows: Row[] = (res.rows as unknown as RawRow[]).map(r => ({
     id: r.cluster, cluster: r.cluster, n: r.n, companies: r.companies

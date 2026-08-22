@@ -14,6 +14,9 @@ export default async function LandscapeGrowthPage() {
   // 工種単位で比較し、差分（競合出願数 − 自社保有数）の大きい順に並べる。
   // 差分が大きい＝競合が活発で自社の備えが薄い「成長・注視領域」、
   // 差分が小さい（マイナス）＝自社が優位な「成熟・自社優位領域」とみなす。
+  // CodeRabbit指摘: patents全件を「競合特許」として集計すると、competitorsマスタに
+  // 登録されていない出願人（自社出願含む）まで競合件数へ混入する。
+  // competitors.name と applicant_name が一致する行だけを競合特許として数える。
   const res = await db.execute(sql`
     with wt as (
       select distinct unnest(work_types) as work_type from patents
@@ -21,7 +24,10 @@ export default async function LandscapeGrowthPage() {
       select distinct unnest(work_types) as work_type from technologies
     ),
     pc as (
-      select w as work_type, count(*)::int as n from patents, unnest(work_types) as w group by w
+      select w as work_type, count(*)::int as n
+      from patents, unnest(work_types) as w
+      where exists (select 1 from competitors c where c.name = patents.applicant_name)
+      group by w
     ),
     tc as (
       select w as work_type, count(*)::int as n from technologies, unnest(work_types) as w group by w

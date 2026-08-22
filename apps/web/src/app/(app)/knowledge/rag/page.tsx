@@ -8,15 +8,16 @@ async function ragSearch(q: string) {
   if (!q) return [];
   const db = getDb(getDatabaseUrl());
   const like = `%${q}%`;
+  // CodeRabbit指摘: UNION ALL全体へのlimitは種別間で偏る（search/nlと同じ問題）。
+  // 種別ごとに独立してlimitする。
   const r = await db.execute(sql`
-    select 'patent' as kind, id, title, abstract as snippet from patents where title ilike ${like} or abstract ilike ${like}
+    (select 'patent' as kind, id, title, abstract as snippet from patents where title ilike ${like} or abstract ilike ${like} limit 3)
     union all
-    select 'tech' as kind, id, name as title, summary as snippet from technologies where name ilike ${like} or summary ilike ${like}
+    (select 'tech' as kind, id, name as title, summary as snippet from technologies where name ilike ${like} or summary ilike ${like} limit 3)
     union all
-    select 'netis' as kind, id, name as title, summary as snippet from netis_technologies where name ilike ${like} or summary ilike ${like}
+    (select 'netis' as kind, id, name as title, summary as snippet from netis_technologies where name ilike ${like} or summary ilike ${like} limit 3)
     union all
-    select 'paper' as kind, id, title, abstract as snippet from papers where title ilike ${like} or abstract ilike ${like}
-    limit 10
+    (select 'paper' as kind, id, title, abstract as snippet from papers where title ilike ${like} or abstract ilike ${like} limit 3)
   `);
   return r.rows as any[];
 }

@@ -8,7 +8,7 @@ export const runtime = 'edge';
 
 export default async function ResearchCaseStudiesPage() {
   const db = getDb(getDatabaseUrl());
-  const applications = await db.select().from(s.fieldApplications).orderBy(desc(s.fieldApplications.createdAt));
+  const applications = await db.select().from(s.fieldApplications).orderBy(desc(s.fieldApplications.createdAt)).limit(100);
 
   const siteIssueIds = [...new Set(applications.map(a => a.siteIssueId))];
   const issues = siteIssueIds.length

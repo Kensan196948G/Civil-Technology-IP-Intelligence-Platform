@@ -17,7 +17,7 @@ export default async function ApplicantSearchPage({ searchParams }: { searchPara
       array_agg(distinct country) as countries,
       max(publication_date) as latest_publication
     from patents
-    where ${q} = '' or applicant_name ilike ${like}
+    where ${q}::text = '' or applicant_name ilike ${like}
     group by applicant_name
     order by patent_n desc, applicant_name asc
     limit 100

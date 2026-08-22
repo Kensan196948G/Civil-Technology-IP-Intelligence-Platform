@@ -13,6 +13,8 @@ const POSITION_LABEL: Record<Row['position'], string> = { lead: '優位', behind
 export default async function LandscapeOurPositionPage() {
   const db = getDb(getDatabaseUrl());
   // 工種ごとに自社技術保有数と競合特許出願数を並べ、自社のポジション（優位/劣位/互角）を示す。
+  // CodeRabbit指摘: competitorsマスタに登録の無い出願人（自社出願含む）が
+  // 「競合特許」に混入すると優位/劣位判定を誤らせるため、competitors一致分のみ数える。
   const res = await db.execute(sql`
     with wt as (
       select distinct unnest(work_types) as work_type from patents
@@ -20,7 +22,10 @@ export default async function LandscapeOurPositionPage() {
       select distinct unnest(work_types) as work_type from technologies
     ),
     pc as (
-      select w as work_type, count(*)::int as n from patents, unnest(work_types) as w group by w
+      select w as work_type, count(*)::int as n
+      from patents, unnest(work_types) as w
+      where exists (select 1 from competitors c where c.name = patents.applicant_name)
+      group by w
     ),
     tc as (
       select w as work_type, count(*)::int as n from technologies, unnest(work_types) as w group by w

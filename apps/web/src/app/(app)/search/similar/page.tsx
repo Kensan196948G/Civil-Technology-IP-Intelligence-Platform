@@ -23,7 +23,7 @@ export default async function SimilarSearchPage({ searchParams }: { searchParams
     join patents p on p.id = a.patent_id
     join technologies t on t.id = a.technology_id
     where r.kind = 'similar'
-      and (${q} = '' or r.our_text ilike ${like} or r.quoted_text ilike ${like} or t.name ilike ${like} or p.title ilike ${like})
+      and (${q}::text = '' or r.our_text ilike ${like} or r.quoted_text ilike ${like} or t.name ilike ${like} or p.title ilike ${like})
     order by a.created_at desc, r.seq asc
     limit 50
   `);

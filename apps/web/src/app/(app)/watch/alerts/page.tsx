@@ -53,17 +53,18 @@ export default async function WatchAlertsPage() {
 
   return (
     <ListView
-      title="アラート一覧"
+      title="ウォッチ条件との一致件数"
       moduleCode="S-19 / WATCH — ALERTS"
-      description="登録済みウォッチ条件と現在のデータを突き合わせ、一致する新着データがある場合はアラートとして表示します（MVPではラベルと名称の部分一致で判定。本番設計ではイベント駆動の差分検知を予定）。"
+      description="登録済みウォッチ条件と現在のデータを突き合わせた一致件数です（MVPではラベルと名称の部分一致で判定）。前回確認時からの新着だけを区別する既読管理は未実装のため、一致するデータは毎回表示されます（本番設計ではイベント駆動の差分検知・既読カーソルを予定）。"
+      badge="全件一致（既読管理なし）"
       rows={rows}
       emptyMessage="登録済みのウォッチはまだありません。"
       fields={[
         { key: 'label', grow: true, render: row => <span style={{ fontWeight: 700 }}>{row.label}</span> },
         { key: 'kind', mono: true, render: row => KIND_LABEL[row.kind] ?? row.kind },
         { key: 'alert', render: row => row.matches.length > 0
-          ? <span className="badge" style={{ color: 'var(--brick)', border: '1px solid var(--brick)' }}>アラート {row.matches.length}件</span>
-          : <span className="badge" style={{ color: 'var(--ink-2)', border: '1px solid var(--line)' }}>変化なし</span>
+          ? <span className="badge" style={{ color: 'var(--brick)', border: '1px solid var(--brick)' }}>一致 {row.matches.length}件</span>
+          : <span className="badge" style={{ color: 'var(--ink-2)', border: '1px solid var(--line)' }}>一致なし</span>
         },
         { key: 'detail', grow: true, render: row => (
           <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>

@@ -1,11 +1,27 @@
 'use client';
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { NAV_SECTIONS, flattenLeaves, type NavLeaf } from '@/lib/nav';
 
 function normalizeHref(href: string) {
   return href.split('?')[0]!;
+}
+
+// CodeRabbit指摘: usePathname()はクエリ文字列を含まないため、`/watch`のような
+// 複数セクションから異なるクエリで参照されるパスで、意図しないセクション・
+// リンクがアクティブ表示されていた。クエリを含めた完全一致を優先し、
+// 完全一致が無い場合のみクエリなしパスの一致にフォールバックする。
+function canonical(path: string, query: string) {
+  const params = new URLSearchParams(query);
+  const entries = [...params.entries()].sort(([a], [b]) => a.localeCompare(b));
+  return path + (entries.length ? '?' + entries.map(([k, v]) => `${k}=${v}`).join('&') : '');
+}
+
+function isLeafActive(leaf: NavLeaf, pathname: string, currentSearch: string): boolean {
+  const [leafPath, leafQuery] = leaf.href.split('?');
+  if (leafPath !== pathname) return false;
+  return canonical(leafPath!, leafQuery ?? '') === canonical(pathname, currentSearch);
 }
 
 function LeafLink({ leaf, active }: { leaf: NavLeaf; active: boolean }) {
@@ -18,10 +34,18 @@ function LeafLink({ leaf, active }: { leaf: NavLeaf; active: boolean }) {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentSearch = searchParams.toString();
   const [query, setQuery] = useState('');
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
 
   const activeSectionKey = useMemo(() => {
+    // 1) クエリまで含めた完全一致を優先
+    for (const section of NAV_SECTIONS) {
+      const leaves = flattenLeaves(section.items);
+      if (leaves.some(l => isLeafActive(l, pathname, currentSearch))) return section.key;
+    }
+    // 2) 完全一致が無ければ、クエリなしパスの一致にフォールバック
     for (const section of NAV_SECTIONS) {
       const leaves = flattenLeaves(section.items);
       if (leaves.some(l => normalizeHref(l.href) === pathname || pathname.startsWith(normalizeHref(l.href) + '/'))) {
@@ -29,7 +53,7 @@ export function Sidebar() {
       }
     }
     return null;
-  }, [pathname]);
+  }, [pathname, currentSearch]);
 
   const q = query.trim();
   const isSearching = q.length > 0;
@@ -96,14 +120,14 @@ export function Sidebar() {
                           <div style={{ padding: '6px 14px 6px 30px', fontSize: 11, color: 'var(--ink-2)', fontWeight: 700 }}>{item.label}</div>
                           {visibleChildren.map(leaf => (
                             <div key={leaf.href} style={{ paddingLeft: 14 }}>
-                              <LeafLink leaf={leaf} active={normalizeHref(leaf.href) === pathname} />
+                              <LeafLink leaf={leaf} active={isLeafActive(leaf, pathname, currentSearch)} />
                             </div>
                           ))}
                         </div>
                       );
                     }
                     if (isSearching && !matched.includes(item)) return null;
-                    return <LeafLink key={item.href} leaf={item} active={normalizeHref(item.href) === pathname} />;
+                    return <LeafLink key={item.href} leaf={item} active={isLeafActive(item, pathname, currentSearch)} />;
                   })}
                 </div>
               )}

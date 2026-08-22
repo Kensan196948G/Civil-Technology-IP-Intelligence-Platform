@@ -6,11 +6,11 @@ import { ListView } from '@/components/ListView';
 
 export const runtime = 'edge';
 
-// claim_chart_rows.kind（一致/類似/相違）を新規性の観点で解釈し直す。
-// match: 先行特許に同一構成が開示済み → 新規性なし
-// similar: 部分的に開示 → 新規性に疑義
-// differ: 開示なし → 新規性あり
-const NOVELTY_LABEL: Record<string, string> = { match: '新規性なし', similar: '新規性に疑義', differ: '新規性あり' };
+// CodeRabbit指摘: 構成要件単位の一致・類似・相違（claim_chart_rows.kind）は
+// 比較上の事実であり、新規性（特許法29条1項）の確定判断ではない
+// （新規性は請求項全体・先行技術全体との関係で専門家が判断する）。
+// 確定ラベルではなく、比較事実そのものをラベルにする。
+const NOVELTY_LABEL: Record<string, string> = { match: '構成一致（要確認）', similar: '構成類似（要確認）', differ: '構成相違' };
 const NOVELTY_COLOR: Record<string, string> = { match: 'var(--brick)', similar: 'var(--amber)', differ: 'var(--green)' };
 
 function trunc(text: string, n: number) {
@@ -44,8 +44,8 @@ export default async function NoveltyReviewPage() {
     <ListView
       title="新規性レビュー"
       moduleCode="S-14 / AI PATENT REVIEW"
-      description="他社特許の構成要件と自社案の記載を比較し、AIが新規性（特許法29条1項）への影響を要件単位で判定した一覧です。"
-      badge="MVP"
+      description="他社特許の構成要件と自社案の記載をAIが要件単位で突き合わせた比較結果です。新規性（特許法29条1項）の確定判断ではなく、専門家が確認すべき箇所を絞るための一次スクリーニングです。"
+      badge="AIスクリーニング"
       rows={rows}
       emptyMessage="新規性レビュー対象のClaim比較データがまだありません。"
       rowHref={row => `/claims/${row.analysisId}`}

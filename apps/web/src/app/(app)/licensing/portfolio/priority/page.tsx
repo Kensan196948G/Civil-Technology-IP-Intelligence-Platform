@@ -18,6 +18,8 @@ function priorityOf(score: number): { label: string; color: string } {
 // 維持優先度 = 活用実績（現場適用件数×2 + ライセンス化件数×3）+ 機密区分の重み。
 // 実績が多く／機密度が高い技術ほど、権利維持（費用投下）の優先度が高いという考え方の
 // 簡易スコアリング（本番設計ではコスト対効果モデルへ拡張予定）。
+// CodeRabbit指摘: 見送り・評価中のライセンス案件がスコアへ加算されないよう、
+// 契約済み（agreed）の案件のみをライセンス化実績として数える。
 export default async function PortfolioPriorityPage() {
   const db = getDb(getDatabaseUrl());
   const result = await db.execute(sql`
@@ -26,7 +28,7 @@ export default async function PortfolioPriorityPage() {
       count(distinct l.id) as license_n
     from technologies t
     left join field_applications fa on fa.candidate_type = 'technology' and fa.candidate_id = t.id
-    left join licenses l on l.subject_type = 'technology' and l.subject_id = t.id
+    left join licenses l on l.subject_type = 'technology' and l.subject_id = t.id and l.status = 'agreed'
     group by t.id, t.name, t.kind, t.classification
   `);
   const rows = (result.rows as unknown as Row[])

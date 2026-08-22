@@ -10,24 +10,35 @@ type RiskSummary = { novelty?: string; inventive?: string; description?: string;
 
 type GroundRow = { id: string; title: string; ground: string; basis: string; href: string };
 
+// CodeRabbit指摘: 構成要件単位の一致・類似は新規性・進歩性欠如の確定判断ではない。
+// 比較事実＋懸念の観点として表示し、専門家確認を促す。
 const CLAIM_GROUND: Record<string, { ground: string; basis: string }> = {
-  match: { ground: '新規性欠如（特許法29条1項3号相当）', basis: '先行特許に同一の構成要件が開示されているとAIが判定' },
-  similar: { ground: '進歩性欠如（特許法29条2項相当）', basis: '先行特許の構成から容易に想到し得るとAIが判定' }
+  match: { ground: '新規性の懸念（構成要件が一致）', basis: '先行特許に同一の構成要件が記載されている（AI比較）' },
+  similar: { ground: '進歩性の懸念（構成要件が類似）', basis: '先行特許の構成に類似する記載がある（AI比較）' }
 };
 
 export default async function RejectionGroundsPage() {
   const db = getDb(getDatabaseUrl());
 
   // (1) ワークフローのAIリスクサマリーから、案件単位の想定拒絶理由を抽出
+  // CodeRabbit指摘: note の有無だけで「新規性・進歩性」の拒絶理由に一律分類すると、
+  // description（記載要件）のみがリスク要因の案件も同じ分類で表示されてしまう。
+  // novelty/inventive の評価値から該当する拒絶理由だけを生成する。
   const workflows = await db.select().from(s.workflowInstances).orderBy(desc(s.workflowInstances.createdAt));
   const workflowGrounds: GroundRow[] = workflows
     .filter(w => (w.aiRiskSummary as RiskSummary | null)?.note)
     .map(w => {
       const risk = w.aiRiskSummary as RiskSummary;
+      const grounds: string[] = [];
+      if (risk.novelty && risk.novelty !== 'low') grounds.push('新規性');
+      if (risk.inventive && risk.inventive !== 'low') grounds.push('進歩性');
+      const ground = grounds.length > 0
+        ? `想定拒絶理由の懸念（${grounds.join('・')}）`
+        : 'AI総合所見（新規性・進歩性以外の要確認事項）';
       return {
         id: `wf-${w.id}`,
         title: w.title,
-        ground: 'AI総合所見に基づく想定拒絶理由（新規性・進歩性）',
+        ground,
         basis: risk.note ?? '—',
         href: `/approvals/${w.id}`
       };

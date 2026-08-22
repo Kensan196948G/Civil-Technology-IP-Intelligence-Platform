@@ -8,7 +8,7 @@ export const runtime = 'edge';
 
 export default async function TechPage() {
   const db = getDb(getDatabaseUrl());
-  const rows = await db.select().from(s.technologies).orderBy(desc(s.technologies.createdAt));
+  const rows = await db.select().from(s.technologies).orderBy(desc(s.technologies.createdAt)).limit(100);
 
   return (
     <ListView

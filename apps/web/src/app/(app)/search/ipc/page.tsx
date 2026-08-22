@@ -16,7 +16,7 @@ export default async function IpcSearchPage({ searchParams }: { searchParams: { 
   const codesResult = await db.execute(sql`
     select code, count(*) as patent_n
     from (select unnest(ipc_codes) as code from patents) t
-    where ${q} = '' or code ilike ${like}
+    where ${q}::text = '' or code ilike ${like}
     group by code
     order by patent_n desc, code asc
     limit 50

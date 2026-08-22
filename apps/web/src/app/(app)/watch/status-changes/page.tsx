@@ -1,7 +1,7 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { desc } from 'drizzle-orm';
+import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
 export const runtime = 'edge';
@@ -23,13 +23,20 @@ const KIND_LABEL: Record<string, string> = {
 
 export default async function WatchStatusChangesPage() {
   const db = getDb(getDatabaseUrl());
-  const rows = await db.select().from(s.workflowInstances).orderBy(desc(s.workflowInstances.createdAt));
+  // CodeRabbit指摘: statusとcreatedAtだけでは「いつ遷移したか」を判定できず、
+  // 遷移イベントの履歴も保持していない。状態遷移の監視ではなく、終端状態
+  // （登録・拒絶・失効）に達した案件の一覧に対象を限定して過大表示を防ぐ
+  // （遷移履歴モデルの追加は本番設計のバックログ）。
+  const rows = await db.select().from(s.workflowInstances)
+    .where(inArray(s.workflowInstances.status, ['approved', 'rejected', 'archived']))
+    .orderBy(desc(s.workflowInstances.createdAt));
 
   return (
     <ListView
-      title="権利状態変更 — 登録・拒絶・失効"
+      title="登録・拒絶・失効 案件一覧"
       moduleCode="S-19 / WATCH — STATUS CHANGES"
-      description="発明届・現場導入等の案件について、審査ステータスの変化を監視します。登録（承認）・拒絶（差戻し）・失効（アーカイブ）への遷移を優先的に確認してください。"
+      description="登録（承認）・拒絶（差戻し）・失効（アーカイブ）のいずれかに達している案件の一覧です。遷移した日時の履歴は保持していないため、現在の状態のみを表示します。"
+      badge="現在の状態"
       rows={rows}
       emptyMessage="監視対象の案件はまだありません。"
       rowHref={row => `/approvals/${row.id}`}

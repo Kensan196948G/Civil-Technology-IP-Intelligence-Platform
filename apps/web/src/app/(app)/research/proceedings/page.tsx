@@ -8,7 +8,7 @@ export const runtime = 'edge';
 
 export default async function ResearchProceedingsPage() {
   const db = getDb(getDatabaseUrl());
-  const rows = await db.select().from(s.papers).orderBy(desc(s.papers.publishedOn));
+  const rows = await db.select().from(s.papers).orderBy(desc(s.papers.publishedOn)).limit(100);
 
   return (
     <ListView

@@ -8,7 +8,7 @@ export const runtime = 'edge';
 
 export default async function ResearchRelatedPatentsPage() {
   const db = getDb(getDatabaseUrl());
-  const rows = await db.select().from(s.claimAnalyses).orderBy(desc(s.claimAnalyses.createdAt));
+  const rows = await db.select().from(s.claimAnalyses).orderBy(desc(s.claimAnalyses.createdAt)).limit(100);
 
   const patentIds = [...new Set(rows.map(r => r.patentId))];
   const techIds = [...new Set(rows.map(r => r.technologyId))];
