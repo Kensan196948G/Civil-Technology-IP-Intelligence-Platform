@@ -87,3 +87,39 @@ test('承認：自己承認は禁止、他者は承認できる', async ({ page 
   // toBeEnabled() 自体がポーリングして待つため、固定待機は不要
   await expect(page.getByRole('button', { name: '承認' })).toBeEnabled();
 });
+
+// Deep Debug Round2で発見・修正した本番専用の不具合（middleware.ts参照）の回帰防止テスト。
+// notFound()/redirect()がReact Server Componentのレンダリングパイプライン内では
+// 本番ビルドでのみ信頼できないことが判明したため、実際にRBACを強制しているmiddlewareの
+// 挙動そのものを検証する（layout側の requireRole() ではなくmiddlewareを通した実挙動）。
+test('RBAC：権限の無いロールは/admin/*へアクセスできない、権限のあるロールは閲覧できる', async ({ page }) => {
+  await loginAs(page, '田村 誠'); // tech_manager（管理者権限なし）
+  let resp = await page.goto('/admin/users');
+  expect(resp?.status()).toBe(404);
+  resp = await page.goto('/admin/feature-flags');
+  expect(resp?.status()).toBe(404);
+  // 管理外ページには回帰がないことも確認
+  resp = await page.goto('/patents');
+  expect(resp?.status()).toBe(200);
+
+  await loginAs(page, '山本 恵'); // executive（管理者権限あり）
+  resp = await page.goto('/admin/users');
+  expect(resp?.status()).toBe(200);
+  // サイドバーのナビゲーションリンクとページ見出しの両方が「ユーザー管理」を
+  // 含むため、getByText は strict mode violation になる。見出しに絞る。
+  await expect(page.getByRole('heading', { name: 'ユーザー管理' })).toBeVisible();
+});
+
+// Deep Debug Round2で追加した (app)/error.tsx の回帰防止テスト。
+// 不正なUUID形式のIDを特許詳細ページへ渡すと、DrizzleのクエリがPostgresへ
+// 不正な型のパラメータを送ることになりServer Component内で例外が発生する。
+// これは実際に起こりうるシナリオ（不正なURL直接入力・古いブックマーク等）であり、
+// error.tsxのフォールバックUIが表示されることを確認する。
+test('エラーバウンダリ：不正なIDでのアクセスがエラー画面としてハンドリングされる', async ({ page }) => {
+  await loginAs(page, '田村 誠');
+  await page.goto('/patents/not-a-valid-uuid');
+  await expect(page.getByText('この画面の表示中にエラーが発生しました')).toBeVisible();
+  await page.getByRole('button', { name: '再試行' }).isVisible();
+  await page.getByRole('link', { name: 'ダッシュボードへ戻る' }).click();
+  await expect(page).toHaveURL(/\/dashboard/);
+});
