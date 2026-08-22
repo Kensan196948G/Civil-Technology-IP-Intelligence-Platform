@@ -45,9 +45,14 @@ jobs:
         # 検査対象が0件のまま「OK」と誤表示する経路があった。
         # → diff ではなく追跡ファイル全体を対象にした git grep へ変更し、
         #   コマンド自体の失敗（grep以外の異常）はジョブ失敗として扱う（pipefail）。
+        # docs/ と .env.example はプレースホルダーの例示（sk-ant-xxxxxxxx 等）を
+        # 意図的に含むため対象外とする。このワークフロー自身もパターン文字列の
+        # 定義を含むため自己検知してしまう（除外しない場合、このファイルを
+        # 編集するたびにCIが自分自身の正規表現定義に反応して失敗する）。
         run: |
           set -euo pipefail
-          if git grep -InE "(sk-ant-|AKIA[0-9A-Z]{16}|-----BEGIN (RSA|EC) PRIVATE KEY-----)" -- . ':!pnpm-lock.yaml'; then
+          if git grep -InE "(sk-ant-|AKIA[0-9A-Z]{16}|-----BEGIN (RSA|EC) PRIVATE KEY-----)" \
+              -- . ':!pnpm-lock.yaml' ':!docs' ':!**/*.example' ':!.github/workflows/ci.yml'; then
             echo "::error::シークレットらしき文字列が検出されました"
             exit 1
           fi
