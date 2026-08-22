@@ -102,14 +102,33 @@ export async function completeHumanCheck(formData: FormData) {
   const dbUrl = getDatabaseUrl();
   const db = getDb(dbUrl);
   const me = await requireCurrentDbUser(db);
-
-  const auditId = crypto.randomUUID();
   const rawSql = getRawSql(dbUrl);
-  await rawSql.transaction([
-    rawSql`update workflow_instances set human_check_completed_at = now() where id = ${instanceId}`,
-    rawSql`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
-            values (${auditId}, ${me.id}, 'update', 'workflow_instance', ${instanceId}, 'success', '{"field":"human_check_completed"}'::jsonb)`
-  ]);
+
+  // CodeRabbit指摘: 対象外（存在しないID／人間確認が不要／既に完了済み）でも
+  // 無条件に「成功」の監査ログを記録していた。UPDATE ... RETURNING で実際に
+  // 更新された行があった場合のみ、成功監査を記録する。
+  const updated = await rawSql`
+    update workflow_instances
+    set human_check_completed_at = now()
+    where id = ${instanceId}
+      and human_check_required = true
+      and human_check_completed_at is null
+    returning id
+  `;
+
+  if (updated.length === 0) {
+    await db.insert(s.auditLogs).values({
+      id: crypto.randomUUID(), actorUserId: me.id, action: 'update', targetType: 'workflow_instance',
+      targetId: instanceId, result: 'denied', reason: 'not_applicable', meta: {}
+    });
+    revalidatePath(`/approvals/${instanceId}`);
+    return;
+  }
+
+  await db.insert(s.auditLogs).values({
+    id: crypto.randomUUID(), actorUserId: me.id, action: 'update', targetType: 'workflow_instance',
+    targetId: instanceId, result: 'success', meta: { field: 'human_check_completed' }
+  });
 
   revalidatePath(`/approvals/${instanceId}`);
 }
