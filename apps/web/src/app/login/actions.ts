@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { COOKIE_NAME, DEMO_USERS } from '@/lib/auth/demo';
 import { signValue } from '@/lib/auth/sign';
+import { isCookieSecureEnabled } from '@/lib/env';
 
 export async function loginAsAction(formData: FormData) {
   const email = String(formData.get('email') ?? '');
@@ -18,7 +19,9 @@ export async function loginAsAction(formData: FormData) {
     // NODE_ENV では「ローカル/CI(HTTP)」と「実デプロイ(HTTPS)」を区別できない。
     // 実際にCloudflare上のHTTPS環境でのみ true にする専用フラグを使う
     // （Cloudflareの環境変数で CTIIP_COOKIE_SECURE=true を設定する）。
-    secure: process.env.CTIIP_COOKIE_SECURE === 'true'
+    // process.env だけでなくCloudflareのバインディングも見る env.ts 経由にする
+    // （sign.ts で見つかった同種の実バグの再発防止）。
+    secure: isCookieSecureEnabled()
   });
   redirect('/dashboard');
 }
