@@ -1,42 +1,46 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { desc, eq, inArray } from 'drizzle-orm';
+import { desc, inArray } from 'drizzle-orm';
 import Link from 'next/link';
+import { resolveCitationLabels } from '@/lib/citations';
 
 export const runtime = 'edge';
 
-async function resolveTarget(db: ReturnType<typeof getDb>, targetType: string | null, targetId: string | null) {
-  if (!targetType || !targetId) return { label: '—', href: null as string | null };
-  if (targetType === 'invention') {
-    const [row] = await db.select().from(s.inventions).where(eq(s.inventions.id, targetId)).limit(1);
-    return { label: row ? `発明届：${row.title}` : '発明届（削除済み）', href: row ? `/inventions/${targetId}` : null };
-  }
-  if (targetType === 'claim_analysis') {
-    const [row] = await db.select().from(s.claimAnalyses).where(eq(s.claimAnalyses.id, targetId)).limit(1);
-    return { label: row ? 'Claim比較' : 'Claim比較（削除済み）', href: row ? `/claims/${targetId}` : null };
-  }
-  if (targetType === 'field_application') {
-    const [row] = await db.select().from(s.fieldApplications).where(eq(s.fieldApplications.id, targetId)).limit(1);
-    return { label: row ? '現場適用性評価' : '現場適用性評価（削除済み）', href: row ? `/field/${targetId}` : null };
-  }
-  return { label: `${targetType}：${targetId}`, href: null };
-}
+type Run = typeof s.aiRuns.$inferSelect;
 
-async function resolveCitationLabel(db: ReturnType<typeof getDb>, sourceType: string, sourceId: string) {
-  if (sourceType === 'patent') {
-    const [p] = await db.select().from(s.patents).where(eq(s.patents.id, sourceId)).limit(1);
-    return p ? `特許：${p.title}` : '特許（削除済み）';
+async function resolveTargets(db: ReturnType<typeof getDb>, runs: Run[]) {
+  const inventionIds = runs.filter(r => r.targetType === 'invention' && r.targetId).map(r => r.targetId!);
+  const analysisIds = runs.filter(r => r.targetType === 'claim_analysis' && r.targetId).map(r => r.targetId!);
+  const fieldAppIds = runs.filter(r => r.targetType === 'field_application' && r.targetId).map(r => r.targetId!);
+
+  const [inventionRows, analysisRows, fieldAppRows] = await Promise.all([
+    inventionIds.length ? db.select().from(s.inventions).where(inArray(s.inventions.id, inventionIds)) : Promise.resolve([]),
+    analysisIds.length ? db.select().from(s.claimAnalyses).where(inArray(s.claimAnalyses.id, analysisIds)) : Promise.resolve([]),
+    fieldAppIds.length ? db.select().from(s.fieldApplications).where(inArray(s.fieldApplications.id, fieldAppIds)) : Promise.resolve([])
+  ]);
+  const inventionById = new Map(inventionRows.map(r => [r.id, r]));
+  const analysisById = new Map(analysisRows.map(r => [r.id, r]));
+  const fieldAppById = new Map(fieldAppRows.map(r => [r.id, r]));
+
+  const targets = new Map<string, { label: string; href: string | null }>();
+  for (const run of runs) {
+    if (!run.targetType || !run.targetId) {
+      targets.set(run.id, { label: '—', href: null });
+    } else if (run.targetType === 'invention') {
+      const row = inventionById.get(run.targetId);
+      targets.set(run.id, { label: row ? `発明届：${row.title}` : '発明届（削除済み）', href: row ? `/inventions/${run.targetId}` : null });
+    } else if (run.targetType === 'claim_analysis') {
+      const row = analysisById.get(run.targetId);
+      targets.set(run.id, { label: row ? 'Claim比較' : 'Claim比較（削除済み）', href: row ? `/claims/${run.targetId}` : null });
+    } else if (run.targetType === 'field_application') {
+      const row = fieldAppById.get(run.targetId);
+      targets.set(run.id, { label: row ? '現場適用性評価' : '現場適用性評価（削除済み）', href: row ? `/field/${run.targetId}` : null });
+    } else {
+      targets.set(run.id, { label: `${run.targetType}：${run.targetId}`, href: null });
+    }
   }
-  if (sourceType === 'netis') {
-    const [n] = await db.select().from(s.netisTechnologies).where(eq(s.netisTechnologies.id, sourceId)).limit(1);
-    return n ? `NETIS：${n.name}` : 'NETIS（削除済み）';
-  }
-  if (sourceType === 'technology') {
-    const [t] = await db.select().from(s.technologies).where(eq(s.technologies.id, sourceId)).limit(1);
-    return t ? `自社技術：${t.name}` : '自社技術（削除済み）';
-  }
-  return `${sourceType}：${sourceId}`;
+  return targets;
 }
 
 export default async function AiRunsPage() {
@@ -53,13 +57,16 @@ export default async function AiRunsPage() {
     citationsByRun.set(c.aiRunId, arr);
   }
 
-  const rows = await Promise.all(runs.map(async run => ({
+  const [targetsByRun, citationLabels] = await Promise.all([
+    resolveTargets(db, runs),
+    resolveCitationLabels(db, citations)
+  ]);
+
+  const rows = runs.map(run => ({
     run,
-    target: await resolveTarget(db, run.targetType, run.targetId),
-    citationLabels: await Promise.all((citationsByRun.get(run.id) ?? []).map(async c => ({
-      c, label: await resolveCitationLabel(db, c.sourceType, c.sourceId)
-    })))
-  })));
+    target: targetsByRun.get(run.id)!,
+    citationLabels: (citationsByRun.get(run.id) ?? []).map(c => ({ c, label: citationLabels.get(c.id)! }))
+  }));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

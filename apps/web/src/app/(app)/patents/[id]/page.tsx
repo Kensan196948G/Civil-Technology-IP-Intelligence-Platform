@@ -1,7 +1,7 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, inArray } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
@@ -15,7 +15,7 @@ export default async function PatentDetailPage({ params }: { params: { id: strin
   const claims = await db.select().from(s.patentClaims).where(eq(s.patentClaims.patentId, patent.id)).orderBy(asc(s.patentClaims.claimNo));
   const claimIds = claims.map(c => c.id);
   const elements = claimIds.length
-    ? (await db.select().from(s.claimElements)).filter(e => claimIds.includes(e.claimId))
+    ? await db.select().from(s.claimElements).where(inArray(s.claimElements.claimId, claimIds))
     : [];
   const elementsByClaim = new Map<string, typeof elements>();
   for (const e of elements) {

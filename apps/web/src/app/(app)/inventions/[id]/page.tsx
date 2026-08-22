@@ -4,20 +4,9 @@ import * as s from '@/lib/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { resolveCitationLabels } from '@/lib/citations';
 
 export const runtime = 'edge';
-
-async function resolveCitationLabel(db: ReturnType<typeof getDb>, sourceType: string, sourceId: string) {
-  if (sourceType === 'patent') {
-    const [p] = await db.select().from(s.patents).where(eq(s.patents.id, sourceId)).limit(1);
-    return p ? `特許：${p.title}` : '特許（削除済み）';
-  }
-  if (sourceType === 'netis') {
-    const [n] = await db.select().from(s.netisTechnologies).where(eq(s.netisTechnologies.id, sourceId)).limit(1);
-    return n ? `NETIS：${n.name}` : 'NETIS（削除済み）';
-  }
-  return `${sourceType}：${sourceId}`;
-}
 
 export default async function InventionDetailPage({ params }: { params: { id: string } }) {
   const db = getDb(getDatabaseUrl());
@@ -45,10 +34,7 @@ export default async function InventionDetailPage({ params }: { params: { id: st
     arr.push(c);
     citationsByRun.set(c.aiRunId, arr);
   }
-  const citationLabels = new Map<string, string>();
-  for (const c of citations) {
-    citationLabels.set(c.id, await resolveCitationLabel(db, c.sourceType, c.sourceId));
-  }
+  const citationLabels = await resolveCitationLabels(db, citations);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
