@@ -1,33 +1,31 @@
 import type { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
+import { ScreenHeader } from './ScreenHeader';
+import { DetailProvider } from './detail/DetailDrawer';
 import { ROLE_LABEL, type DemoRole } from '@/lib/auth/demo';
-import Link from 'next/link';
+import type { NavCounts } from '@/lib/nav-counts';
 
+// 設計案（design-B-copilot）のシェル。
+// 左に250pxの全ライトモードのサイドバー、右は62pxのヘッダー＋スクロールする本文。
+// 本文のどこからでも右側の詳細ドロワーを開けるよう、DetailProviderで全体を包む。
 export function AppShell({
-  children, userName, role, dept
-}: { children: ReactNode; userName: string; role: DemoRole; dept: string }) {
+  children, userName, role, dept, counts
+}: {
+  children: ReactNode;
+  userName: string;
+  role: DemoRole;
+  dept: string;
+  counts: NavCounts;
+}) {
   return (
-    <div className="shell">
-      <div className="topbar">
-        <span style={{ fontFamily: 'var(--f-disp)', fontWeight: 700, fontSize: 15 }}>
-          土木技術・知財インテリジェンス
-        </span>
-        <span className="mono" style={{ fontSize: 10, letterSpacing: '.18em', color: '#63C2E0' }}>CTIIP</span>
-        <div style={{ flexGrow: 1 }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#93A8B0' }}>
-          <span>{userName}</span><span>／</span><span>{ROLE_LABEL[role]}</span><span>／</span><span>{dept}</span>
-          <Link href="/login" style={{ color: '#93A8B0', marginLeft: 8 }}>切替</Link>
+    <DetailProvider>
+      <div className="shell">
+        <Sidebar counts={counts} userName={userName} roleLabel={ROLE_LABEL[role]} dept={dept} />
+        <div className="shell-body">
+          <ScreenHeader />
+          <div className="main">{children}</div>
         </div>
       </div>
-      <div className="mvp-banner">
-        <strong>MVP環境</strong> — 表示されているデータはすべてデモ用のダミーデータです。この画面の数値で業務判断をしないでください。
-        <span style={{ flexGrow: 1 }} />
-        <span className="mono" style={{ fontSize: 10, letterSpacing: '.1em' }}>ctiip-mvp.mirai-dx-platform.com</span>
-      </div>
-      <div className="body-row">
-        <Sidebar />
-        <div className="main">{children}</div>
-      </div>
-    </div>
+    </DetailProvider>
   );
 }

@@ -43,7 +43,7 @@ export default async function WatchDigestPage() {
           <div style={{ padding: '13px 16px', fontSize: 13, color: 'var(--ink-2)' }}>直近のAI実行はまだありません。</div>
         )}
         {recentRuns.map((run, i) => (
-          <div key={run.id} style={{ padding: '11px 16px', borderBottom: i < recentRuns.length - 1 ? '1px solid #E8EDED' : 'none', display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
+          <div key={run.id} style={{ padding: '11px 16px', borderBottom: i < recentRuns.length - 1 ? '1px solid var(--line-2)' : 'none', display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
             <span className="badge" style={{ color: 'var(--blue)', border: '1px solid var(--blue)' }}>{AI_KIND_LABEL[run.kind] ?? run.kind}</span>
             <span className="mono" style={{ color: 'var(--ink-2)' }}>{run.model}</span>
             <span style={{ flexGrow: 1 }} />

@@ -62,7 +62,7 @@ export default async function PatentDetailPage({ params }: { params: { id: strin
             </div>
           )}
           {claims.map(c => (
-            <div key={c.id} style={{ padding: '12px 16px', borderBottom: '1px solid #E8EDED', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div key={c.id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--line-2)', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span className="mono" style={{ fontSize: 13, fontWeight: 700 }}>請求項{c.claimNo}</span>
                 {c.isIndependent && <span className="badge" style={{ color: 'var(--blue)', border: '1px solid var(--blue)' }}>独立項</span>}

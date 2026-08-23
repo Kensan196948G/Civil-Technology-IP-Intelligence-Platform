@@ -1,72 +1,265 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Shippori+Mincho+B1:wght@700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap');
+/* CTIIP 新WebUI デザインシステム（案B AI対話型 / design-B-copilot）
+ *
+ * 旧デザイン（paper/ink・明朝見出し・濃色トップバー）から全面刷新した。
+ * 既存の約190ルートは .card / .badge / .pill / .btn / .notice / table.plain と
+ * CSS変数（--blue など）だけでスタイルされているため、変数名とクラス名はそのまま残し、
+ * 値と見た目だけを新デザインへ差し替えている。これにより個別に手を入れていない画面も
+ * 自動的に新しい見た目になる。 */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --paper:#EAEDEE; --surface:#F7F9F9; --sunk:#DFE4E5;
-  --ink:#16262E; --ink-2:#516268; --line:#BFCACD; --line-2:#93A3A8;
-  --blue:#0D6E8C; --blue-soft:#D8E9EF;
-  --amber:#A9700D; --amber-soft:#F2E7D0;
-  --brick:#9C3E24; --brick-soft:#F2DDD6;
-  --green:#2F6B4F; --green-soft:#D9E9DF;
-  --f-disp:'Shippori Mincho B1',serif;
-  --f-body:'Zen Kaku Gothic New',system-ui,sans-serif;
-  --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+  /* 面と線 */
+  --paper: #EEF1F5;     /* ページ背景 */
+  --surface: #fff;      /* パネル */
+  --sunk: #F8FAFB;      /* 弱い塗り（表ヘッダ・補助面） */
+  --hover: #FAFBFC;     /* 行ホバー */
+  --chip: #F2F4F8;      /* チップ・カウンタ */
+  --line: #E3E8EF;      /* 外枠 */
+  --line-2: #EEF1F5;    /* 内側の区切り線 */
+
+  /* 文字 */
+  --ink: #1A2433;
+  --ink-2: #5A6678;
+  --ink-3: #8A97A8;
+
+  /* アクセント（オレンジ）: 主要アクション・アクティブ表示 */
+  --accent: #E08A2B;
+  --accent-bd: rgba(224, 138, 43, .4);
+  --amber: #B5701A;
+  --amber-soft: #FDEFE0;
+
+  /* 情報色 */
+  --blue: #2E5AAC;  --blue-soft: #E9F0FB;  --blue-bd: #C9D7EC;  --blue-bar: #3E76D6;
+  --green: #1F8255; --green-soft: #E4F3EC; --green-dot: #2E9E6B;
+  --brick: #C5392F; --brick-soft: #FCE9E7; --brick-dot: #D6443B;
+  --purple: #6B45B0; --purple-soft: #EDE7F6;
+
+  --radius: 10px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .04);
+
+  --f-disp: 'IBM Plex Sans JP', system-ui, -apple-system, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+  --f-body: 'IBM Plex Sans JP', system-ui, -apple-system, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
+
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
+html, body { margin: 0; padding: 0; height: 100%; }
 body {
   background: var(--paper); color: var(--ink); font-family: var(--f-body);
-  font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased;
+  font-size: 14px; line-height: 1.7;
+  /* 「文字の輪郭をハッキリさせたい」への対応。サブピクセルではなくグレースケール
+   * アンチエイリアスにし、白背景・濃紺文字のコントラストと合わせて輪郭を立てる。 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 a { color: var(--blue); text-decoration: none; }
-a:hover { color: #095972; text-decoration: underline; }
-h1, h2, h3 { font-family: var(--f-disp); font-weight: 700; margin: 0; }
+a:hover { text-decoration: underline; }
+h1, h2, h3 { font-family: var(--f-disp); font-weight: 600; margin: 0; letter-spacing: -.2px; }
+h1 { font-size: 18px; }
 button { font: inherit; cursor: pointer; }
 input, textarea, select { font: inherit; }
+input:focus-visible, textarea:focus-visible, select:focus-visible,
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: #C8D0DB; border-radius: 6px; border: 2px solid transparent; background-clip: padding-box;
+}
 
 .mono { font-family: var(--f-mono); }
-.shell { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ── シェル ───────────────────────────────────────────── */
+.shell { display: flex; height: 100vh; width: 100%; overflow: hidden; background: var(--paper); }
+.shell-body { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+
 .topbar {
-  display: flex; align-items: center; gap: 16px; height: 52px; padding: 0 20px;
-  background: var(--ink); color: #DEE9EC; flex: none;
+  height: 62px; flex: none; background: var(--surface); border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; padding: 0 22px; gap: 16px;
 }
+.topbar-title { font-size: 16px; font-weight: 600; color: var(--ink); line-height: 1.2; }
+.topbar-sub { font-size: 11.5px; color: var(--ink-3); }
+
+/* MVP表示は帯ではなくヘッダー右のバッジになった。旧クラス名は互換のため残す。 */
 .mvp-banner {
-  display: flex; align-items: center; gap: 8px; padding: 6px 20px;
-  background: var(--amber-soft); border-bottom: 1px solid #E0CFA8; color: #7A5008;
-  font-size: 12px; flex: none;
+  display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 7px;
+  background: var(--amber-soft); color: var(--amber); font-size: 12px; font-weight: 600; flex: none;
 }
-.body-row { display: flex; flex-grow: 1; align-items: stretch; }
-.sidebar { width: 214px; flex: none; background: var(--sunk); border-right: 1px solid var(--line); padding: 14px 0; }
+.mvp-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(224, 138, 43, .18); flex: none;
+}
+
+.body-row { display: flex; flex-grow: 1; align-items: stretch; min-height: 0; }
+.main { flex-grow: 1; overflow: auto; padding: 22px; min-width: 0; }
+/* 各画面が自前で読み幅を決める。中央寄せの読み幅コンテナ。 */
+.measure { max-width: 1080px; margin: 0 auto; }
+.measure-narrow { max-width: 960px; margin: 0 auto; }
+.measure-wide { max-width: 1240px; margin: 0 auto; }
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.stack-tight { display: flex; flex-direction: column; gap: 14px; }
+
+/* ── サイドバー（全ライトモード） ─────────────────────── */
+.sidebar {
+  width: 250px; flex: none; background: var(--surface); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; color: var(--ink-2);
+}
+.sidebar-head {
+  padding: 18px 18px 16px; display: flex; align-items: center; gap: 11px;
+  border-bottom: 1px solid var(--line-2);
+}
+.sidebar-mark {
+  width: 34px; height: 34px; border-radius: 8px; background: var(--accent); flex: none;
+  display: flex; align-items: center; justify-content: center; color: #141C29;
+}
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 1px; }
+.sidebar-group {
+  padding: 13px 8px 6px; font-size: 10px; letter-spacing: 1px; color: var(--ink-3); font-weight: 600;
+}
+.sidebar-foot {
+  padding: 13px 14px; border-top: 1px solid var(--line-2);
+  display: flex; align-items: center; gap: 11px;
+}
+
 .nav-item {
-  display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 14px;
-  color: var(--ink); font-size: 13px; border-left: 3px solid transparent;
+  position: relative; display: flex; align-items: center; gap: 10px; padding: 8px 11px;
+  border-radius: 7px; color: var(--ink-2); font-size: 13px; font-weight: 500;
+  background: transparent; text-decoration: none; cursor: pointer;
 }
-.nav-item.active { color: var(--blue); background: var(--surface); border-left-color: var(--blue); font-weight: 700; }
-.nav-item:hover { text-decoration: none; background: rgba(255,255,255,.4); }
-.main { flex-grow: 1; padding: 22px 26px 40px; min-width: 0; }
+.nav-item:hover { background: var(--hover); text-decoration: none; color: var(--ink); }
+.nav-item.active { color: var(--ink); background: var(--chip); font-weight: 500; }
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
+  border-radius: 2px; background: var(--accent);
+}
+.nav-item .nav-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav-item .nav-icon { width: 18px; text-align: center; flex: none; }
+.nav-count {
+  font-family: var(--f-mono); font-size: 10.5px; padding: 1px 6px; border-radius: 9px;
+  background: var(--chip); color: var(--ink-2);
+}
+.nav-item.active .nav-count { background: #E7EBF2; }
 
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 3px; }
-.badge { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; border-radius: 2px; padding: 1px 6px; }
-.pill { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; border-radius: 999px; padding: 0 7px; border: 1px solid currentColor; }
+/* 最近の会話は一段小さく、控えめに */
+.nav-item.nav-sub { padding: 7px 11px; font-size: 12.5px; font-weight: 400; color: var(--ink-3); }
+.nav-item.nav-sub.active { color: var(--ink); }
+
+/* ── パネル・カード ───────────────────────────────────── */
+.card, .panel {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.panel-head {
+  padding: 14px 18px; border-bottom: 1px solid var(--line-2);
+  display: flex; align-items: center; gap: 10px;
+}
+.panel-title { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.panel-note { font-size: 11.5px; color: var(--ink-3); }
+.panel-body { padding: 16px 18px; }
+
+/* ── バッジ・ピル・チップ ─────────────────────────────── */
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0; font-family: var(--f-body);
+}
+.pill {
+  display: inline-block; font-family: var(--f-mono); font-size: 10px; letter-spacing: .08em;
+  border-radius: 5px; padding: 1px 6px; border: 1px solid currentColor; font-weight: 600;
+}
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500;
+  padding: 7px 13px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink-2); text-decoration: none; cursor: pointer;
+}
+.chip:hover { background: var(--sunk); text-decoration: none; }
+.chip.active { border-color: var(--accent); background: var(--amber-soft); color: var(--amber); }
+.chip-count { font-family: var(--f-mono); opacity: .7; }
+
+.tag-blue   { color: var(--blue);   background: var(--blue-soft); }
+.tag-green  { color: var(--green);  background: var(--green-soft); }
+.tag-amber  { color: var(--amber);  background: var(--amber-soft); }
+.tag-red    { color: var(--brick);  background: var(--brick-soft); }
+.tag-purple { color: var(--purple); background: var(--purple-soft); }
+.tag-gray   { color: var(--ink-2);  background: var(--chip); }
+
+/* ── ボタン ───────────────────────────────────────────── */
 .btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  height: 34px; padding: 0 18px; border-radius: 3px; font-size: 13px; font-weight: 700; border: 1px solid transparent;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 14px; border-radius: var(--radius-sm); font-size: 12.5px; font-weight: 600;
+  border: 1px solid transparent; text-decoration: none; line-height: 1.4;
 }
-.btn-primary { background: var(--blue); color: #fff; }
-.btn-primary:hover { background: #095972; text-decoration: none; color: #fff; }
-.btn-secondary { background: var(--surface); color: var(--blue); border-color: var(--blue); }
+.btn:hover { text-decoration: none; }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: #CE7C21; border-color: #CE7C21; color: #fff; }
+.btn-secondary { background: var(--surface); color: var(--blue); border-color: var(--blue-bd); }
+.btn-secondary:hover { background: var(--blue-soft); color: var(--blue); }
 .btn-ghost { background: var(--surface); color: var(--ink-2); border-color: var(--line); }
-.btn:disabled { background: var(--sunk); color: var(--line-2); border-color: var(--line); cursor: not-allowed; }
+.btn-ghost:hover { background: var(--sunk); color: var(--ink-2); }
+.btn:disabled { background: var(--chip); color: var(--ink-3); border-color: var(--line); cursor: not-allowed; }
 
-.notice {
-  display: flex; gap: 10px; padding: 12px 14px; border-radius: 3px; border: 1px solid; line-height: 1.7;
+/* ── 入力 ─────────────────────────────────────────────── */
+.input, .textarea {
+  width: 100%; font-family: inherit; font-size: 13px; padding: 8px 11px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface);
+  color: var(--ink); outline: none;
 }
-.notice-brick { background: var(--brick-soft); border-color: #D3A695; color: #7A2E17; border-left-width: 3px; border-left-color: var(--brick); }
-.notice-amber { background: var(--amber-soft); border-color: #DDC08A; color: #7A5008; }
-.notice-green { background: var(--green-soft); border-color: #8FBBA3; color: #1F4D38; }
-.notice-blue { background: var(--blue-soft); border-color: #9CC3D0; color: #0A5B75; }
+.textarea { min-height: 84px; resize: vertical; }
 
-.mobile-shell { width: 100%; max-width: 430px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; background: var(--paper); }
+/* ── 注記 ─────────────────────────────────────────────── */
+/* 「AIは決めない・根拠必須」などの注記。消せない前提の表示なので、
+ * どの画面でも同じ形・同じ色で出す。 */
+.notice {
+  display: block; padding: 10px 14px; border-radius: var(--radius-sm);
+  font-size: 12px; line-height: 1.7; border: none;
+}
+.notice-amber { background: var(--amber-soft); color: var(--amber); }
+.notice-brick { background: var(--brick-soft); color: var(--brick); }
+.notice-green { background: var(--green-soft); color: var(--green); }
+.notice-blue  { background: var(--blue-soft);  color: var(--blue); }
 
+/* ── 行リスト ─────────────────────────────────────────── */
+.row-list > .row { border-bottom: 1px solid var(--line-2); }
+.row-list > .row:last-child { border-bottom: none; }
+.row {
+  display: flex; align-items: center; gap: 14px; padding: 13px 18px;
+  color: var(--ink); text-decoration: none; width: 100%; text-align: left;
+  background: transparent; border: none; font: inherit;
+}
+.row:hover { background: var(--hover); text-decoration: none; }
+.row-top { align-items: flex-start; }
+.row-main { flex: 1; min-width: 0; }
+.row-title { font-size: 13px; font-weight: 600; color: var(--ink); }
+.row-sub { font-size: 11.5px; color: var(--ink-3); }
+
+/* ── 表 ───────────────────────────────────────────────── */
 table.plain { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-table.plain th, table.plain td { text-align: left; padding: 8px 12px; border-top: 1px solid var(--line); }
-table.plain thead th { border-top: none; background: var(--sunk); font-size: 11px; }
+table.plain th, table.plain td {
+  text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line-2); border-top: none;
+}
+table.plain thead th {
+  padding: 11px 16px; background: var(--hover); font-size: 11px; color: var(--ink-3); font-weight: 600;
+}
+table.plain tbody tr:last-child td { border-bottom: none; }
+table.plain tbody tr.clickable { cursor: pointer; }
+table.plain tbody tr.clickable:hover { background: var(--hover); }
+
+/* ── メーター ─────────────────────────────────────────── */
+.meter { height: 6px; background: var(--line-2); border-radius: 3px; overflow: hidden; display: block; }
+.meter > span { display: block; height: 100%; border-radius: 3px; background: var(--blue-bar); }
+
+.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; display: inline-block; }
+
+/* 定義リスト（詳細ドロワー・現場条件など） */
+dl.kv { display: grid; grid-template-columns: max-content 1fr; gap: 9px 16px; margin: 0; }
+dl.kv dt { color: var(--ink-3); font-weight: 600; font-size: 12px; }
+dl.kv dd { margin: 0; font-size: 12.5px; }
+
+/* ── モバイル（現場からの1分入力） ───────────────────── */
+.mobile-shell {
+  width: 100%; max-width: 430px; margin: 0 auto; min-height: 100vh;
+  display: flex; flex-direction: column; background: var(--paper);
+}

@@ -39,7 +39,7 @@ export default async function NetisDetailPage({ params }: { params: { id: string
         ) : (
           <div>
             {applications.map(a => (
-              <Link key={a.id} href={`/field/${a.id}`} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: '1px solid #E8EDED', color: 'var(--ink)' }}>
+              <Link key={a.id} href={`/field/${a.id}`} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: '1px solid var(--line-2)', color: 'var(--ink)' }}>
                 <span className="mono" style={{ fontSize: 15, color: 'var(--blue)' }}>{Number(a.score).toFixed(0)}<span style={{ fontSize: 11, color: 'var(--ink-2)' }}> / 100</span></span>
                 <span style={{ flexGrow: 1 }} />
                 <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>詳細を見る →</span>

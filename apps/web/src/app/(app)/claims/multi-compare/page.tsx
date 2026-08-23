@@ -57,7 +57,7 @@ export default async function MultiComparePage() {
             </div>
             <div>
               {g.items.map(item => (
-                <Link key={item.analysis_id} href={`/claims/${item.analysis_id}`} className="card" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderRadius: 0, border: 'none', borderBottom: '1px solid #E8EDED', color: 'var(--ink)' }}>
+                <Link key={item.analysis_id} href={`/claims/${item.analysis_id}`} className="card" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderRadius: 0, border: 'none', borderBottom: '1px solid var(--line-2)', color: 'var(--ink)' }}>
                   <span style={{ flexGrow: 1 }}>{item.patent_title}</span>
                   <span style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>{item.applicant_name}</span>
                   <span className="mono">{item.total_n > 0 ? Math.round((item.match_n / item.total_n) * 100) : 0}%</span>

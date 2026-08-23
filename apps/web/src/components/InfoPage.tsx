@@ -25,7 +25,7 @@ export function InfoPage({
       {blocks && blocks.length > 0 && (
         <div className="card" style={{ padding: 0 }}>
           {blocks.map((b, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < blocks.length - 1 ? '1px solid #E8EDED' : 'none' }}>
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < blocks.length - 1 ? '1px solid var(--line-2)' : 'none' }}>
               <span style={{ fontSize: 12.5, color: 'var(--ink-2)', width: 200, flexShrink: 0 }}>{b.label}</span>
               <span style={{ fontSize: 13 }}>{b.value}</span>
             </div>

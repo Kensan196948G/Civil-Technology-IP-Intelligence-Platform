@@ -73,7 +73,7 @@ export default async function RndDashboardPage() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {LINKS.map((l, i) => (
-            <Link key={l.href} href={l.href} style={{ padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 12, color: 'var(--ink)', borderBottom: i < LINKS.length - 1 ? '1px solid #E8EDED' : 'none' }}>
+            <Link key={l.href} href={l.href} style={{ padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 12, color: 'var(--ink)', borderBottom: i < LINKS.length - 1 ? '1px solid var(--line-2)' : 'none' }}>
               <span style={{ fontWeight: 700, fontSize: 13, width: 160, flexShrink: 0 }}>{l.label}</span>
               <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>{l.sub}</span>
             </Link>
