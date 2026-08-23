@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { desc, eq, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { stamp } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -51,7 +52,7 @@ export default async function RndClaimCandidatesPage() {
         { key: 'status', render: row => (
           <span className="badge" style={{ color: row.status === 'succeeded' ? 'var(--green)' : 'var(--amber)', border: `1px solid ${row.status === 'succeeded' ? 'var(--green)' : 'var(--amber)'}` }}>{row.status}</span>
         ) },
-        { key: 'createdAt', mono: true, render: row => String(row.createdAt).slice(0, 16) }
+        { key: 'createdAt', mono: true, render: row => stamp(row.createdAt) }
       ]}
     />
   );

@@ -4,6 +4,7 @@ import * as s from '@/lib/db/schema';
 import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { resolveCitationLabels } from '@/lib/citations';
+import { stampSec } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -49,7 +50,7 @@ export default async function ArgumentPointsPage() {
         } },
         { key: 'source', render: row => labels.get(row.id) ?? '—' },
         { key: 'quoted', grow: true, render: row => trunc(row.quotedText, 40) },
-        { key: 'retrievedAt', mono: true, render: row => String(row.retrievedAt).slice(0, 19).replace('T', ' ') }
+        { key: 'retrievedAt', mono: true, render: row => stampSec(row.retrievedAt) }
       ]}
     />
   );

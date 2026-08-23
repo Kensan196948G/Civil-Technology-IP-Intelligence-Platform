@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { ymd } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -30,7 +31,7 @@ export default async function ResearchRelatedPatentsPage() {
       fields={[
         { key: 'patent', grow: true, render: row => <span style={{ fontWeight: 700 }}>{patentById.get(row.patentId)?.title ?? '特許（削除済み）'}</span> },
         { key: 'tech', render: row => `関連技術：${techById.get(row.technologyId)?.name ?? '—'}` },
-        { key: 'createdAt', mono: true, render: row => String(row.createdAt).slice(0, 10) }
+        { key: 'createdAt', mono: true, render: row => ymd(row.createdAt) }
       ]}
     />
   );

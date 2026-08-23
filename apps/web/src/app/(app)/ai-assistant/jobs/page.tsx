@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { stamp } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -37,7 +38,7 @@ export default async function AiAssistantJobsPage() {
         ) },
         { key: 'model', mono: true, render: row => row.model },
         { key: 'citations', render: row => <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>根拠 {citationCountByRun.get(row.id) ?? 0} 件</span> },
-        { key: 'createdAt', mono: true, render: row => String(row.createdAt).slice(0, 16).replace('T', ' ') }
+        { key: 'createdAt', mono: true, render: row => stamp(row.createdAt) }
       ]}
     />
   );

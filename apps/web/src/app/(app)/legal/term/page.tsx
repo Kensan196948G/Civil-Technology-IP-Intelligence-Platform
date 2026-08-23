@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { ymd } from '@/lib/labels';
 import {
   LICENSE_KIND_LABEL, licenseSubjectLabel, resolveLicenseSubjects, termField
 } from '@/lib/legal-license-subjects';
@@ -28,7 +29,7 @@ export default async function LegalTermPage() {
         ) },
         { key: 'subject', render: row => licenseSubjectLabel(maps, row.subjectType, row.subjectId) },
         { key: 'term', render: row => <span className="mono">{termField(row.terms, 'term')}</span> },
-        { key: 'registered', mono: true, render: row => `登録 ${String(row.createdAt).slice(0, 10)}` }
+        { key: 'registered', mono: true, render: row => `登録 ${ymd(row.createdAt)}` }
       ]}
     />
   );

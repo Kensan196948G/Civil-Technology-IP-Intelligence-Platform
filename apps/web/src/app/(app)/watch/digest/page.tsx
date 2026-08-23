@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { count, desc } from 'drizzle-orm';
 import { InfoPage } from '@/components/InfoPage';
+import { stamp } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -47,7 +48,7 @@ export default async function WatchDigestPage() {
             <span className="badge" style={{ color: 'var(--blue)', border: '1px solid var(--blue)' }}>{AI_KIND_LABEL[run.kind] ?? run.kind}</span>
             <span className="mono" style={{ color: 'var(--ink-2)' }}>{run.model}</span>
             <span style={{ flexGrow: 1 }} />
-            <span className="mono" style={{ fontSize: 11, color: 'var(--ink-2)' }}>{String(run.createdAt).slice(0, 16).replace('T', ' ')}</span>
+            <span className="mono" style={{ fontSize: 11, color: 'var(--ink-2)' }}>{stamp(run.createdAt)}</span>
           </div>
         ))}
       </div>
