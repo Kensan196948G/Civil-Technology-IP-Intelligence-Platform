@@ -1,0 +1,136 @@
+name: Deploy Production
+
+# docs/50-development/04-cicd-pipeline.md の骨子を実装したもの。
+#
+# トリガはタグ push（v*）のみ。ブランチへの push では動かない。
+# environment: production に Required reviewers を設定することで、
+# 承認なしに本番へ出ないようにする（設定はリポジトリ側で行う必要がある）。
+#
+# デプロイ先は apps/web の cf:deploy が対象にしている Cloudflare Pages プロジェクト
+# `ctiip-mvp`（https://ctiip-mvp.mirai-dx-platform.com）。
+# docs/40-infrastructure/03-dns-and-domain.md には本番 `ctiip` の記載もあるが、
+# 現状スクリプトが向いているのは MVP 側のみのため、ここでも MVP を対象にする。
+
+on:
+  push:
+    tags: ['v*']
+  # 手動実行も許可する（タグを打ち直さずに再デプロイしたい場合）。
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'デプロイするタグ（例: v1.2.3）'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  # 本番デプロイは同時に走らせない。進行中のものは中断しない。
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  PAGES_PROJECT: ctiip-mvp
+  SMOKE_URL: https://ctiip-mvp.mirai-dx-platform.com
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production      # 🔒 Required reviewers をリポジトリ設定で有効にすること
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+          # main の祖先であることを検証するため、履歴を全部取る
+          fetch-depth: 0
+          persist-credentials: false
+
+      # 検証済みコミット以外を本番へ出さない。
+      # main にマージされていないタグ（作業ブランチに打ったタグ等）を弾く。
+      - name: Verify tag is an ancestor of main
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          if git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "OK: $GITHUB_SHA は origin/main の祖先です"
+          else
+            echo "::error::このタグのコミット（$GITHUB_SHA）は origin/main に含まれていません。mainにマージ済みのコミットにのみタグを打ってください。"
+            exit 1
+          fi
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.1.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # マイグレーションは「追記のみ」。列削除・型変更など後方非互換な変更は、
+      # 旧バージョンが動いている間に流すと壊れるため入れないこと
+      # （docs/50-development/04-cicd-pipeline.md のロールバック方針）。
+      - name: Apply migrations (additive only)
+        working-directory: apps/web
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+        run: pnpm db:migrate
+
+      - name: Build for Cloudflare Pages
+        working-directory: apps/web
+        env:
+          # ビルド時にも env.ts の requireEnvVar が評価されうるため渡しておく。
+          # 実行時の値は Cloudflare 側の Secrets が使われる。
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+          CTIIP_DEMO_COOKIE_SECRET: ${{ secrets.CTIIP_DEMO_COOKIE_SECRET }}
+        run: pnpm cf:build
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        working-directory: apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          pnpm exec wrangler pages deploy .vercel/output/static \
+            --project-name="${PAGES_PROJECT}" \
+            --branch=main \
+            --commit-dirty=true
+
+      # デプロイ後に実際に応答することを確認する。
+      # 失敗したらジョブを赤にして、気づかないまま壊れた版が残らないようにする。
+      - name: Smoke test
+        run: |
+          set -uo pipefail
+          echo "smoke: ${SMOKE_URL}/api/health"
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o /tmp/health.json -w '%{http_code}' --max-time 20 "${SMOKE_URL}/api/health" || echo "000")
+            if [ "$code" = "200" ]; then
+              echo "OK: /api/health が 200 を返しました"
+              cat /tmp/health.json || true
+              exit 0
+            fi
+            echo "attempt ${i}: HTTP ${code} — 10秒待って再試行します"
+            sleep 10
+          done
+          echo "::error::デプロイ後のスモークテストに失敗しました（${SMOKE_URL}/api/health が 200 を返しません）。Cloudflare Pages のデプロイ状況とWorkerのログを確認してください。"
+          exit 1
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### 本番デプロイ"
+            echo ""
+            echo "| 項目 | 値 |"
+            echo "|---|---|"
+            echo "| タグ／参照 | \`${{ github.event.inputs.ref || github.ref_name }}\` |"
+            echo "| コミット | \`${GITHUB_SHA}\` |"
+            echo "| Pagesプロジェクト | \`${PAGES_PROJECT}\` |"
+            echo "| URL | ${SMOKE_URL} |"
+            echo "| 結果 | ${{ job.status }} |"
+          } >> "$GITHUB_STEP_SUMMARY"

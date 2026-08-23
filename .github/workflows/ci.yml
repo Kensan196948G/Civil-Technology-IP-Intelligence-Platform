@@ -98,9 +98,48 @@ jobs:
           fi
           echo "OK: 既知のシークレットパターンは検出されませんでした"
 
-  e2e:
+  # Secretsの有無だけを判定する軽量ジョブ。
+  #
+  # 以前は e2e ジョブの中でこの判定を行い、未設定なら後続ステップを個別に skip していた。
+  # その場合ジョブ自体は「success（緑）」で完了するため、チェック一覧の見た目上は
+  # E2Eが通ったのと区別がつかず、実際には1件も実行されていない状態を緑と誤読しうる。
+  # 判定を独立したジョブへ切り出し、e2e 側をジョブレベルの if で制御することで、
+  # 未設定時は e2e が「skipped（灰）」として表示され、緑＝実行済みが一致する。
+  # （secrets コンテキストはジョブレベルの if では参照できないため、
+  #   判定結果を outputs 経由で渡す。Secretsの値そのものは出力しない）
+  e2e-preflight:
     runs-on: ubuntu-latest
     needs: quality
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - name: Check E2E database secrets are configured
+        id: check
+        run: |
+          if [ -n "${{ secrets.DATABASE_URL_MVP }}" ] && [ -n "${{ secrets.CTIIP_SEED_ALLOWED_HOST }}" ] && [ -n "${{ secrets.CTIIP_SEED_ALLOWED_DB }}" ] && [ -n "${{ secrets.CTIIP_DEMO_COOKIE_SECRET }}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "OK: E2E用のSecretsが設定されています。E2Eを実行します。"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::DATABASE_URL_MVP / CTIIP_SEED_ALLOWED_HOST / CTIIP_SEED_ALLOWED_DB / CTIIP_DEMO_COOKIE_SECRET のいずれかがリポジトリSecretsに未設定のため、E2Eジョブをスキップします（skipped表示になります）。専用のE2E用Neonデータベースを用意し、Secretsへ設定してください。"
+            {
+              echo "### E2E はスキップされました"
+              echo ""
+              echo "E2E用のSecretsが未設定のため、E2Eジョブを実行していません。"
+              echo "**このPRのE2Eは未検証です。** 実行するには次のSecretsを設定してください。"
+              echo ""
+              echo "- \`DATABASE_URL_MVP\`"
+              echo "- \`CTIIP_SEED_ALLOWED_HOST\`"
+              echo "- \`CTIIP_SEED_ALLOWED_DB\`"
+              echo "- \`CTIIP_DEMO_COOKIE_SECRET\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [quality, e2e-preflight]
+    # 未設定時はジョブごと skip する（success で緑にしない）
+    if: needs.e2e-preflight.outputs.ready == 'true'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -115,26 +154,13 @@ jobs:
           node-version: 20
           cache: pnpm
 
-      - name: Check E2E database secrets are configured
-        id: check
-        run: |
-          if [ -n "${{ secrets.DATABASE_URL_MVP }}" ] && [ -n "${{ secrets.CTIIP_SEED_ALLOWED_HOST }}" ] && [ -n "${{ secrets.CTIIP_SEED_ALLOWED_DB }}" ] && [ -n "${{ secrets.CTIIP_DEMO_COOKIE_SECRET }}" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::DATABASE_URL_MVP / CTIIP_SEED_ALLOWED_HOST / CTIIP_SEED_ALLOWED_DB / CTIIP_DEMO_COOKIE_SECRET のいずれかがリポジトリSecretsに未設定のため、E2Eをスキップします。専用のE2E用Neonデータベースを用意し、Secretsへ設定してください。"
-          fi
-
       - name: Install dependencies
-        if: steps.check.outputs.ready == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
-        if: steps.check.outputs.ready == 'true'
         run: pnpm --filter @ctiip/web exec playwright install --with-deps chromium
 
       - name: Run E2E (Playwright)
-        if: steps.check.outputs.ready == 'true'
         working-directory: apps/web
         env:
           CI: true
@@ -146,9 +172,10 @@ jobs:
         run: pnpm exec playwright test --workers=1
 
       - name: Upload Playwright report
-        if: steps.check.outputs.ready == 'true' && failure()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: apps/web/playwright-report/
           retention-days: 7
+
