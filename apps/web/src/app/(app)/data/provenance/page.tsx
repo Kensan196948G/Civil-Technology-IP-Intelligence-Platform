@@ -4,6 +4,7 @@ import * as s from '@/lib/db/schema';
 import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { resolveCitationLabels } from '@/lib/citations';
+import { stampSec } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -37,7 +38,7 @@ export default async function ProvenancePage() {
             <span className="badge" style={{ color: 'var(--blue)', border: '1px solid var(--blue)' }}>{KIND_LABEL[run.kind] ?? run.kind}</span>
           ) : '—';
         } },
-        { key: 'retrievedAt', mono: true, render: row => String(row.retrievedAt).slice(0, 19).replace('T', ' ') }
+        { key: 'retrievedAt', mono: true, render: row => stampSec(row.retrievedAt) }
       ]}
     />
   );

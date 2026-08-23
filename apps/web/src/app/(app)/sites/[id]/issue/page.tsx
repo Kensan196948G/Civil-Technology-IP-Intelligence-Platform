@@ -4,6 +4,7 @@ import * as s from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { submitSiteIssue } from '../../actions';
 import { notFound } from 'next/navigation';
+import { stamp } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -44,7 +45,7 @@ export default async function SiteIssuePage({ params }: { params: { id: string }
               {issues.map(i => (
                 <div key={i.id} className="card" style={{ padding: 10, fontSize: 12.5 }}>
                   {i.body}
-                  <div className="mono" style={{ fontSize: 10, color: 'var(--ink-2)', marginTop: 4 }}>{String(i.createdAt).slice(0, 16)}</div>
+                  <div className="mono" style={{ fontSize: 10, color: 'var(--ink-2)', marginTop: 4 }}>{stamp(i.createdAt)}</div>
                 </div>
               ))}
             </div>

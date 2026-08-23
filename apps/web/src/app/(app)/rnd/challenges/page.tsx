@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { ymd } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -38,7 +39,7 @@ export default async function RndChallengesPage() {
             border: `1px solid ${row.status === 'open' ? 'var(--amber)' : 'var(--green)'}`
           }}>{row.status === 'open' ? '未解決' : row.status}</span>
         ) },
-        { key: 'createdAt', mono: true, render: row => String(row.createdAt).slice(0, 10) }
+        { key: 'createdAt', mono: true, render: row => ymd(row.createdAt) }
       ]}
     />
   );

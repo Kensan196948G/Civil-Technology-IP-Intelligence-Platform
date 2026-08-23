@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { count, desc } from 'drizzle-orm';
 import { InfoPage } from '@/components/InfoPage';
+import { stampSec } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -31,7 +32,7 @@ export default async function AdminBackupPage() {
         { label: '利用者件数', value: `${users?.n ?? 0} 名` },
         { label: '監査ログ件数', value: `${auditLogs?.n ?? 0} 件` },
         { label: '保護対象データ合計', value: `${totalRows} 件` },
-        { label: '直近のDB更新（監査ログ基準）', value: latestLog ? <span className="mono">{String(latestLog.occurredAt).slice(0, 19).replace('T', ' ')}</span> : '—' }
+        { label: '直近のDB更新（監査ログ基準）', value: latestLog ? <span className="mono">{stampSec(latestLog.occurredAt)}</span> : '—' }
       ]}
       note="Neonのポイントインタイムリストア機能に依存した参照表示です。定期バックアップジョブ・世代管理・復旧手順の自動化は本番設計フェーズのバックログとして扱います。"
     />

@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { desc, eq, inArray, or } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { stampSec } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -28,7 +29,7 @@ export default async function InvestigationHistoryPage() {
       rows={rows}
       emptyMessage="調査に関連する履歴はまだありません。"
       fields={[
-        { key: 'occurredAt', mono: true, render: row => String(row.occurredAt).slice(0, 19).replace('T', ' ') },
+        { key: 'occurredAt', mono: true, render: row => stampSec(row.occurredAt) },
         { key: 'action', render: row => ACTION_LABEL[row.action] ?? row.action },
         { key: 'actor', grow: true, render: row => row.actorUserId ? actorById.get(row.actorUserId)?.displayName ?? '—' : '—' },
         { key: 'target', render: row => row.targetType ?? '—' }
