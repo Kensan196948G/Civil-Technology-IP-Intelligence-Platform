@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { ymd } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -32,7 +33,7 @@ export default async function TechComparePage() {
           <span style={{ fontWeight: 700 }}>{patentById.get(row.patentId)?.title ?? '（削除済み特許）'}</span>
         ) },
         { key: 'tech', render: row => `自社案：${techById.get(row.technologyId)?.name ?? '（削除済み技術）'}` },
-        { key: 'createdAt', mono: true, render: row => String(row.createdAt).slice(0, 10) }
+        { key: 'createdAt', mono: true, render: row => ymd(row.createdAt) }
       ]}
     />
   );

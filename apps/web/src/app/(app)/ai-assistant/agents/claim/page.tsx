@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { ymd } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -31,7 +32,7 @@ export default async function ClaimAgentPage() {
         { key: 'patent', grow: true, render: row => <span style={{ fontWeight: 700 }}>{patentById.get(row.patentId)?.title ?? '（削除済み特許）'}</span> },
         { key: 'vs', render: () => <span style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>vs</span> },
         { key: 'tech', render: row => <span style={{ fontSize: 12.5 }}>{techById.get(row.technologyId)?.name ?? '（削除済み技術）'}</span> },
-        { key: 'createdAt', mono: true, render: row => String(row.createdAt).slice(0, 10) }
+        { key: 'createdAt', mono: true, render: row => ymd(row.createdAt) }
       ]}
     />
   );

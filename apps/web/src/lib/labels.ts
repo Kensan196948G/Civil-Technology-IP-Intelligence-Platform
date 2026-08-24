@@ -135,3 +135,9 @@ export function stamp(value: unknown): string {
   const d = toDate(value);
   return d ? d.toISOString().slice(0, 16).replace('T', ' ') : '—';
 }
+
+/** YYYY-MM-DD HH:mm:ss（監査ログ・Provenance など、秒まで必要な箇所） */
+export function stampSec(value: unknown): string {
+  const d = toDate(value);
+  return d ? d.toISOString().slice(0, 19).replace('T', ' ') : '—';
+}
