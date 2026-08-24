@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { desc, eq, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { ymd } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -37,7 +38,7 @@ export default async function PatentCitationsPage() {
         { key: 'run', render: row => runById.get(row.aiRunId)?.kind ?? '—' },
         { key: 'model', mono: true, render: row => runById.get(row.aiRunId)?.model ?? '—' },
         { key: 'quoted', render: row => <span style={{ color: 'var(--ink-2)', fontSize: 12 }}>{row.quotedText.slice(0, 40)}{row.quotedText.length > 40 ? '…' : ''}</span> },
-        { key: 'retrievedAt', mono: true, render: row => String(row.retrievedAt).slice(0, 10) }
+        { key: 'retrievedAt', mono: true, render: row => ymd(row.retrievedAt) }
       ]}
     />
   );

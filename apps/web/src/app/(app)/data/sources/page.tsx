@@ -2,6 +2,7 @@ import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { stampSec } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -40,7 +41,7 @@ export default async function DataSourcesPage() {
           <span className="badge" style={{ color: 'var(--blue)', border: '1px solid var(--blue)' }}>{KIND_LABEL[row.kind] ?? row.kind}</span>
         ) },
         { key: 'source', grow: true, render: row => <span style={{ fontWeight: 700 }}>{row.source}</span> },
-        { key: 'latest', mono: true, render: row => row.latest ? String(row.latest).slice(0, 19).replace('T', ' ') : '—' },
+        { key: 'latest', mono: true, render: row => stampSec(row.latest) },
         { key: 'n', render: row => <span className="mono">{row.n} 件</span> }
       ]}
     />

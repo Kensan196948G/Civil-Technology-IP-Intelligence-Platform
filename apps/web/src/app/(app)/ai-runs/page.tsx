@@ -4,6 +4,7 @@ import * as s from '@/lib/db/schema';
 import { desc, inArray } from 'drizzle-orm';
 import Link from 'next/link';
 import { resolveCitationLabels } from '@/lib/citations';
+import { stamp } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -92,7 +93,7 @@ export default async function AiRunsPage() {
               <span className="mono" style={{ fontSize: 11, color: 'var(--ink-2)' }}>{run.kind}</span>
               <span className="badge" style={{ color: run.status === 'succeeded' ? 'var(--green)' : 'var(--amber)', border: `1px solid ${run.status === 'succeeded' ? 'var(--green)' : 'var(--amber)'}` }}>{run.status}</span>
               <span style={{ flexGrow: 1 }} />
-              <span className="mono" style={{ fontSize: 11, color: 'var(--ink-2)' }}>{String(run.createdAt).slice(0, 16)}</span>
+              <span className="mono" style={{ fontSize: 11, color: 'var(--ink-2)' }}>{stamp(run.createdAt)}</span>
             </div>
             {target.href ? (
               <Link href={target.href} style={{ fontSize: 13, fontWeight: 700 }}>{target.label} →</Link>

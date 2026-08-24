@@ -5,6 +5,7 @@ import { eq, desc } from 'drizzle-orm';
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { decideAction, completeHumanCheck } from '../actions';
+import { stamp } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -85,7 +86,7 @@ export default async function ApprovalDetail({ params }: { params: { id: string 
             <tbody>
               {history.map(h => (
                 <tr key={h.id}>
-                  <td className="mono" style={{ fontSize: 11 }}>{String(h.decidedAt).slice(0, 16)}</td>
+                  <td className="mono" style={{ fontSize: 11 }}>{stamp(h.decidedAt)}</td>
                   <td>{h.decision}</td>
                   <td>{h.comment}</td>
                 </tr>

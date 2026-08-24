@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { stamp } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -33,7 +34,7 @@ export default async function WorkflowHistoryPage() {
         return inst ? `/approvals/${inst.id}` : '/approvals';
       }}
       fields={[
-        { key: 'decidedAt', mono: true, render: row => String(row.decidedAt).slice(0, 16).replace('T', ' ') },
+        { key: 'decidedAt', mono: true, render: row => stamp(row.decidedAt) },
         { key: 'title', grow: true, render: row => instanceById.get(row.instanceId)?.title ?? '—' },
         { key: 'approver', render: row => approverById.get(row.approverId)?.displayName ?? '—' },
         { key: 'decision', render: row => (

@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { asc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { stampSec } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -25,7 +26,7 @@ export default async function AdminFeatureFlagsPage() {
           ? <span className="badge" style={{ color: 'var(--green)', border: '1px solid var(--green)' }}>有効</span>
           : <span className="badge" style={{ color: 'var(--ink-2)', border: '1px solid var(--line)' }}>無効</span>
         },
-        { key: 'updatedAt', mono: true, render: row => String(row.updatedAt).slice(0, 19).replace('T', ' ') }
+        { key: 'updatedAt', mono: true, render: row => stampSec(row.updatedAt) }
       ]}
     />
   );

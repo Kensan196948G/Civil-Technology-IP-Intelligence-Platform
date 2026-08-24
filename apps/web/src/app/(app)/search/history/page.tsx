@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { ymd } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -35,7 +36,7 @@ export default async function SearchHistoryPage() {
           </span>
         ) },
         { key: 'createdBy', render: row => userById.get(row.createdBy)?.displayName ?? '—' },
-        { key: 'createdAt', mono: true, render: row => String(row.createdAt).slice(0, 10) }
+        { key: 'createdAt', mono: true, render: row => ymd(row.createdAt) }
       ]}
     />
   );

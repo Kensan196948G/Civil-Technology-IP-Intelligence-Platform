@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { asc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { stampSec } from '@/lib/labels';
 
 export const runtime = 'edge';
 
@@ -39,7 +40,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         { key: 'value', mono: true, render: row => (
           <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>{JSON.stringify(row.value)}</span>
         ) },
-        { key: 'updatedAt', mono: true, render: row => String(row.updatedAt).slice(0, 19).replace('T', ' ') }
+        { key: 'updatedAt', mono: true, render: row => stampSec(row.updatedAt) }
       ]}
     />
   );
