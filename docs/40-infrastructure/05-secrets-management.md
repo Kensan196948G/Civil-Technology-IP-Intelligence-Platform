@@ -17,6 +17,30 @@
 
 ⚠️ 実際の値は本書に記載しない。**変数名のみを管理する**。
 
+### 1.1 ワークフロー別の必要シークレット
+
+実装済みのワークフローが実際に参照しているものは以下のとおり。未設定だとジョブが
+失敗する（E2E のみ、未設定時は skip される）。
+
+| ワークフロー | シークレット | 保管先 | 未設定時の挙動 |
+|---|---|---|---|
+| `.github/workflows/deploy-production.yml` | `CLOUDFLARE_API_TOKEN` | Environment `production` | デプロイ失敗 |
+| 〃 | `CLOUDFLARE_ACCOUNT_ID` | Environment `production` | デプロイ失敗 |
+| 〃 | `DATABASE_URL_PROD` | Environment `production` | マイグレーション失敗 |
+| 〃 | `CTIIP_DEMO_COOKIE_SECRET` | Environment `production` | ビルド失敗 |
+| `.github/workflows/ci.yml`（e2e） | `DATABASE_URL_MVP` | Repository Secrets | E2E を skip |
+| 〃 | `CTIIP_SEED_ALLOWED_HOST` | Repository Secrets | E2E を skip |
+| 〃 | `CTIIP_SEED_ALLOWED_DB` | Repository Secrets | E2E を skip |
+| 〃 | `CTIIP_DEMO_COOKIE_SECRET` | Repository Secrets | E2E を skip |
+
+**MUST**: Environment `production` には **Required reviewers** を設定する。
+これがないと、タグを打っただけで承認なく本番へ出てしまう。
+
+**注意**: E2E 用の `DATABASE_URL_MVP` は毎回データを洗い替える（`TRUNCATE`）ため、
+**必ずE2E専用のNeonデータベース**を指すこと。本番・共有DBを指してはならない。
+`CTIIP_SEED_ALLOWED_HOST` / `CTIIP_SEED_ALLOWED_DB` はその事故を防ぐための
+ホスト名・DB名の完全一致による許可リストである。
+
 ## 2. 保管の原則
 
 | 場所 | 用途 | 可否 |
