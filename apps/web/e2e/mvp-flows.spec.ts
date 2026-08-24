@@ -21,7 +21,8 @@ test('横断検索：実データがヒットしタブ切替が動く', async ({
   await loginAs(page, '田村 誠');
   await page.goto('/search?q=ケーソン&tab=patent');
   await expect(page.locator('.main')).toContainText('ケーソン据付装置');
-  await page.getByRole('link', { name: /NETIS/ }).click();
+  // 新サイドバーの「最近の会話」にもNETISを含む項目があるため、種別チップの検索は本文に限定する。
+  await page.locator('.main').getByRole('link', { name: /NETIS/ }).click();
   await expect(page.locator('.main')).toContainText('GNSS併用ケーソン据付支援システム');
 });
 
@@ -105,9 +106,9 @@ test('RBAC：権限の無いロールは/admin/*へアクセスできない、�
   await loginAs(page, '山本 恵'); // executive（管理者権限あり）
   resp = await page.goto('/admin/users');
   expect(resp?.status()).toBe(200);
-  // サイドバーのナビゲーションリンクとページ見出しの両方が「ユーザー管理」を
-  // 含むため、getByText は strict mode violation になる。見出しに絞る。
-  await expect(page.getByRole('heading', { name: 'ユーザー管理' })).toBeVisible();
+  // ナビゲーション・ヘッダーの画面名・ページ見出しが同じ文言になるため、
+  // getByText も素の getByRole('heading') も strict mode violation になる。本文の見出しに絞る。
+  await expect(page.locator('.main').getByRole('heading', { name: 'ユーザー管理' })).toBeVisible();
 });
 
 // Deep Debug Round2で追加した (app)/error.tsx の回帰防止テスト。
@@ -122,4 +123,47 @@ test('エラーバウンダリ：不正なIDでのアクセスがエラー画面
   await expect(page.getByRole('button', { name: '再試行' })).toBeVisible();
   await page.getByRole('link', { name: 'ダッシュボードへ戻る' }).click();
   await expect(page).toHaveURL(/\/dashboard/);
+});
+
+// ── 新WebUI（design-B-copilot）の回帰防止 ──────────────────────────────
+
+test('詳細ドロワー：検索結果の行を開くと右から詳細が出て、閉じられる', async ({ page }) => {
+  await loginAs(page, '田村 誠');
+  await page.goto('/search?q=ケーソン&tab=patent');
+
+  const drawer = page.getByRole('dialog');
+  await expect(drawer).toBeHidden();
+
+  // 行内の「特許詳細を見る →」リンクを踏まないよう、行の左上（種別バッジ側）を押す。
+  await page.locator('.main .row-list > [role="button"]').first().click({ position: { x: 10, y: 10 } });
+  await expect(drawer).toBeVisible();
+  // 出どころと注記は常に併記される（AIの要約だけを見せない）
+  await expect(drawer.getByText('要約と言い換えはAIによるものです')).toBeVisible();
+
+  await drawer.getByRole('button', { name: '閉じる' }).click();
+  await expect(drawer).toBeHidden();
+});
+
+test('サイドバー：最近の会話を選ぶとCopilotホームがその会話に切り替わる', async ({ page }) => {
+  await loginAs(page, '田村 誠');
+  await page.getByRole('link', { name: 'Copilot に聞く' }).click();
+  await expect(page).toHaveURL(/\/ai-assistant/);
+
+  await page.getByRole('link', { name: '競合A社の直近1年の出願' }).click();
+  await expect(page).toHaveURL(/\/ai-assistant\?c=/);
+  await expect(page.locator('.main')).toContainText('競合A社の直近1年の出願動向をまとめて。');
+  // 回答には必ず根拠件数が併記される
+  await expect(page.locator('.main')).toContainText('根拠');
+});
+
+test('全モジュール：20分類が並び、項目から実画面へ遷移できる', async ({ page }) => {
+  await loginAs(page, '田村 誠');
+  await page.getByRole('link', { name: /全モジュール/ }).click();
+  await expect(page).toHaveURL(/\/modules/);
+
+  // nav.ts の20セクションがすべてカードとして出ている
+  await expect(page.locator('.main section.panel')).toHaveCount(20);
+
+  await page.locator('.main').getByRole('link', { name: '調査案件一覧' }).click();
+  await expect(page).toHaveURL(/\/investigations/);
 });

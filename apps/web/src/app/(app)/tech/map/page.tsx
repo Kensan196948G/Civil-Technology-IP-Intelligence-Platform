@@ -49,7 +49,7 @@ export default async function TechMapPage() {
         ) : (
           <div>
             {workTypes.map(w => (
-              <div key={w.wt} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: '1px solid #E8EDED' }}>
+              <div key={w.wt} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: '1px solid var(--line-2)' }}>
                 <span className="mono" style={{ fontSize: 11, color: 'var(--ink-2)', border: '1px solid var(--line)', borderRadius: 3, padding: '1px 6px' }}>{w.wt}</span>
                 <span style={{ flexGrow: 1 }} />
                 <span className="mono" style={{ fontSize: 13 }}>{w.n} 件</span>

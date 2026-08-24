@@ -42,7 +42,7 @@ export default async function ResearchTrendsPage() {
             <div style={{ padding: '13px 16px', fontSize: 12.5, color: 'var(--ink-2)' }}>学会資料はまだありません。</div>
           ) : (
             latestPapers.map(p => (
-              <div key={p.id} style={{ padding: '11px 16px', borderBottom: '1px solid #E8EDED', fontSize: 13 }}>
+              <div key={p.id} style={{ padding: '11px 16px', borderBottom: '1px solid var(--line-2)', fontSize: 13 }}>
                 <span style={{ fontWeight: 700 }}>{p.title}</span>
                 <span style={{ color: 'var(--ink-2)', marginLeft: 8 }}>{p.venue ?? '—'} ｜ <span className="mono">{p.publishedOn ?? '—'}</span></span>
               </div>
@@ -58,7 +58,7 @@ export default async function ResearchTrendsPage() {
             <div style={{ padding: '13px 16px', fontSize: 12.5, color: 'var(--ink-2)' }}>NETIS登録技術はまだありません。</div>
           ) : (
             latestNetis.map(n => (
-              <div key={n.id} style={{ padding: '11px 16px', borderBottom: '1px solid #E8EDED', fontSize: 13 }}>
+              <div key={n.id} style={{ padding: '11px 16px', borderBottom: '1px solid var(--line-2)', fontSize: 13 }}>
                 <span style={{ fontWeight: 700 }}>{n.name}</span>
                 <span style={{ color: 'var(--ink-2)', marginLeft: 8 }}>{n.category ?? '—'} ｜ 登録 <span className="mono">{n.registeredOn ?? '—'}</span></span>
               </div>

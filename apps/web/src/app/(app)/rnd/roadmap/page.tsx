@@ -54,7 +54,7 @@ export default async function RndRoadmapPage() {
               </div>
               <div>
                 {techs.map((t, i) => (
-                  <div key={t.id} style={{ padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: i < techs.length - 1 ? '1px solid #E8EDED' : 'none' }}>
+                  <div key={t.id} style={{ padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: i < techs.length - 1 ? '1px solid var(--line-2)' : 'none' }}>
                     <span style={{ fontWeight: 700, fontSize: 13 }}>{t.name}</span>
                     <span className="mono" style={{ fontSize: 10.5, color: 'var(--ink-2)' }}>{KIND_LABEL[t.kind] ?? t.kind}</span>
                     <span style={{ flexGrow: 1 }} />

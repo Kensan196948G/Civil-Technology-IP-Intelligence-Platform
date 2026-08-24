@@ -64,7 +64,7 @@ export default async function InventionDetailPage({ params }: { params: { id: st
         ) : (
           <div>
             {runs.map(run => (
-              <div key={run.id} style={{ padding: '12px 16px', borderBottom: '1px solid #E8EDED', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div key={run.id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--line-2)', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span className="mono" style={{ fontSize: 11, color: 'var(--ink-2)' }}>{run.kind}</span>
                   <span className="badge" style={{ color: run.status === 'succeeded' ? 'var(--green)' : 'var(--amber)', border: `1px solid ${run.status === 'succeeded' ? 'var(--green)' : 'var(--amber)'}` }}>{run.status}</span>

@@ -43,7 +43,7 @@ export default async function EvaluationPage() {
             <div style={{ padding: '14px 16px', fontSize: 13, color: 'var(--ink-2)' }}>ライセンス案件はまだありません。</div>
           )}
           {licenses.map(l => (
-            <div key={l.id} style={{ padding: '12px 16px', borderBottom: '1px solid #E8EDED', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div key={l.id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--line-2)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <span className="badge" style={{ color: 'var(--blue)', border: '1px solid var(--blue)' }}>{LICENSE_KIND_LABEL[l.kind] ?? l.kind}</span>
               <span style={{ fontWeight: 700, fontSize: 13 }}>{subjects.label(l.subjectType, l.subjectId)}</span>
               <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>相手方：{l.counterpartName}</span>
