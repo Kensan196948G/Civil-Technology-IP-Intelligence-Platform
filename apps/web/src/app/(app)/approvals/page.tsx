@@ -6,7 +6,6 @@ import { FilterChips, Notice, Tag } from '@/components/ui';
 import { DetailChip } from '@/components/detail/DetailOpener';
 import { CLASSIFICATION, WORKFLOW_KIND, WORKFLOW_STATUS } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 // 設計案（design-B-copilot）の「承認・レビュー」。
 //

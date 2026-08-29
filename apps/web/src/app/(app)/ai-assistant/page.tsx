@@ -9,7 +9,6 @@ import { citationDetail, type DetailSpec } from '@/components/detail/types';
 import { CONVERSATIONS, PROMPT_CHIPS, getConversation } from '@/lib/copilot-demo';
 import { AI_RUN_KIND, stamp } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 // 設計案（design-B-copilot）の「Copilotホーム」。
 // 会話そのものはMVPスキーマに対応テーブルが無いためデモ定数（lib/copilot-demo.ts）だが、

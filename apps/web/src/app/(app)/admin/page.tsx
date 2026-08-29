@@ -8,7 +8,6 @@ import { DetailTr } from '@/components/detail/DetailOpener';
 import { ROLE_LABEL, type DemoRole } from '@/lib/auth/demo';
 import { stamp } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 // 設計案（design-B-copilot）の「システム管理」。
 // 旧UIには /admin の入口ページが無く、配下の個別ページ（users / roles / status …）しか

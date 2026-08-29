@@ -7,7 +7,6 @@ import { Panel, Tag } from '@/components/ui';
 import { DetailRow } from '@/components/detail/DetailOpener';
 import { WATCH_KIND, ymd } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 // 設計案（design-B-copilot）の「ウォッチ・アラート」。
 // 上に週次AIダイジェスト、下に種別つきのウォッチ一覧。行から詳細ドロワーを開く。

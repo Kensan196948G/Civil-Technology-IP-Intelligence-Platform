@@ -1,8 +1,8 @@
 // MVP用ダミーデータ投入スクリプト。
 // 実在の人物・企業・案件を一切含まない架空データのみを使用する。
 // すべてのレコードに is_sample=true（相当）を付与し、MVP画面に「デモ用」表示を出す根拠とする。
-import { Pool } from '@neondatabase/serverless';
 import { randomUUID as uuid } from 'node:crypto';
+import postgres from 'postgres';
 
 async function main() {
   const url = process.env.DATABASE_URL;
@@ -40,21 +40,19 @@ async function main() {
     );
   }
 
-  const pool = new Pool({ connectionString: url });
-  // CodeRabbit指摘: pool.connect() が try の外にあると、接続取得自体が失敗した際に
-  // pool.end() が実行されずリークしうる。取得も try に含め、client を取得できた
-  // 場合のみ release() する。
-  // 型注釈: pool.connect() はコールバック版とPromise版のオーバーロードを持ち、
-  // ReturnTypeで正確な型を取れないため、ここでは意図的にanyとする。
-  let client: any;
+  // postgres.js (TCPドライバ) を使用して接続する（ローカルPostgreSQL対応）
+  // max: 1 にすることで、sql.unsafe で BEGIN/COMMIT を直接実行できる
+  // （postgres.jsは複数接続時の手動トランザクションを安全のため拒否するため）
+  const pg = postgres(url, { max: 1 });
+  // 既存の client.query(text, params) 呼び出しと互換性を持たせる
+  const client: any = {
+    query: (text: string, params: any[] = []) => pg.unsafe(text, params),
+    release: () => {}
+  };
+  // 既存の sql(text, params) 呼び出しと互換性を持たせる
+  const sql = (text: string, params: any[] = []) => pg.unsafe(text, params);
 
   try {
-    client = await pool.connect();
-    // CodeRabbit指摘: pool.query() は呼び出しごとに別コネクションを使う可能性があり、
-    // BEGIN〜COMMITが同一セッションで完結する保証がない。専用クライアントを1本取得し、
-    // 全書き込みをそのクライアント上の単一トランザクションとして実行する。
-    const sql = (text: string, params: any[] = []) => client!.query(text, params);
-
     await client.query('BEGIN');
 
     console.log('🧹 既存データをクリア中... (接続先: ' + host + ')');
@@ -187,14 +185,14 @@ async function main() {
   const techId = uuid();
   await sql(
     `INSERT INTO technologies (id, kind, name, summary, applicable_conditions, work_types, maturity, classification, is_sample)
-     VALUES ($1,'technology','ケーソン据付管理システム（自社保有・デモ）','当社が港湾工事で運用する据付管理技術のデモデータ。動揺補償は未実装。',$2,$3,'実用','C2', true)`,
-    [techId, JSON.stringify({ marine_wave_limit_m: 1.5, ground_min_n: 10, yard_min_m2: 500 }), ['port','marine']]
+     VALUES ($1,'technology','ケーソン据付管理システム（自社保有・デモ）','当社が港湾工事で運用する据付管理技術のデモデータ。動揺補償は未実装。',$2::jsonb,$3,'実用','C2', true)`,
+    [techId, { marine_wave_limit_m: 1.5, ground_min_n: 10, yard_min_m2: 500 }, ['port','marine']]
   );
   const techId2 = uuid();
   await sql(
     `INSERT INTO technologies (id, kind, name, summary, applicable_conditions, work_types, maturity, classification, is_sample)
-     VALUES ($1,'method','GNSS併用ケーソン据付支援システム（デモ）','NETIS登録技術のデモ複製。据付精度向上を目的とする。',$2,$3,'実用','C1', true)`,
-    [techId2, JSON.stringify({ marine_wave_limit_m: 2.5, ground_min_n: 10, yard_min_m2: 800 }), ['port','marine']]
+     VALUES ($1,'method','GNSS併用ケーソン据付支援システム（デモ）','NETIS登録技術のデモ複製。据付精度向上を目的とする。',$2::jsonb,$3,'実用','C1', true)`,
+    [techId2, { marine_wave_limit_m: 2.5, ground_min_n: 10, yard_min_m2: 800 }, ['port','marine']]
   );
 
   // Claim比較（1件目の特許 × 自社技術）
@@ -220,8 +218,8 @@ async function main() {
 
   // 現場・課題・適用性評価
   const siteId = uuid();
-  await sql(`INSERT INTO sites (id, code, name, work_types, conditions) VALUES ($1,'SITE-001','◯◯港 岸壁改良工事（デモ）',$2,$3)`,
-    [siteId, ['port','marine'], JSON.stringify({ marine_wave_m: 2.0, ground_n: 14, yard_m2: 640 })]);
+  await sql(`INSERT INTO sites (id, code, name, work_types, conditions) VALUES ($1,'SITE-001','◯◯港 岸壁改良工事（デモ）',$2,$3::jsonb)`,
+    [siteId, ['port','marine'], { marine_wave_m: 2.0, ground_n: 14, yard_m2: 640 }]);
   const issueId = uuid();
   await sql(
     `INSERT INTO site_issues (id, site_id, body, photos, status, created_by) VALUES ($1,$2,$3,'{}','open',$4)`,
@@ -246,8 +244,8 @@ async function main() {
   const fieldApplicationId = uuid();
   await sql(
     `INSERT INTO field_applications (id, site_issue_id, candidate_type, candidate_id, score, axes, blockers)
-     VALUES ($1,$2,'technology',$3,$4,$5,'[]')`,
-    [fieldApplicationId, issueId, techId2, score, JSON.stringify(axes)]
+     VALUES ($1,$2,'technology',$3,$4,$5::jsonb,'[]'::jsonb)`,
+    [fieldApplicationId, issueId, techId2, score, axes]
   );
 
   // 発明届 → ワークフロー（AI模擬審査ステップ相当・人間確認未完了）
@@ -261,10 +259,10 @@ async function main() {
   const wfId = uuid();
   await sql(
     `INSERT INTO workflow_instances (id, kind, subject_type, subject_id, title, status, classification, author_id, due_on, human_check_required, human_check_completed_at, ai_risk_summary)
-     VALUES ($1,'invention','invention',$2,$3,'ip_review','C3',$4,'2026-08-28', true, NULL, $5)`,
+     VALUES ($1,'invention','invention',$2,$3,'ip_review','C3',$4,'2026-08-28', true, NULL, $5::jsonb)`,
     [wfId, inventionId, '吊具姿勢の自動補正による据付精度の向上（デモ発明）', U('sato.ken@demo.ctiip.example'),
-     JSON.stringify({ novelty: 'low', inventive: 'medium', description: 'low', overlap: 'medium',
-       note: '請求項1の構成B・Cについて先行文献Aとの技術的類似性が高いため専門家確認を推奨（デモ）' })]
+     { novelty: 'low', inventive: 'medium', description: 'low', overlap: 'medium',
+       note: '請求項1の構成B・Cについて先行文献Aとの技術的類似性が高いため専門家確認を推奨（デモ）' }]
   );
   // 2件目（自分が起案＝承認不可のデモ、知財担当 高橋 実 自身の案件）
   const inventionId2 = uuid();
@@ -406,8 +404,8 @@ async function main() {
     ['master.work_types', { source: 'technologies.work_types（派生）' }, 'マスタ設定：工種マスタの生成元']
   ] as const;
   for (const [key, value, description] of settingDefs) {
-    await sql(`INSERT INTO settings (id, key, value, description) VALUES ($1,$2,$3,$4)`,
-      [uuid(), key, JSON.stringify(value), description]);
+    await sql(`INSERT INTO settings (id, key, value, description) VALUES ($1,$2,$3::jsonb,$4)`,
+      [uuid(), key, value, description]);
   }
 
   // 監査ログ（種別を多様化し、履歴系画面のフィルタが実データで意味を持つようにする）
@@ -443,7 +441,7 @@ async function main() {
     throw e;
   } finally {
     if (client) client.release();
-    await pool.end();
+    await pg.end();
   }
 }
 

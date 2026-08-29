@@ -7,7 +7,6 @@ import { Notice, Tag } from '@/components/ui';
 import { DetailChip, DetailTr } from '@/components/detail/DetailOpener';
 import { REPORT_KIND, ymd } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 // 設計案（design-B-copilot）の「レポート」。
 // 種類の絞り込みチップ（nav.ts の ?kind= と同じ）＋出力履歴の表。行から詳細ドロワー。

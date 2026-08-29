@@ -13,7 +13,7 @@ test('未ログインは /login へリダイレクトされる', async ({ page }
 
 test('デモログイン → ダッシュボードに実件数が出る', async ({ page }) => {
   await loginAs(page, '田村 誠');
-  await expect(page.getByText('MVP環境')).toBeVisible();
+  await expect(page.getByText('MVP環境・ダミーデータ')).toBeVisible();
   await expect(page.locator('.main')).toContainText('特許');
 });
 

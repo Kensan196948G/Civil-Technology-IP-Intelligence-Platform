@@ -6,7 +6,6 @@ import { Tag } from '@/components/ui';
 import { DetailChip, DetailRow, StopPropagation } from '@/components/detail/DetailOpener';
 import { SEARCH_TAB, ymd } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 // 設計案（design-B-copilot）の「横断検索」。
 // 検索窓 → AIが組み立てた検索条件（直せる）→ 種別チップ → 結果行（クリックで詳細ドロワー）。

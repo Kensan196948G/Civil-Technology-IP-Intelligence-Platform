@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { Meter, Notice, Panel, Tag } from '@/components/ui';
 import { DetailRow } from '@/components/detail/DetailOpener';
 
-export const runtime = 'edge';
 
 // 設計案（design-B-copilot）の「現場の困りごと」入口。
 // 現場から届いた困りごとと、それに対してAIが出した候補技術・適用スコアを並べる。

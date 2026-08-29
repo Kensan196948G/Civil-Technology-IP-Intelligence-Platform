@@ -7,7 +7,6 @@ import { FilterChips, Notice, Tag } from '@/components/ui';
 import { DetailRow } from '@/components/detail/DetailOpener';
 import { ymd } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 // 設計案（design-B-copilot）の「調査案件」。
 // AIが調べ、人が確認する先行技術調査の一覧。進行中／完了で絞り込み、行から詳細ドロワーを開く。

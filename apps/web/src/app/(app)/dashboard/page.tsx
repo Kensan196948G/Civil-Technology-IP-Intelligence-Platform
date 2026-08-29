@@ -6,7 +6,6 @@ import { Meter, Panel, Tag } from '@/components/ui';
 import { DetailRow, DetailTr } from '@/components/detail/DetailOpener';
 import { CLASSIFICATION, WATCH_KIND, WORKFLOW_KIND, WORKFLOW_STATUS, ymd } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 // 設計案（design-B-copilot）の「ダッシュボード」。
 // KPIカード → 該当画面、案件行・ウォッチ行 → 詳細ドロワー。数値はすべて実DB。

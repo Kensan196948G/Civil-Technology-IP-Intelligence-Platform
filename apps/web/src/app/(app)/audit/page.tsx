@@ -7,7 +7,6 @@ import { Notice, Tag } from '@/components/ui';
 import { DetailTr } from '@/components/detail/DetailOpener';
 import { AUDIT_ACTION, stamp } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 // 設計案（design-B-copilot）の「セキュリティ・監査」。
 // 操作種別のチップ（nav.ts の ?action= と同じ）＋監査ログの表。行から詳細ドロワー。

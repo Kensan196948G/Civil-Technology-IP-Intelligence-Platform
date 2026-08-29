@@ -6,7 +6,6 @@ import { Notice, Tag } from '@/components/ui';
 import { DetailChip, DetailTr } from '@/components/detail/DetailOpener';
 import { CLASSIFICATION, WORKFLOW_STATUS, ymd } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 // 設計案（design-B-copilot）の「発明・出願」。
 // 現場の工夫を発明として蓄え、出願するかは人が決める。表の行から詳細ドロワーを開く。

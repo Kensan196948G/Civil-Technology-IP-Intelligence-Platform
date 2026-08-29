@@ -1,4 +1,3 @@
-export const runtime = 'edge';
 import { ListView } from '@/components/ListView';
 import { loadFieldAxisRows } from '../_lib';
 

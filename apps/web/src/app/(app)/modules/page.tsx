@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { NAV_SECTIONS, flattenLeaves } from '@/lib/nav';
 
-export const runtime = 'edge';
 
 // 設計案（design-B-copilot）の「全モジュール（20分類）」。
 // 旧サイドバーが持っていた20セクション・全項目をここに移した（サイドバーは日々の導線だけに絞った）。
