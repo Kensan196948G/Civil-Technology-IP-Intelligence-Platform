@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { DEMO_USERS, ROLE_LABEL } from '@/lib/auth/demo';
 import { loginAsAction } from './actions';
 

@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { createReportAction } from './actions';
 
 

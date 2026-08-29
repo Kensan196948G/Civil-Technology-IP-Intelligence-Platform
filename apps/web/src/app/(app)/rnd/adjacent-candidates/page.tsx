@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';

@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { ListView } from '@/components/ListView';
 import { loadCivilCategoryRows, KIND_LABEL } from '../_lib';
 
