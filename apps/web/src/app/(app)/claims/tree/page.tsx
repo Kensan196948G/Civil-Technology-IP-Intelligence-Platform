@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { desc, asc, inArray } from 'drizzle-orm';
 import Link from 'next/link';
 
-export const runtime = 'edge';
 
 export default async function ClaimTreePage() {
   const db = getDb(getDatabaseUrl());

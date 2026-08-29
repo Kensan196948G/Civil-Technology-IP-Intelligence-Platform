@@ -22,10 +22,10 @@ export async function createInvestigation(formData: FormData) {
   const auditId = crypto.randomUUID();
 
   const sql = getRawSql(dbUrl);
-  await sql.transaction([
-    sql`insert into investigations (id, title, query, status, created_by)
+  await sql.transaction((txn) => [
+    txn`insert into investigations (id, title, query, status, created_by)
         values (${investigationId}, ${title}, ${query}, 'open', ${me.id})`,
-    sql`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
+    txn`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
         values (${auditId}, ${me.id}, 'create', 'investigation', ${investigationId}, 'success', '{}'::jsonb)`
   ]);
 

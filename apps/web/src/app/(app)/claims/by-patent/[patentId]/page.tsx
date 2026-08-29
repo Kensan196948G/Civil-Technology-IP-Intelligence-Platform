@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { redirect, notFound } from 'next/navigation';
 
-export const runtime = 'edge';
 
 export default async function ByPatent({ params }: { params: { patentId: string } }) {
   const db = getDb(getDatabaseUrl());

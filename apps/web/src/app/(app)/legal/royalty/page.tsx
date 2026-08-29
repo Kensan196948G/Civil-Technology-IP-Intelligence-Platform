@@ -7,7 +7,6 @@ import {
   LICENSE_KIND_LABEL, LICENSE_STATUS_LABEL, licenseSubjectLabel, resolveLicenseSubjects, termField
 } from '@/lib/legal-license-subjects';
 
-export const runtime = 'edge';
 
 export default async function LegalRoyaltyPage() {
   const db = getDb(getDatabaseUrl());

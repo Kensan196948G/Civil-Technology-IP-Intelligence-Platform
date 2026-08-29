@@ -84,11 +84,11 @@ export async function decideAction(formData: FormData) {
   // 「全部成功/全部失敗」は保証するが、同時承認の競合防止（真の排他制御）はカバーしない。
   // 真の同時実行安全性は本番実装のバックログとする（lib/db/raw.ts 参照）。
   const sql = getRawSql(dbUrl);
-  await sql.transaction([
-    sql`insert into approvals (id, instance_id, approver_id, decision, comment)
+  await sql.transaction((txn) => [
+    txn`insert into approvals (id, instance_id, approver_id, decision, comment)
         values (${approvalId}, ${instanceId}, ${approver.id}, ${decision}, ${comment})`,
-    sql`update workflow_instances set status = ${newStatus} where id = ${instanceId}`,
-    sql`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
+    txn`update workflow_instances set status = ${newStatus} where id = ${instanceId}`,
+    txn`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
         values (${auditId}, ${approver.id}, 'approve', 'workflow_instance', ${instanceId}, 'success',
                 ${JSON.stringify({ decision, newStatus })}::jsonb)`
   ]);

@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 const KIND_LABEL: Record<string, string> = { invention: '発明届', field_adoption: '現場導入' };
 // CodeRabbit指摘: 「強い（進歩性あり）」は進歩性の成立を確定的に断定する表現になる。

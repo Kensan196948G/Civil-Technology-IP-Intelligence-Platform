@@ -5,7 +5,6 @@ import { desc, eq, inArray, or } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { stampSec } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 const ACTION_LABEL: Record<string, string> = { search: '検索実行', ai_run: 'AI実行', view: '閲覧' };
 

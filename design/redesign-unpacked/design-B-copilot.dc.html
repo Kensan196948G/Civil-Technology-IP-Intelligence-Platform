@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;height:100%;background:#EEF1F5;}
+body{font-family:'IBM Plex Sans JP',system-ui,-apple-system,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;-webkit-font-smoothing:antialiased;color:#1A2433;font-size:14px;}
+a{color:#2E5AAC;text-decoration:none;} a:hover{text-decoration:underline;}
+::-webkit-scrollbar{width:10px;height:10px;} ::-webkit-scrollbar-thumb{background:#c8d0db;border-radius:6px;border:2px solid transparent;background-clip:padding-box;}
+</style>
+</helmet>
+<div data-screen-label="CTIIP 新WebUI (AI対話型)" style="display:flex;height:100vh;width:100%;overflow:hidden;background:#EEF1F5;">
+  <aside style="width:250px;flex-shrink:0;background:#fff;border-right:1px solid #E3E8EF;display:flex;flex-direction:column;color:#5A6678;">
+    <div style="padding:18px 18px 16px;display:flex;align-items:center;gap:11px;border-bottom:1px solid #EEF1F5;">
+      <span style="width:34px;height:34px;border-radius:8px;background:#E08A2B;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#141C29;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path></svg>
+      </span>
+      <div style="line-height:1.2;">
+        <div style="color:#1A2433;font-weight:600;font-size:14.5px;letter-spacing:.2px;">CTIIP</div>
+        <div style="font-size:11px;color:#8A97A8;">土木技術・知財インテリジェンス</div>
+      </div>
+    </div>
+    <nav style="flex:1;overflow-y:auto;padding:10px 12px 14px;display:flex;flex-direction:column;gap:1px;">
+      <sc-for list="{{ navMain }}" as="n" hint-placeholder-count="3">
+        <a onClick="{{ n.go }}" style="position:relative;display:flex;align-items:center;gap:10px;padding:8px 11px;border-radius:7px;color:{{ n.color }};font-size:13px;font-weight:500;background:{{ n.bg }};text-decoration:none;cursor:pointer;" style-hover="background:#F8FAFB;">
+          <sc-if value="{{ n.active }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:2px;background:#E08A2B;"></span></sc-if>
+          <span style="width:18px;text-align:center;flex-shrink:0;">{{ n.icon }}</span><span style="flex:1;">{{ n.label }}</span>
+        </a>
+      </sc-for>
+      <div style="padding:13px 8px 6px;font-size:10px;letter-spacing:1px;color:#8A97A8;font-weight:600;">会話から始まる仕事</div>
+      <sc-for list="{{ tasks }}" as="t" hint-placeholder-count="8">
+        <a onClick="{{ t.go }}" style="position:relative;display:flex;align-items:center;gap:10px;padding:8px 11px;border-radius:7px;color:{{ t.color }};font-size:13px;font-weight:500;background:{{ t.bg }};text-decoration:none;cursor:pointer;" style-hover="background:#F8FAFB;">
+          <sc-if value="{{ t.active }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:2px;background:#E08A2B;"></span></sc-if>
+          <span style="width:18px;text-align:center;flex-shrink:0;">{{ t.icon }}</span><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ t.label }}</span>
+          <sc-if value="{{ t.count }}" hint-placeholder-val="{{ false }}"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:1px 6px;border-radius:9px;background:#F2F4F8;color:#5A6678;">{{ t.count }}</span></sc-if>
+        </a>
+      </sc-for>
+      <div style="padding:13px 8px 6px;font-size:10px;letter-spacing:1px;color:#8A97A8;font-weight:600;">最近の会話</div>
+      <sc-for list="{{ recents }}" as="r" hint-placeholder-count="4">
+        <a onClick="{{ r.go }}" style="display:flex;align-items:center;gap:10px;padding:7px 11px;border-radius:7px;color:{{ r.color }};background:{{ r.bg }};font-size:12.5px;text-decoration:none;cursor:pointer;" style-hover="background:#F8FAFB;">
+          <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ r.label }}</span>
+        </a>
+      </sc-for>
+      <div style="padding:13px 8px 6px;font-size:10px;letter-spacing:1px;color:#8A97A8;font-weight:600;">従来メニュー</div>
+      <a onClick="{{ goModules }}" style="position:relative;display:flex;align-items:center;gap:10px;padding:8px 11px;border-radius:7px;color:{{ modColor }};background:{{ modBg }};font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;" style-hover="background:#F8FAFB;">
+        <sc-if value="{{ isModules }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:2px;background:#E08A2B;"></span></sc-if>
+        <span style="width:18px;text-align:center;flex-shrink:0;">☰</span><span style="flex:1;">全モジュール（20分類）</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8A97A8;">›</span></a>
+    </nav>
+    <div style="padding:13px 14px;border-top:1px solid #EEF1F5;display:flex;align-items:center;gap:11px;">
+      <span style="width:34px;height:34px;border-radius:50%;background:#E9F0FB;color:#2E5AAC;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;">佐</span>
+      <div style="flex:1;line-height:1.25;">
+        <div style="color:#1A2433;font-size:13px;font-weight:500;">佐藤 健一</div>
+        <div style="font-size:11px;color:#8A97A8;">04 技術・研究開発</div>
+      </div>
+      <span style="font-size:10px;font-weight:600;color:#E08A2B;border:1px solid rgba(224,138,43,.4);padding:1px 6px;border-radius:5px;">R&amp;D</span>
+    </div>
+  </aside>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="height:62px;flex-shrink:0;background:#fff;border-bottom:1px solid #E3E8EF;display:flex;align-items:center;padding:0 22px;gap:16px;">
+      <div>
+        <div style="font-size:16px;font-weight:600;color:#1A2433;line-height:1.2;">{{ title }}</div>
+        <div style="font-size:11.5px;color:#8A97A8;">{{ subtitle }}</div>
+      </div>
+      <span style="flex:1;"></span>
+      <div style="display:flex;align-items:center;gap:6px;background:#FDEFE0;color:#B5701A;padding:6px 10px;border-radius:7px;font-size:12px;font-weight:600;">
+        <span style="width:7px;height:7px;border-radius:50%;background:#E08A2B;box-shadow:0 0 0 3px rgba(224,138,43,.18);"></span>MVP環境・ダミーデータ
+      </div>
+    </div>
+
+    <sc-if value="{{ isCopilot }}" hint-placeholder-val="{{ true }}">
+    <div data-screen-label="Copilotホーム" style="flex:1;overflow:auto;padding:22px;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start;">
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0;max-width:840px;margin:0 auto;width:100%;">
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);padding:20px;display:flex;flex-direction:column;gap:12px;">
+          <div style="font-size:18px;font-weight:600;letter-spacing:-.2px;">現場のこまりごとに、世界の技術で答えます。</div>
+          <div style="display:flex;gap:10px;">
+            <input placeholder="例：港湾のケーソン据付を自動化したい。水深12m、波高1.5m超の日が多い現場です" style="flex:1;font-family:inherit;font-size:13.5px;padding:12px 14px;border:1px solid #E3E8EF;border-radius:8px;background:#fff;color:#1A2433;outline:none;box-sizing:border-box;">
+            <button onClick="{{ askDefault }}" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:#E08A2B;color:#fff;border:1px solid #E08A2B;padding:8px 18px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;flex:none;">調べる</button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <sc-for list="{{ promptChips }}" as="p" hint-placeholder-count="3">
+              <a onClick="{{ p.go }}" style="font-size:12.5px;font-weight:500;padding:7px 13px;border-radius:8px;border:1px solid #E3E8EF;background:#fff;color:#5A6678;text-decoration:none;cursor:pointer;" style-hover="background:#F8FAFB;">{{ p.label }}</a>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;">
+          <div style="background:#E9F0FB;border-radius:10px;padding:12px 16px;font-size:13.5px;max-width:80%;line-height:1.8;">{{ convoQ }}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden;">
+          <div style="padding:14px 18px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:10px;">
+            <span style="width:26px;height:26px;border-radius:7px;background:#E08A2B;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;flex:none;">AI</span>
+            <span style="font-size:13px;font-weight:600;">{{ convoAgent }}</span>
+            <span style="font-size:11.5px;color:#8A97A8;">{{ convoScope }}</span>
+            <span style="flex:1;"></span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#1F8255;background:#E4F3EC;border-radius:6px;padding:2px 8px;font-weight:600;">根拠 {{ convoEvidence }}件</span>
+          </div>
+          <div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px;">
+            <p style="margin:0;font-size:13.5px;line-height:1.9;">{{ convoAnswer }}</p>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <sc-for list="{{ candidates }}" as="c" hint-placeholder-count="3">
+                <div onClick="{{ c.go }}" style="display:flex;align-items:center;gap:12px;border:1px solid #E3E8EF;border-radius:8px;padding:11px 14px;cursor:pointer;" style-hover="background:#FAFBFC;">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600;color:{{ c.tone }};flex:none;width:34px;text-align:right;">{{ c.score }}</span>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:13px;font-weight:600;">{{ c.name }}</div>
+                    <div style="font-size:11.5px;color:#8A97A8;">{{ c.meta }}</div>
+                  </div>
+                  <span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:{{ c.tagFg }};background:{{ c.tagBg }};flex:none;">{{ c.tag }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div>
+              <div style="font-size:11.5px;font-weight:600;color:#5A6678;margin-bottom:8px;">出どころ（クリックで原文の該当箇所を開きます）</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <sc-for list="{{ citations }}" as="cit" hint-placeholder-count="4">
+                  <a onClick="{{ cit.go }}" style="font-family:'IBM Plex Mono',monospace;background:#F2F4F8;color:#5A6678;border-radius:5px;padding:3px 8px;font-size:11px;text-decoration:none;cursor:pointer;" style-hover="background:#E9F0FB;">{{ cit.label }}</a>
+                </sc-for>
+              </div>
+            </div>
+            <div style="padding:10px 14px;border-radius:8px;font-size:12px;line-height:1.7;background:#FDEFE0;color:#B5701A;">
+              スコア・類似度は<strong>専門家が見る場所を絞るための目印</strong>です。権利侵害や導入可否の判断ではありません（この注記は消せません）。
+            </div>
+          </div>
+          <div style="padding:13px 18px;border-top:1px solid #EEF1F5;display:flex;gap:9px;">
+            <a onClick="{{ goField }}" style="display:inline-flex;align-items:center;gap:6px;background:#E08A2B;color:#fff;border:1px solid #E08A2B;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;cursor:pointer;">現場スコアの内訳を見る</a>
+            <a onClick="{{ goSearch }}" style="display:inline-flex;align-items:center;gap:6px;border:1px solid #C9D7EC;background:#fff;color:#2E5AAC;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;cursor:pointer;">検索結果として開く</a>
+            <a onClick="{{ goInvest }}" style="display:inline-flex;align-items:center;gap:6px;border:1px solid #E3E8EF;background:#fff;color:#5A6678;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;cursor:pointer;">調査案件として保存</a>
+            <span style="flex:1;"></span>
+            <a onClick="{{ goApprove }}" style="display:inline-flex;align-items:center;gap:6px;border:1px solid #E3E8EF;background:#fff;color:#5A6678;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;cursor:pointer;">導入検討を起票 →</a>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0;">
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+          <div style="padding:14px 18px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:13.5px;font-weight:600;">専門Agent</span>
+            <span style="font-size:11px;color:#8A97A8;">担当領域のデータだけを参照</span>
+          </div>
+          <div style="padding:6px 0;max-height:300px;overflow-y:auto;">
+            <sc-for list="{{ agents }}" as="a" hint-placeholder-count="9">
+              <a onClick="{{ a.go }}" style="display:flex;align-items:center;gap:10px;padding:8px 18px;color:#1A2433;text-decoration:none;cursor:pointer;" style-hover="background:#FAFBFC;">
+                <span style="width:7px;height:7px;border-radius:50%;background:{{ a.dot }};flex:none;"></span>
+                <span style="font-size:12.5px;font-weight:500;flex:1;">{{ a.label }}</span>
+                <span style="font-size:11px;color:#8A97A8;">{{ a.state }}</span>
+              </a>
+            </sc-for>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+          <div style="padding:14px 18px;border-bottom:1px solid #EEF1F5;"><span style="font-size:13.5px;font-weight:600;">自律調査ジョブ</span></div>
+          <div style="padding:14px 18px;display:flex;flex-direction:column;gap:12px;">
+            <div onClick="{{ d.job1 }}" style="cursor:pointer;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="font-size:12.5px;font-weight:500;flex:1;">ケーソン据付自動化の横断調査</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B45B0;">64%</span></div>
+              <div style="height:5px;background:#EEF1F5;border-radius:3px;overflow:hidden;"><span style="display:block;height:100%;width:64%;background:#6B45B0;border-radius:3px;"></span></div>
+            </div>
+            <div onClick="{{ d.job2 }}" style="cursor:pointer;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="font-size:12.5px;font-weight:500;flex:1;">浚渫土改良材の先行技術調査</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B45B0;">88%</span></div>
+              <div style="height:5px;background:#EEF1F5;border-radius:3px;overflow:hidden;"><span style="display:block;height:100%;width:88%;background:#6B45B0;border-radius:3px;"></span></div>
+            </div>
+            <div style="font-size:11px;color:#8A97A8;">完了すると通知します。結果はすべて根拠付きで保存されます。</div>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+          <div style="padding:14px 18px;border-bottom:1px solid #EEF1F5;"><span style="font-size:13.5px;font-weight:600;">最近のAI実行</span></div>
+          <div style="padding:6px 0;">
+            <div onClick="{{ d.run1 }}" style="display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;" style-hover="background:#FAFBFC;"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A97A8;flex:none;">run-0128</span><span style="font-size:12px;flex:1;">新規性レビュー（発明届 INV-24）</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#1F8255;">根拠8</span></div>
+            <div onClick="{{ d.run2 }}" style="display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;" style-hover="background:#FAFBFC;"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A97A8;flex:none;">run-0127</span><span style="font-size:12px;flex:1;">競合A社の出願動向サマリー</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#1F8255;">根拠15</span></div>
+            <div onClick="{{ d.run3 }}" style="display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;" style-hover="background:#FAFBFC;"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A97A8;flex:none;">run-0126</span><span style="font-size:12px;flex:1;">現場適用スコア（新潟東港）</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#1F8255;">根拠12</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="ダッシュボード" style="flex:1;overflow:auto;padding:22px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:16px;">
+        <div onClick="{{ goField }}" style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;padding:16px 17px;box-shadow:0 1px 2px rgba(16,24,40,.04);display:flex;flex-direction:column;gap:7px;cursor:pointer;" style-hover="background:#FAFBFC;">
+          <div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-size:11.5px;color:#8A97A8;font-weight:500;">未対応の現場課題</span><span style="width:8px;height:8px;border-radius:3px;background:#D6443B;"></span></div>
+          <div style="font-size:28px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.5px;">4</div>
+          <div style="font-size:11px;font-weight:500;color:#C5392F;">うち工期影響あり 2件</div>
+        </div>
+        <div onClick="{{ goInvest }}" style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;padding:16px 17px;box-shadow:0 1px 2px rgba(16,24,40,.04);display:flex;flex-direction:column;gap:7px;cursor:pointer;" style-hover="background:#FAFBFC;">
+          <div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-size:11.5px;color:#8A97A8;font-weight:500;">AI調査 実行中</span><span style="width:8px;height:8px;border-radius:3px;background:#6B45B0;"></span></div>
+          <div style="font-size:28px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.5px;">3</div>
+          <div style="font-size:11px;font-weight:500;color:#8A97A8;">根拠付与率 100%</div>
+        </div>
+        <div onClick="{{ goField }}" style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;padding:16px 17px;box-shadow:0 1px 2px rgba(16,24,40,.04);display:flex;flex-direction:column;gap:7px;cursor:pointer;" style-hover="background:#FAFBFC;">
+          <div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-size:11.5px;color:#8A97A8;font-weight:500;">候補技術（今週）</span><span style="width:8px;height:8px;border-radius:3px;background:#3E76D6;"></span></div>
+          <div style="font-size:28px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.5px;">12</div>
+          <div style="font-size:11px;font-weight:500;color:#8A97A8;">スコア80以上 3件</div>
+        </div>
+        <div onClick="{{ goApprove }}" style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;padding:16px 17px;box-shadow:0 1px 2px rgba(16,24,40,.04);display:flex;flex-direction:column;gap:7px;cursor:pointer;" style-hover="background:#FAFBFC;">
+          <div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-size:11.5px;color:#8A97A8;font-weight:500;">あなたの承認待ち</span><span style="width:8px;height:8px;border-radius:3px;background:#E08A2B;"></span></div>
+          <div style="font-size:28px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.5px;">5</div>
+          <div style="font-size:11px;font-weight:500;color:#B5701A;">期限超過 1件</div>
+        </div>
+        <div onClick="{{ goWatch }}" style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;padding:16px 17px;box-shadow:0 1px 2px rgba(16,24,40,.04);display:flex;flex-direction:column;gap:7px;cursor:pointer;" style-hover="background:#FAFBFC;">
+          <div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-size:11.5px;color:#8A97A8;font-weight:500;">ウォッチアラート</span><span style="width:8px;height:8px;border-radius:3px;background:#2E9E6B;"></span></div>
+          <div style="font-size:28px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.5px;">7</div>
+          <div style="font-size:11px;font-weight:500;color:#8A97A8;">競合の新規出願 2件</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:16px;align-items:start;">
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+          <div style="padding:15px 18px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:14px;font-weight:600;">あなたの対応が必要な案件</span>
+            <span style="flex:1;"></span><a onClick="{{ goApprove }}" style="font-size:12px;cursor:pointer;">すべて見る →</a>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+            <thead><tr>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">種別</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">件名</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">段階</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">期限</th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ dashRows }}" as="w" hint-placeholder-count="4">
+                <tr onClick="{{ w.go }}" style="cursor:pointer;">
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;"><span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:{{ w.kindFg }};background:{{ w.kindBg }};">{{ w.kind }}</span></td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;font-weight:500;">{{ w.title }}</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;color:#5A6678;">{{ w.stage }}</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;font-family:'IBM Plex Mono',monospace;color:{{ w.dueColor }};">{{ w.due }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;min-width:0;">
+          <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+            <div style="padding:15px 18px;border-bottom:1px solid #EEF1F5;"><span style="font-size:14px;font-weight:600;">AI実行と根拠</span></div>
+            <div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:12.5px;color:#5A6678;flex:1;">今週のAI実行</span>
+                <span style="font-size:12.5px;font-weight:600;font-family:'IBM Plex Mono',monospace;">32 件</span>
+              </div>
+              <div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                  <span style="font-size:12.5px;color:#5A6678;flex:1;">根拠（出典）付与率</span>
+                  <span style="font-size:12.5px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:#1F8255;">100%</span>
+                </div>
+                <div style="height:6px;background:#EEF1F5;border-radius:3px;overflow:hidden;"><span style="display:block;height:100%;width:100%;background:#2E9E6B;border-radius:3px;"></span></div>
+              </div>
+              <div style="padding:11px 14px;border-radius:8px;font-size:12px;line-height:1.7;background:#FDEFE0;color:#B5701A;">
+                <strong>AIは決めません。</strong>類似度・スコアは専門家が見る場所を絞るための目印であり、権利侵害や導入可否の判断ではありません。
+              </div>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+            <div style="padding:15px 18px;border-bottom:1px solid #EEF1F5;"><span style="font-size:14px;font-weight:600;">今週のウォッチ</span></div>
+            <div style="padding:6px 0;">
+              <div onClick="{{ goWatch }}" style="display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid #EEF1F5;cursor:pointer;" style-hover="background:#FAFBFC;">
+                <span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:#C5392F;background:#FCE9E7;flex:none;">新規出願</span>
+                <span style="font-size:12.5px;flex:1;">競合A社がケーソン据付関連で2件出願</span>
+              </div>
+              <div onClick="{{ goWatch }}" style="display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid #EEF1F5;cursor:pointer;" style-hover="background:#FAFBFC;">
+                <span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:#2E5AAC;background:#E9F0FB;flex:none;">権利変化</span>
+                <span style="font-size:12.5px;flex:1;">ウォッチ中の特許1件が登録査定</span>
+              </div>
+              <div onClick="{{ goWatch }}" style="display:flex;align-items:center;gap:12px;padding:11px 18px;cursor:pointer;" style-hover="background:#FAFBFC;">
+                <span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:#1F8255;background:#E4F3EC;flex:none;">NETIS</span>
+                <span style="font-size:12.5px;flex:1;">法面吹付関連の新技術3件が登録</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isSearch }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="横断検索" style="flex:1;overflow:auto;padding:22px;">
+      <div style="max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px;">
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);padding:18px;display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;gap:10px;">
+            <input value="ケーソン 据付 自動化" style="flex:1;font-family:inherit;font-size:13.5px;padding:11px 14px;border:1px solid #E3E8EF;border-radius:8px;background:#fff;color:#1A2433;outline:none;box-sizing:border-box;">
+            <button style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:#E08A2B;color:#fff;border:1px solid #E08A2B;padding:8px 18px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;flex:none;">検索</button>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;background:#F8FAFB;border:1px solid #EEF1F5;border-radius:8px;padding:10px 14px;">
+            <span style="font-size:11px;font-weight:600;color:#5A6678;flex:none;padding-top:2px;">AIが組み立てた検索条件</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#1A2433;flex:1;">(ケーソン OR 函体) AND (据付 OR 沈設 OR 位置決め) AND (自動 OR 誘導 OR 支援)</span>
+            <a onClick="{{ d.queryEdit }}" style="font-size:12px;flex:none;cursor:pointer;">直す</a>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <sc-for list="{{ searchChips }}" as="ch" hint-placeholder-count="4">
+            <a onClick="{{ ch.go }}" style="font-size:12.5px;font-weight:500;padding:7px 13px;border-radius:8px;border:1px solid {{ ch.bd }};background:{{ ch.bg }};color:{{ ch.color }};text-decoration:none;cursor:pointer;">{{ ch.label }} <span style="font-family:'IBM Plex Mono',monospace;opacity:.7;">{{ ch.count }}</span></a>
+          </sc-for>
+          <span style="flex:1;"></span>
+          <span style="font-size:11.5px;color:#8A97A8;">関連度順・ダミーデータ</span>
+        </div>
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden;">
+          <sc-for list="{{ results }}" as="r" hint-placeholder-count="4">
+            <div onClick="{{ r.go }}" style="display:flex;align-items:flex-start;gap:14px;padding:14px 18px;border-bottom:1px solid #EEF1F5;cursor:pointer;" style-hover="background:#FAFBFC;">
+              <span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:{{ r.tagFg }};background:{{ r.tagBg }};flex:none;margin-top:2px;">{{ r.tag }}</span>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13.5px;font-weight:600;line-height:1.6;">{{ r.title }}</div>
+                <div style="font-size:11.5px;color:#8A97A8;margin-top:3px;">{{ r.meta }}</div>
+                <div style="font-size:12.5px;color:#5A6678;margin-top:6px;line-height:1.8;">{{ r.summary }}</div>
+              </div>
+              <div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8A97A8;">{{ r.id }}</span>
+                <span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:#B5701A;background:#FDEFE0;">デモ</span>
+              </div>
+            </div>
+          </sc-for>
+          <div style="padding:12px 18px;font-size:11.5px;color:#8A97A8;">やさしい言い換えは各詳細で表示します。要約はAIによるもので、必ず原文の該当箇所へのリンクが付きます。</div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isField }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="現場適用スコア" style="flex:1;overflow:auto;padding:22px;">
+      <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:16px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:13px;color:#5A6678;">新潟東港 防波堤改良工事</span>
+          <span style="color:#C8D0DB;">/</span>
+          <span style="font-size:13px;font-weight:600;">候補技術：水中不分離コンクリート自動打設工法</span>
+          <span onClick="{{ d.fieldTech }}" style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:#1F8255;background:#E4F3EC;cursor:pointer;">NETIS</span>
+        </div>
+        <div style="display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;align-items:start;">
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);padding:20px;display:flex;flex-direction:column;gap:14px;">
+              <span style="font-size:11.5px;font-weight:600;color:#5A6678;letter-spacing:.4px;">FIELD APPLICABILITY SCORE</span>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <div style="width:96px;height:96px;border-radius:50%;background:conic-gradient(#2E9E6B 0 78%, #EEF1F5 78% 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <div style="width:70px;height:70px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;">78</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <span style="font-size:12.5px;color:#5A6678;">100点満点・8軸の重み付き合成</span>
+                  <span style="font-size:11.5px;color:#8A97A8;">規則ベース5軸 ＋ AI推定3軸</span>
+                </div>
+              </div>
+              <div style="padding:10px 14px;border-radius:8px;font-size:12px;line-height:1.7;background:#FDEFE0;color:#B5701A;">
+                <strong>このスコアは導入可否の判断を代替しません。</strong>安全・品質・環境部門の承認を経てはじめて導入できます。
+              </div>
+              <a onClick="{{ goApprove }}" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#E08A2B;color:#fff;border:1px solid #E08A2B;padding:9px 14px;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;cursor:pointer;">導入検討を起票する →</a>
+              <div style="font-size:11px;color:#8A97A8;text-align:center;">起票であって決定ではありません</div>
+            </div>
+            <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+              <div style="padding:14px 18px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:10px;"><span style="font-size:13.5px;font-weight:600;flex:1;">現場条件</span><a onClick="{{ d.siteEdit }}" style="font-size:12px;cursor:pointer;">直す</a></div>
+              <dl style="display:grid;grid-template-columns:max-content 1fr;gap:9px 16px;margin:0;padding:14px 18px;">
+                <dt style="color:#8A97A8;font-weight:600;font-size:12px;">工種</dt><dd style="margin:0;font-size:12.5px;">港湾・防波堤（水中コンクリート工）</dd>
+                <dt style="color:#8A97A8;font-weight:600;font-size:12px;">水深</dt><dd style="margin:0;font-size:12.5px;">12 m（適用範囲 20 m 以内）</dd>
+                <dt style="color:#8A97A8;font-weight:600;font-size:12px;">海象</dt><dd style="margin:0;font-size:12.5px;">波高 1.5 m 超が月間 8 日</dd>
+                <dt style="color:#8A97A8;font-weight:600;font-size:12px;">地盤</dt><dd style="margin:0;font-size:12.5px;">砂質・N値 10〜15</dd>
+              </dl>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+            <div style="padding:14px 18px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:10px;">
+              <span style="font-size:13.5px;font-weight:600;">軸別の内訳</span>
+              <span style="font-size:11.5px;color:#8A97A8;">スコア単独では表示しません。各軸の根拠から原文を開けます</span>
+            </div>
+            <div>
+              <sc-for list="{{ axes }}" as="a" hint-placeholder-count="8">
+                <div style="padding:12px 18px;border-bottom:1px solid #EEF1F5;display:flex;flex-direction:column;gap:6px;">
+                  <div style="display:flex;align-items:center;gap:12px;">
+                    <span style="width:120px;font-size:12.5px;font-weight:600;flex:none;">{{ a.axis }}</span>
+                    <span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:{{ a.fg }};background:{{ a.bg }};flex:none;">{{ a.kind }}</span>
+                    <span style="flex:1;height:6px;background:#EEF1F5;border-radius:3px;overflow:hidden;"><span style="display:block;height:100%;width:{{ a.pct }}%;background:{{ a.bar }};border-radius:3px;"></span></span>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;width:38px;text-align:right;flex:none;">{{ a.val }}</span>
+                    <span style="width:52px;text-align:right;font-size:11px;color:#8A97A8;flex:none;">重み {{ a.weight }}</span>
+                  </div>
+                  <div style="font-size:11.5px;color:#8A97A8;padding-left:132px;line-height:1.7;">{{ a.basis }} <a onClick="{{ a.open }}" style="font-size:11px;cursor:pointer;">原文を開く</a></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isInvest }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="調査案件" style="flex:1;overflow:auto;padding:22px;">
+      <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <sc-for list="{{ investChips }}" as="ch" hint-placeholder-count="3">
+            <a onClick="{{ ch.go }}" style="font-size:12.5px;font-weight:500;padding:7px 13px;border-radius:8px;border:1px solid {{ ch.bd }};background:{{ ch.bg }};color:{{ ch.color }};text-decoration:none;cursor:pointer;">{{ ch.label }} <span style="font-family:'IBM Plex Mono',monospace;opacity:.7;">{{ ch.count }}</span></a>
+          </sc-for>
+          <span style="flex:1;"></span>
+          <a onClick="{{ goCopilot }}" style="display:inline-flex;align-items:center;gap:6px;background:#E08A2B;color:#fff;border:1px solid #E08A2B;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;cursor:pointer;">＋ Copilotから新規調査</a>
+        </div>
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden;">
+          <sc-for list="{{ investRows }}" as="r" hint-placeholder-count="3">
+            <div onClick="{{ r.go }}" style="display:flex;align-items:flex-start;gap:14px;padding:14px 18px;border-bottom:1px solid #EEF1F5;cursor:pointer;" style-hover="background:#FAFBFC;">
+              <span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:{{ r.stFg }};background:{{ r.stBg }};flex:none;margin-top:2px;">{{ r.st }}</span>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13.5px;font-weight:600;line-height:1.6;">{{ r.title }}</div>
+                <div style="font-size:11.5px;color:#8A97A8;margin-top:3px;">{{ r.meta }}</div>
+                <sc-if value="{{ r.pct }}" hint-placeholder-val="{{ false }}">
+                  <div style="height:5px;background:#EEF1F5;border-radius:3px;overflow:hidden;margin-top:8px;max-width:320px;"><span style="display:block;height:100%;width:{{ r.pct }}%;background:#6B45B0;border-radius:3px;"></span></div>
+                </sc-if>
+                <sc-if value="{{ r.note }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:12px;color:#B5701A;margin-top:6px;">{{ r.note }}</div>
+                </sc-if>
+              </div>
+              <div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#1F8255;background:#E4F3EC;border-radius:6px;padding:2px 8px;font-weight:600;">根拠 {{ r.ev }}件</span>
+                <span style="font-size:11px;color:#8A97A8;">{{ r.owner }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:12px;line-height:1.7;background:#FDEFE0;color:#B5701A;">AI調査の直後には必ず人の確認ステップが入ります。根拠が1件も付かないAI実行は保存されません。</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isInvent }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="発明・出願" style="flex:1;overflow:auto;padding:22px;">
+      <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="padding:10px 14px;border-radius:8px;font-size:12px;line-height:1.7;background:#FCE9E7;color:#C5392F;flex:1;"><strong>出願前の発明は最高レベルの機密（C4）です。</strong>関係者以外には、存在すること自体が見えません。</div>
+          <a onClick="{{ d.newInvention }}" style="display:inline-flex;align-items:center;gap:6px;background:#E08A2B;color:#fff;border:1px solid #E08A2B;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;flex:none;cursor:pointer;">＋ 現場の工夫を書き込む</a>
+        </div>
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden;">
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+            <thead><tr>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">発明名</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">発明者</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">段階</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">機密区分</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">AI模擬審査</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">更新</th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ inventRows }}" as="r" hint-placeholder-count="4">
+                <tr onClick="{{ r.go }}" style="cursor:pointer;">
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;font-weight:500;">{{ r.name }}</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;color:#5A6678;">{{ r.inventor }}</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;"><span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:{{ r.stFg }};background:{{ r.stBg }};">{{ r.stage }}</span></td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:{{ r.clsFg }};background:{{ r.clsBg }};border-radius:6px;padding:2px 8px;">{{ r.cls }}</span></td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;font-size:12px;color:#5A6678;">{{ r.exam }}</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;font-family:'IBM Plex Mono',monospace;">{{ r.updated }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:11.5px;color:#8A97A8;">必須入力は「現場」と「工夫の内容（普通の文章）」だけ。分類・整理と類似特許の確認はAIが行い、出願するかを決めるのは技術部門・知財部門・経営です。</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isApprove }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="承認・レビュー" style="flex:1;overflow:auto;padding:22px;">
+      <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <sc-for list="{{ approveChips }}" as="ch" hint-placeholder-count="5">
+            <a onClick="{{ ch.go }}" style="font-size:12.5px;font-weight:500;padding:7px 13px;border-radius:8px;border:1px solid {{ ch.bd }};background:{{ ch.bg }};color:{{ ch.color }};text-decoration:none;cursor:pointer;">{{ ch.label }} <span style="font-family:'IBM Plex Mono',monospace;opacity:.7;">{{ ch.count }}</span></a>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden;">
+          <sc-for list="{{ approveRows }}" as="r" hint-placeholder-count="5">
+            <div onClick="{{ r.go }}" style="display:flex;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid #EEF1F5;cursor:pointer;" style-hover="background:#FAFBFC;">
+              <span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:{{ r.kindFg }};background:{{ r.kindBg }};flex:none;">{{ r.kind }}</span>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:600;">{{ r.title }}</div>
+                <div style="font-size:11.5px;color:#8A97A8;">{{ r.sub }}</div>
+              </div>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:{{ r.dueColor }};flex:none;">{{ r.due }}</span>
+              <a onClick="{{ r.go }}" style="display:inline-flex;align-items:center;gap:6px;border:1px solid #C9D7EC;background:#fff;color:#2E5AAC;padding:6px 11px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;flex:none;cursor:pointer;">開く</a>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:12px;line-height:1.7;background:#FDEFE0;color:#B5701A;">ワークフローのAIステップの直後には、必ず人の確認ステップが入ります。AIから直接「決定」へ進む道はありません。</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isWatch }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="ウォッチ・アラート" style="flex:1;overflow:auto;padding:22px;">
+      <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:14px;">
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);padding:16px 18px;display:flex;align-items:center;gap:16px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13.5px;font-weight:600;">週次AIダイジェスト（8/17〜8/23）</div>
+            <div style="font-size:12px;color:#5A6678;margin-top:3px;">新規出願 5件 ・ 権利状態変更 1件 ・ NETIS新規登録 3件。重要度「高」はケーソン据付関連の競合出願2件です。</div>
+          </div>
+          <a onClick="{{ d.digest }}" style="display:inline-flex;align-items:center;gap:6px;border:1px solid #C9D7EC;background:#fff;color:#2E5AAC;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;flex:none;cursor:pointer;">ダイジェストを読む</a>
+        </div>
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden;">
+          <div style="padding:14px 18px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13.5px;font-weight:600;">アラート</span>
+            <span style="font-size:11.5px;color:#8A97A8;">重要度はAIの目安です。ウォッチ条件はいつでも直せます</span>
+          </div>
+          <sc-for list="{{ watchRows }}" as="r" hint-placeholder-count="4">
+            <div onClick="{{ r.go }}" style="display:flex;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid #EEF1F5;cursor:pointer;" style-hover="background:#FAFBFC;">
+              <span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:{{ r.typeFg }};background:{{ r.typeBg }};flex:none;">{{ r.type }}</span>
+              <span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:{{ r.sevFg }};background:{{ r.sevBg }};flex:none;">重要度 {{ r.sev }}</span>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:600;">{{ r.title }}</div>
+                <div style="font-size:11.5px;color:#8A97A8;">{{ r.sub }}</div>
+              </div>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#8A97A8;flex:none;">{{ r.date }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isReport }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="レポート" style="flex:1;overflow:auto;padding:22px;">
+      <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <sc-for list="{{ reportChips }}" as="ch" hint-placeholder-count="5">
+            <a onClick="{{ ch.go }}" style="font-size:12.5px;font-weight:500;padding:7px 13px;border-radius:8px;border:1px solid {{ ch.bd }};background:{{ ch.bg }};color:{{ ch.color }};text-decoration:none;cursor:pointer;">{{ ch.label }} <span style="font-family:'IBM Plex Mono',monospace;opacity:.7;">{{ ch.count }}</span></a>
+          </sc-for>
+          <span style="flex:1;"></span>
+          <a onClick="{{ d.newReport }}" style="display:inline-flex;align-items:center;gap:6px;background:#E08A2B;color:#fff;border:1px solid #E08A2B;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;cursor:pointer;">＋ レポート作成</a>
+        </div>
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden;">
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+            <thead><tr>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">レポート名</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">種類</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">形式</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">作成者</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">作成日</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">状態</th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ reportRows }}" as="r" hint-placeholder-count="4">
+                <tr onClick="{{ r.go }}" style="cursor:pointer;">
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;font-weight:500;">{{ r.name }}</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;"><span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:{{ r.kindFg }};background:{{ r.kindBg }};">{{ r.kind }}</span></td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;font-family:'IBM Plex Mono',monospace;font-size:11px;">{{ r.fmt }}</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;color:#5A6678;">{{ r.author }}</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;font-family:'IBM Plex Mono',monospace;">{{ r.date }}</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;"><span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:{{ r.stFg }};background:{{ r.stBg }};">{{ r.status }}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:12px;line-height:1.7;background:#FDEFE0;color:#B5701A;">AIの出力をそのまま社外向け資料に貼ることは禁止されています。社外に出す資料は必ず技術部門の確認を経てください。</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isAudit }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="セキュリティ・監査" style="flex:1;overflow:auto;padding:22px;">
+      <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <sc-for list="{{ auditChips }}" as="ch" hint-placeholder-count="5">
+            <a onClick="{{ ch.go }}" style="font-size:12.5px;font-weight:500;padding:7px 13px;border-radius:8px;border:1px solid {{ ch.bd }};background:{{ ch.bg }};color:{{ ch.color }};text-decoration:none;cursor:pointer;">{{ ch.label }} <span style="font-family:'IBM Plex Mono',monospace;opacity:.7;">{{ ch.count }}</span></a>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden;">
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+            <thead><tr>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">日時</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">操作</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">ユーザー</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">対象</th>
+              <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">結果</th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ auditRows }}" as="r" hint-placeholder-count="6">
+                <tr onClick="{{ r.go }}" style="cursor:pointer;">
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;font-family:'IBM Plex Mono',monospace;font-size:11.5px;">{{ r.time }}</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;"><span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:{{ r.acFg }};background:{{ r.acBg }};">{{ r.action }}</span></td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;color:#5A6678;">{{ r.user }}</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;">{{ r.target }}</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;"><span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:{{ r.resFg }};background:{{ r.resBg }};">{{ r.result }}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:12px;line-height:1.7;background:#FDEFE0;color:#B5701A;">監査ログは<strong>追記専用</strong>です。UPDATE・DELETEはデータベース権限のレベルで禁止されています。C3/C4のデータは権限がない場合、存在自体を表示しません（404）。</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="システム管理" style="flex:1;overflow:auto;padding:22px;">
+      <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:16px;">
+        <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start;">
+          <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+            <div style="padding:14px 18px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:10px;">
+              <span style="font-size:13.5px;font-weight:600;">ユーザー・ロール</span>
+              <span style="flex:1;"></span>
+              <a onClick="{{ d.newUser }}" style="display:inline-flex;align-items:center;gap:6px;border:1px solid #C9D7EC;background:#fff;color:#2E5AAC;padding:6px 11px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">＋ ユーザー追加</a>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+              <thead><tr>
+                <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">氏名</th>
+                <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">部署</th>
+                <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">ロール</th>
+                <th style="text-align:left;padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:11px;color:#8A97A8;font-weight:600;background:#FAFBFC;">状態</th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ adminUsers }}" as="u" hint-placeholder-count="5">
+                  <tr onClick="{{ u.go }}" style="cursor:pointer;">
+                    <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;font-weight:500;">{{ u.name }}</td>
+                    <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;color:#5A6678;">{{ u.dept }}</td>
+                    <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;"><span style="font-size:10px;font-weight:600;color:{{ u.roleFg }};border:1px solid {{ u.roleBd }};padding:1px 6px;border-radius:5px;">{{ u.role }}</span></td>
+                    <td style="padding:12px 16px;border-bottom:1px solid #EEF1F5;"><span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:#1F8255;background:#E4F3EC;">有効</span></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px;min-width:0;">
+            <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+              <div style="padding:14px 18px;border-bottom:1px solid #EEF1F5;"><span style="font-size:13.5px;font-weight:600;">システム状態</span></div>
+              <div style="padding:6px 0;">
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 18px;"><span style="width:7px;height:7px;border-radius:50%;background:#2E9E6B;flex:none;"></span><span style="font-size:12.5px;flex:1;">Web（Cloudflare Pages）</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#1F8255;">正常</span></div>
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 18px;"><span style="width:7px;height:7px;border-radius:50%;background:#2E9E6B;flex:none;"></span><span style="font-size:12.5px;flex:1;">データベース（Neon）</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#1F8255;">正常</span></div>
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 18px;"><span style="width:7px;height:7px;border-radius:50%;background:#2E9E6B;flex:none;"></span><span style="font-size:12.5px;flex:1;">AI実行（Claude API）</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#1F8255;">正常</span></div>
+                <div onClick="{{ d.dlq }}" style="display:flex;align-items:center;gap:10px;padding:10px 18px;cursor:pointer;" style-hover="background:#FAFBFC;"><span style="width:7px;height:7px;border-radius:50%;background:#E08A2B;flex:none;"></span><span style="font-size:12.5px;flex:1;">DLQ（失敗ジョブ）</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B5701A;">1件 要調査</span></div>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+              <div style="padding:14px 18px;border-bottom:1px solid #EEF1F5;"><span style="font-size:13.5px;font-weight:600;">日次チェック（Runbook）</span></div>
+              <div style="padding:6px 0;">
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 18px;"><span style="font-size:12.5px;flex:1;">根拠なし成功実行</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#1F8255;">0 件</span></div>
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 18px;"><span style="font-size:12.5px;flex:1;">AIトークン消費（月次予算比）</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5A6678;">42%</span></div>
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 18px;"><span style="font-size:12.5px;flex:1;">最終バックアップ</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5A6678;">08-23 03:00</span></div>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+              <div style="padding:14px 18px;border-bottom:1px solid #EEF1F5;"><span style="font-size:13.5px;font-weight:600;">設定</span></div>
+              <div style="padding:12px 16px;display:flex;gap:6px;flex-wrap:wrap;">
+                <sc-for list="{{ settingsChips }}" as="s" hint-placeholder-count="6">
+                  <a onClick="{{ s.go }}" style="font-size:11.5px;font-weight:500;padding:4px 10px;border-radius:6px;border:1px solid #EEF1F5;background:#F8FAFB;color:#8A97A8;text-decoration:none;cursor:pointer;" style-hover="background:#F2F4F8;">{{ s.label }}</a>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isModules }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="全モジュール" style="flex:1;overflow:auto;padding:22px;">
+      <div style="max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:14px;">
+        <div style="font-size:12.5px;color:#5A6678;">構想している20モジュールの全機能一覧です。青い項目はこのMVPで画面まで実装済み、灰色の項目は今後実装します（クリックで状態を確認できます）。</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px;">
+          <sc-for list="{{ modules }}" as="m" hint-placeholder-count="20">
+            <div style="background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+              <div style="padding:13px 16px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:9px;">
+                <span style="width:18px;text-align:center;">{{ m.icon }}</span>
+                <span style="font-size:13px;font-weight:600;flex:1;">{{ m.label }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8A97A8;">{{ m.num }}</span>
+              </div>
+              <div style="padding:12px 16px;display:flex;gap:6px;flex-wrap:wrap;">
+                <sc-for list="{{ m.items }}" as="it" hint-placeholder-count="6">
+                  <a onClick="{{ it.go }}" style="font-size:11.5px;font-weight:500;padding:4px 10px;border-radius:6px;border:1px solid {{ it.bd }};background:{{ it.bg }};color:{{ it.color }};text-decoration:none;cursor:pointer;">{{ it.label }}</a>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ hasDetail }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeDetail }}" style="position:fixed;inset:0;background:rgba(16,24,40,.32);z-index:50;cursor:pointer;"></div>
+      <div style="position:fixed;top:0;right:0;bottom:0;width:470px;background:#fff;z-index:51;box-shadow:-8px 0 30px rgba(16,24,40,.14);display:flex;flex-direction:column;">
+        <div style="padding:16px 20px;border-bottom:1px solid #EEF1F5;display:flex;align-items:flex-start;gap:10px;">
+          <sc-if value="{{ detailHasTag }}" hint-placeholder-val="{{ false }}"><span style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;color:{{ detail.tagFg }};background:{{ detail.tagBg }};flex:none;margin-top:2px;">{{ detail.tag }}</span></sc-if>
+          <div style="font-size:15px;font-weight:600;line-height:1.6;flex:1;">{{ detail.title }}</div>
+          <button onClick="{{ closeDetail }}" style="border:none;background:#F2F4F8;color:#5A6678;width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:13px;flex:none;font-family:inherit;">✕</button>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:16px;">
+          <sc-if value="{{ detailHasMeta }}" hint-placeholder-val="{{ false }}">
+            <dl style="display:grid;grid-template-columns:max-content 1fr;gap:9px 16px;margin:0;">
+              <sc-for list="{{ detailMeta }}" as="m" hint-placeholder-count="4">
+                <dt style="color:#8A97A8;font-weight:600;font-size:12px;">{{ m.k }}</dt><dd style="margin:0;font-size:12.5px;">{{ m.v }}</dd>
+              </sc-for>
+            </dl>
+          </sc-if>
+          <sc-if value="{{ detailHasBody }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:13px;line-height:1.9;color:#1A2433;">{{ detail.body }}</p></sc-if>
+          <sc-if value="{{ detailHasForm }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <sc-for list="{{ detailForm }}" as="f" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;gap:5px;">
+                  <label style="font-size:12px;font-weight:600;color:#5A6678;">{{ f.label }}</label>
+                  <sc-if value="{{ f.textarea }}" hint-placeholder-val="{{ false }}"><textarea placeholder="{{ f.placeholder }}" style="font-family:inherit;font-size:13px;padding:8px 11px;border:1px solid #E3E8EF;border-radius:8px;min-height:84px;resize:vertical;outline:none;"></textarea></sc-if>
+                  <sc-if value="{{ f.input }}" hint-placeholder-val="{{ true }}"><input placeholder="{{ f.placeholder }}" style="font-family:inherit;font-size:13px;padding:8px 11px;border:1px solid #E3E8EF;border-radius:8px;outline:none;box-sizing:border-box;width:100%;"></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ detailHasCitations }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="font-size:11.5px;font-weight:600;color:#5A6678;margin-bottom:8px;">出どころ</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <sc-for list="{{ detailCitations }}" as="cit" hint-placeholder-count="3">
+                  <span style="font-family:'IBM Plex Mono',monospace;background:#F2F4F8;color:#5A6678;border-radius:5px;padding:3px 8px;font-size:11px;">{{ cit }}</span>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ detailHasNote }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:10px 14px;border-radius:8px;font-size:12px;line-height:1.7;background:#FDEFE0;color:#B5701A;">{{ detail.note }}</div>
+          </sc-if>
+        </div>
+        <sc-if value="{{ detailHasActions }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 20px;border-top:1px solid #EEF1F5;display:flex;gap:9px;flex-wrap:wrap;">
+            <sc-for list="{{ detailActions }}" as="ac" hint-placeholder-count="2">
+              <a onClick="{{ ac.go }}" style="display:inline-flex;align-items:center;gap:6px;background:{{ ac.bg }};color:{{ ac.color }};border:1px solid {{ ac.bd }};padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;cursor:pointer;">{{ ac.label }}</a>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;1440px&quot;,&quot;height&quot;:&quot;960px&quot;},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;copilot&quot;,&quot;options&quot;:[&quot;copilot&quot;,&quot;dashboard&quot;,&quot;search&quot;,&quot;field&quot;,&quot;invest&quot;,&quot;invent&quot;,&quot;approve&quot;,&quot;watchs&quot;,&quot;report&quot;,&quot;audit&quot;,&quot;admin&quot;,&quot;modules&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;画面&quot;},&quot;showRecents&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;サイドバー&quot;,&quot;description&quot;:&quot;最近の会話を表示&quot;}}">
+const CITE_BODY = '原文の該当箇所（ダミー抜粋）:「…水中における函体の位置決めにおいて、音響測位手段と衛星測位手段とを併用し、函体の姿勢情報をリアルタイムに算出する…」。引用文は原文から機械的に切り出されます。AIが引用文を生成することはありません。';
+const CONVOS = [
+  { label: null,
+    q:'軟弱地盤で重機が沈下する。作業ヤードも狭い。使える工法はある？',
+    agent:'Civil Engineer Agent', scope:'特許 214件・NETIS 48件・自社技術 8件を照合', evidence:12,
+    answer:'軟弱地盤・狭隘ヤードの条件に合う候補を3件見つけました。いずれも地盤改良を先行せずに施工できる点が共通です。現場条件（地耐力・ヤード寸法）を登録すると、適用スコアの精度が上がります。',
+    candidates:[
+      { score:82, tone:'#1F8255', name:'超軽量敷鉄板レス地盤支持マット工法', meta:'NETIS登録・事後評価あり ／ 地耐力30kN/m²から適用', tag:'NETIS', tagFg:'#1F8255', tagBg:'#E4F3EC' },
+      { score:74, tone:'#B5701A', name:'狭隘地対応ミニクローラクレーン工法', meta:'他社特許（実施許諾の可能性あり）／ ヤード幅6mから', tag:'他社特許', tagFg:'#B5701A', tagBg:'#FDEFE0' },
+      { score:68, tone:'#B5701A', name:'自社開発・軽量盛土による仮設路盤', meta:'自社技術台帳 T-0038 ／ 東北支店で施工実績2件', tag:'自社技術', tagFg:'#2E5AAC', tagBg:'#E9F0FB' }
+    ],
+    citations:['JP7234567 請求項1','NETIS KT-230045-VE 事後評価','土木学会論文集 2025-B3-042 §4.2','自社技術台帳 T-0038'] },
+  { label:'ケーソン据付の自動化技術',
+    q:'港湾のケーソン据付を自動化したい。使える技術をまとめて。',
+    agent:'技術調査Agent', scope:'特許 214件・NETIS 48件・論文 96件を照合', evidence:9,
+    answer:'据付の「位置決め」「誘導」「姿勢制御」の3工程それぞれに候補が見つかりました。NETIS登録の誘導システムは事後評価で据付精度±5cmの実績があります。2件は他社特許のため、導入にはライセンス確認が必要です。',
+    candidates:[
+      { score:85, tone:'#1F8255', name:'ケーソン据付誘導システム（自動追尾TS併用）', meta:'NETIS KT-230045-VE ／ 据付精度±5cm・省人化20%', tag:'NETIS', tagFg:'#1F8255', tagBg:'#E4F3EC' },
+      { score:76, tone:'#B5701A', name:'水中構造物の据付誘導装置（音響測位併用）', meta:'東亜建設工業の特許 ／ 濁水中でも使用可能', tag:'他社特許', tagFg:'#B5701A', tagBg:'#FDEFE0' },
+      { score:71, tone:'#B5701A', name:'函体姿勢制御用バラスト注水制御装置', meta:'五洋建設の特許 ／ 沈設中の姿勢を自動保持', tag:'他社特許', tagFg:'#B5701A', tagBg:'#FDEFE0' }
+    ],
+    citations:['JP7234567 請求項1','JP7198221 請求項1・3','NETIS KT-230045-VE 事後評価','JP730198 明細書 §0021'] },
+  { label:'浚渫土の改良材、既存特許との違い',
+    q:'発明届「浚渫土の高含水比改良材の配合」は、既存特許とどこが違う？',
+    agent:'Claim Agent', scope:'類似特許 6件と構成要件を突き合わせ', evidence:7,
+    answer:'最も近いJP6891234と構成要件5件を比較しました。「同じ」2件・「似ている」1件・「違う」2件です。違いは改良材の配合比の範囲と、混合撹拌の工程順にあります。この2点が新規性の主張候補です（判断は知財部門が行います）。',
+    candidates:[
+      { score:72, tone:'#B5701A', name:'JP6891234「高含水比土の固化処理材」', meta:'構成要件5件中: 同じ2・似ている1・違う2 ／ 類似度は目印です', tag:'他社特許', tagFg:'#B5701A', tagBg:'#FDEFE0' },
+      { score:58, tone:'#5A6678', name:'JP7011876「浚渫土の再資源化処理方法」', meta:'構成要件5件中: 同じ1・似ている2・違う2', tag:'他社特許', tagFg:'#B5701A', tagBg:'#FDEFE0' },
+      { score:41, tone:'#5A6678', name:'JP6755432「泥土の脱水固化システム」', meta:'工程構成が異なる（脱水先行型）', tag:'参考', tagFg:'#5A6678', tagBg:'#F2F4F8' }
+    ],
+    citations:['JP6891234 請求項1','JP7011876 請求項1・4','発明届 INV-24 構成要件表','Claim Chart CC-0112'] },
+  { label:'無人化法面吹付のNETIS事後評価',
+    q:'無人化法面吹付工法のNETIS事後評価の内容を教えて。',
+    agent:'技術調査Agent', scope:'NETIS 48件・公開施工事例 32件を照合', evidence:5,
+    answer:'NETIS KT-210033-VEの事後評価では、省人化30%・法面での墜落災害リスクの低減が確認されています。適用条件は法面勾配1:0.8まで。東北支店の導入審査（承認済）でもこの評価値が根拠に使われました。',
+    candidates:[
+      { score:88, tone:'#1F8255', name:'無人化法面吹付工法（遠隔操作式）', meta:'NETIS KT-210033-VE ／ 省人化30%・墜落リスク低減', tag:'NETIS', tagFg:'#1F8255', tagBg:'#E4F3EC' },
+      { score:69, tone:'#B5701A', name:'法面吹付ノズルの角度自動調整機構', meta:'自社発明届（出願決定）／ 上記工法の改良発明', tag:'自社発明', tagFg:'#6B45B0', tagBg:'#EDE7F6' }
+    ],
+    citations:['NETIS KT-210033-VE 事後評価','公開施工事例 CS-0271','発明届 INV-19'] },
+  { label:'競合A社の直近1年の出願',
+    q:'競合A社の直近1年の出願動向をまとめて。',
+    agent:'Competitor Agent', scope:'競合A社の公開特許 38件を分析', evidence:15,
+    answer:'直近1年の公開出願は38件で前年比+27%です。ケーソン据付関連（8件）と水中ドローン点検（6件）に集中しており、当社の調査案件「ケーソン据付自動化」と重なる領域が拡大しています。ウォッチの重要度「高」2件はこのクラスタです。',
+    candidates:[
+      { score:8, tone:'#C5392F', name:'ケーソン据付・函体沈設クラスタ', meta:'前年3件→8件に増加 ／ 当社調査案件と重複', tag:'要注視', tagFg:'#C5392F', tagBg:'#FCE9E7' },
+      { score:6, tone:'#B5701A', name:'水中ドローン・点検クラスタ', meta:'新規参入領域 ／ 大学との共同出願2件を含む', tag:'新興', tagFg:'#B5701A', tagBg:'#FDEFE0' },
+      { score:4, tone:'#5A6678', name:'ICT土工・転圧管理クラスタ', meta:'横ばい ／ 当社導入済み技術と競合', tag:'継続', tagFg:'#5A6678', tagBg:'#F2F4F8' }
+    ],
+    citations:['出願人分析 A社 2025-08〜2026-08','JP2026-101234 公開公報','共同出願分析 CF-0009'] },
+  { label: null,
+    q:'狭隘部の配筋検査を省人化したい。',
+    agent:'技術調査Agent', scope:'特許 156件・NETIS 48件・論文 74件を照合', evidence:6,
+    answer:'配筋検査の省人化には「画像認識」「写真測量」「ロボット搬送」の3系統があります。写真測量型はNETIS事後評価で検査時間40%短縮の実績があり、狭隘部に強いのは小型カメラの画像認識型です。',
+    candidates:[
+      { score:81, tone:'#1F8255', name:'写真測量による配筋自動照合システム', meta:'NETIS KT-220018-VE ／ 検査時間40%短縮', tag:'NETIS', tagFg:'#1F8255', tagBg:'#E4F3EC' },
+      { score:76, tone:'#B5701A', name:'配筋検査AIカメラ（小型・狭隘部対応）', meta:'他社特許 ／ かぶり厚も同時計測', tag:'他社特許', tagFg:'#B5701A', tagBg:'#FDEFE0' },
+      { score:62, tone:'#5A6678', name:'ロボットアーム型検査装置', meta:'論文段階 ／ 実用化は2〜3年先の見込み', tag:'研究', tagFg:'#5A6678', tagBg:'#F2F4F8' }
+    ],
+    citations:['NETIS KT-220018-VE 事後評価','JP7302211 請求項1','コンクリート工学年次論文 2025-V2-118'] }
+];
+const AGENTS = [
+  { label:'技術調査Agent', state:'待機', dot:'#2E9E6B', desc:'自社技術・NETIS登録技術を横断調査' },
+  { label:'Patent Search Agent', state:'実行中', dot:'#6B45B0', desc:'先行技術調査案件の検索式・状況' },
+  { label:'Claim Agent', state:'待機', dot:'#2E9E6B', desc:'他社特許 vs 自社案の構成要件比較' },
+  { label:'Examiner Agent', state:'待機', dot:'#2E9E6B', desc:'AI模擬審査（新規性・進歩性リスク）' },
+  { label:'Civil Engineer Agent', state:'実行中', dot:'#6B45B0', desc:'現場適用性スコアリング' },
+  { label:'Competitor Agent', state:'待機', dot:'#2E9E6B', desc:'競合企業の動向モニタリング' },
+  { label:'Landscape Agent', state:'待機', dot:'#2E9E6B', desc:'特許ランドスケープ（国別・出願人別）' },
+  { label:'R&D Agent', state:'待機', dot:'#2E9E6B', desc:'社内研究者・発明者の知見' },
+  { label:'Licensing Agent', state:'待機', dot:'#2E9E6B', desc:'ライセンスIN/OUT案件の評価' },
+  { label:'Legal Agent', state:'待機', dot:'#2E9E6B', desc:'人間確認必須案件の法務・コンプライアンス確認' },
+  { label:'Report Agent', state:'待機', dot:'#2E9E6B', desc:'各種レポートの出力履歴' }
+];
+const SEARCH_DATA = {
+  patent: [
+    { tag:'特許', tagFg:'#2E5AAC', tagBg:'#E9F0FB', id:'JP7234567', title:'ケーソン据付時の位置決め支援システムおよび方法',
+      meta:'五洋建設株式会社 ・ 出典 jpo:j-platpat ・ 取得 2026-07-14',
+      summary:'GNSSと水中音響測位を組み合わせ、函体の位置と姿勢をリアルタイム表示して据付作業を支援するシステム。',
+      detail:{ meta:[['出願人','五洋建設株式会社'],['公開日','2024-11-07'],['権利状態','登録（存続中）'],['IPC','E02D 23/00'],['出典','jpo:j-platpat（2026-07-14 取得）']],
+        body:'やさしい言い換え: 衛星の位置情報（GNSS）と水中の音波による測位を組み合わせて、ケーソン（巨大なコンクリートの箱）を沈める位置と傾きを画面にリアルタイム表示し、据付作業を助ける仕組みです。',
+        citations:['請求項1 原文','明細書 §0015','図面 図3'], note:'要約と言い換えはAIによるものです。判断には必ず原文をご確認ください。',
+        actions:[{label:'現場スコアを見る',screen:'field',primary:true},{label:'Claim比較を開く'},{label:'ウォッチに追加'}] } },
+    { tag:'特許', tagFg:'#2E5AAC', tagBg:'#E9F0FB', id:'JP7198221', title:'水中構造物の据付誘導装置（音響測位併用）',
+      meta:'東亜建設工業株式会社 ・ 出典 jpo:j-platpat ・ 取得 2026-07-14',
+      summary:'音響ビーコンで水中の据付位置を誘導し、潜水士の目視確認を減らす装置。濁水中でも使用可能。',
+      detail:{ meta:[['出願人','東亜建設工業株式会社'],['公開日','2023-08-22'],['権利状態','登録査定（8/20）'],['IPC','E02D 23/08'],['出典','jpo:j-platpat（2026-07-14 取得）']],
+        body:'やさしい言い換え: 水中に置いた音の発信機（ビーコン）を頼りに据付位置まで誘導する装置です。濁った水の中でも使え、潜水士が目で確かめる作業を減らせます。',
+        citations:['請求項1 原文','請求項3 原文'], note:'この特許はウォッチ中です（8/20に登録査定）。',
+        actions:[{label:'Claim比較を開く',primary:true},{label:'ウォッチを見る',screen:'watchs'}] } },
+    { tag:'特許', tagFg:'#2E5AAC', tagBg:'#E9F0FB', id:'JP730198', title:'ケーソン函体の姿勢制御用バラスト注水制御装置',
+      meta:'五洋建設株式会社 ・ 出典 jpo:j-platpat ・ 取得 2026-07-14',
+      summary:'注水量を函体の傾斜計と連動制御し、沈設中の姿勢を自動保持する装置。',
+      detail:{ meta:[['出願人','五洋建設株式会社'],['公開日','2022-03-15'],['権利状態','登録（存続中）'],['IPC','E02D 23/02']],
+        body:'やさしい言い換え: ケーソンを沈めるとき、傾きセンサーの値に合わせて水を入れる量を自動調節し、函体をまっすぐ保つ装置です。',
+        citations:['請求項1 原文','明細書 §0021'], actions:[{label:'現場スコアを見る',screen:'field',primary:true},{label:'類似特許を見る'}] } },
+    { tag:'特許', tagFg:'#2E5AAC', tagBg:'#E9F0FB', id:'JP2026-101234', title:'函体沈設の遠隔操作システム（公開段階）',
+      meta:'競合A社 ・ 出典 jpo:j-platpat ・ 取得 2026-08-22',
+      summary:'競合A社の新規公開出願。作業船からの遠隔操作で沈設全工程を管理する構成。',
+      detail:{ tag:'要注視', tagFg:'#C5392F', tagBg:'#FCE9E7', meta:[['出願人','競合A社'],['公開日','2026-08-20'],['権利状態','審査請求前'],['IPC','E02D 23/00']],
+        body:'当社の調査案件「ケーソン据付自動化」と技術領域が重なります。構成要件の比較と、当社発明届への影響確認をおすすめします。',
+        citations:['公開公報 全文'], note:'重要度「高」のウォッチアラート対象です。',
+        actions:[{label:'Claim比較を開く',primary:true},{label:'アラートを見る',screen:'watchs'}] } }
+  ],
+  paper: [
+    { tag:'論文', tagFg:'#6B45B0', tagBg:'#EDE7F6', id:'2025-B3-042', title:'水中音響測位によるケーソン誘導の据付精度評価',
+      meta:'土木学会論文集 B3（海洋開発）・ 取得 2026-07-10',
+      summary:'音響測位の据付精度を実海域で検証。波高1.2m以下で±8cmの精度を確認。',
+      detail:{ meta:[['掲載','土木学会論文集 B3 Vol.81'],['著者','港湾空港技術研究所ほか'],['年','2025']],
+        body:'実海域試験により、音響測位単独でも波高1.2m以下の条件で±8cmの据付精度が得られることを確認した研究です。当社現場（波高1.5m超が月8日）では気象条件の絞り込みが必要になります。',
+        citations:['§4.2 実験結果','表3 精度比較'], actions:[{label:'関連特許を見る',primary:true},{label:'調査案件に追加',screen:'invest'}] } },
+    { tag:'論文', tagFg:'#6B45B0', tagBg:'#EDE7F6', id:'2024-OD-117', title:'大型函体の沈設挙動シミュレーションと実測比較',
+      meta:'海洋開発論文集 ・ 取得 2026-07-10',
+      summary:'沈設中の函体挙動を数値解析し、注水制御パラメータの最適化手法を提案。',
+      detail:{ meta:[['掲載','海洋開発論文集 Vol.40'],['著者','大学・建設会社 共同研究'],['年','2024']],
+        body:'沈設シミュレーションと実測の比較により、バラスト注水の制御パラメータを事前に最適化できることを示した論文です。',
+        citations:['§3 解析手法','§5 実測比較'], actions:[{label:'関連特許を見る',primary:true}] } }
+  ],
+  netis: [
+    { tag:'NETIS', tagFg:'#1F8255', tagBg:'#E4F3EC', id:'KT-230045-VE', title:'ケーソン据付誘導システム（自動追尾トータルステーション併用）',
+      meta:'NETIS登録 ・ 事後評価あり ・ 取得 2026-07-10',
+      summary:'据付精度±5cmの実績。省人化率20%（事後評価値）。作業船からの遠隔監視に対応。',
+      detail:{ meta:[['NETIS番号','KT-230045-VE'],['評価','事後評価済（VE）'],['開発','建設会社・機器メーカー共同'],['適用工種','港湾・ケーソン据付']],
+        body:'事後評価で据付精度±5cm・省人化率20%が確認された誘導システムです。自動追尾トータルステーションと水中測位を併用し、作業船から遠隔監視できます。',
+        citations:['NETIS 事後評価票','活用効果調査表'], actions:[{label:'現場スコアを見る',screen:'field',primary:true},{label:'ウォッチに追加'}] } },
+    { tag:'NETIS', tagFg:'#1F8255', tagBg:'#E4F3EC', id:'KT-198812-A', title:'水中施工可視化装置（濁水対応ソナーカメラ）',
+      meta:'NETIS登録 ・ 取得 2026-07-10',
+      summary:'濁水中でも構造物の輪郭を可視化。据付・捨石均しの出来形確認に適用実績。',
+      detail:{ meta:[['NETIS番号','KT-198812-A'],['評価','登録（事前審査）'],['適用工種','水中施工全般']],
+        body:'ソナーとカメラを組み合わせ、濁水中でも構造物の輪郭を画面表示する装置です。据付や捨石均しの出来形確認で適用実績があります。',
+        citations:['NETIS 登録情報'], actions:[{label:'現場スコアを見る',screen:'field',primary:true}] } }
+  ],
+  tech: [
+    { tag:'自社技術', tagFg:'#2E5AAC', tagBg:'#E9F0FB', id:'T-0021', title:'ケーソン据付支援AR表示システム（自社開発）',
+      meta:'自社技術台帳 ・ 東北支店 施工実績1件 ・ 更新 2026-06-30',
+      summary:'据付位置と現況をAR重畳表示する自社開発システム。特許出願を検討中。',
+      detail:{ meta:[['台帳番号','T-0021'],['開発部署','04 技術・研究開発'],['実績','東北支店 1件'],['知財','特許出願 検討中']],
+        body:'船上のタブレットに据付目標位置と函体の現在位置をAR表示する自社開発システムです。発明届の起案候補として整理されています。',
+        citations:['自社技術台帳 T-0021','施工報告 東北-2025-118'], actions:[{label:'発明届を起案',screen:'invent',primary:true},{label:'現場スコアを見る',screen:'field'}] } }
+  ]
+};
+const AXES = [
+  { axis:'工種適合性', kind:'規則', val:0.85, weight:20, basis:'港湾・防波堤の水中コンクリート工に工種一致（技術台帳の適用工種と現場工種の照合）', cite:'技術台帳 T-0102 適用工種表' },
+  { axis:'地盤・地形', kind:'規則', val:0.80, weight:15, basis:'水深12m・砂質地盤は適用範囲内（適用条件: 水深20m以内）', cite:'NETIS 登録情報 適用条件' },
+  { axis:'気象・海象', kind:'AI推定', val:0.65, weight:15, basis:'波高1.5m超の日が月間8日。類似現場の施工実績から中断リスクを推定', cite:'類似現場 施工報告 3件' },
+  { axis:'安全性', kind:'AI推定', val:0.82, weight:15, basis:'潜水士作業の削減効果あり。無人化施工の類似事例3件を参照', cite:'公開施工事例 CS-0271 ほか' },
+  { axis:'品質', kind:'規則', val:0.78, weight:10, basis:'水中不分離性の品質規格（JSCE-D104）に適合', cite:'JSCE-D104 適合試験成績書' },
+  { axis:'環境・CO₂', kind:'AI推定', val:0.70, weight:10, basis:'材料使用量の削減見込み。CO₂原単位は類似工法比で推定', cite:'環境評価シート（推定）' },
+  { axis:'生産性・省人化', kind:'規則', val:0.88, weight:10, basis:'NETIS事後評価で省人化30%の実績値', cite:'NETIS KT-230045-VE 事後評価' },
+  { axis:'導入難易度', kind:'AI推定', val:0.60, weight:5, basis:'専用打設船の調達リードタイム3ヶ月が制約', cite:'調達部門ヒアリング記録' }
+];
+const INVEST = [
+  { f:'active', st:'実行中', stFg:'#6B45B0', stBg:'#EDE7F6', title:'ケーソン据付自動化の横断調査', meta:'対象: 特許・NETIS・論文 ・ 検索式 (ケーソン OR 函体) AND (据付 OR 沈設)…', pct:64, ev:38, owner:'担当 佐藤 ・ 8/23 更新',
+    detail:{ tag:'実行中', tagFg:'#6B45B0', tagBg:'#EDE7F6', meta:[['対象','特許・NETIS・論文'],['進捗','64%（特許214件を精査中）'],['根拠','38件'],['担当','佐藤 健一'],['開始','8/21']], body:'AIが検索式を組み立て、ヒットした文献を関連度順に精査しています。完了後は重要文献ランキングの人の確認ステップに進みます。', citations:['検索式 Q-0118','中間ランキング（暫定）'], actions:[{label:'中間結果を見る',primary:true},{label:'検索式を直す'},{label:'調査を停止'}] } },
+  { f:'active', st:'人の確認待ち', stFg:'#B5701A', stBg:'#FDEFE0', title:'浚渫土改良材の先行技術調査', meta:'対象: 特許・論文 ・ 検索式 (浚渫土 OR 高含水比) AND (改良材 OR 固化材)…', pct:null, ev:52, owner:'担当 田中 ・ 8/22 更新', note:'AIの調査結果がそろいました。重要文献ランキングの確認をお願いします。',
+    detail:{ tag:'人の確認待ち', tagFg:'#B5701A', tagBg:'#FDEFE0', meta:[['対象','特許・論文'],['状態','AI調査完了・人の確認待ち'],['根拠','52件'],['担当','田中 美咲'],['期限','8/29']], body:'重要文献ランキング上位10件の妥当性確認が必要です。確認が完了すると先行技術調査書の下書きが生成されます（生成物にも根拠が付きます）。', citations:['重要文献ランキング（52件）','検索式 Q-0114'], actions:[{label:'ランキングを確認する',primary:true},{label:'発明届 INV-24 を開く',screen:'invent'}] } },
+  { f:'active', st:'実行中', stFg:'#6B45B0', stBg:'#EDE7F6', title:'狭隘ヤード向け仮設路盤技術の類似技術調査', meta:'対象: NETIS・自社技術 ・ 検索式 (敷鉄板 OR 仮設路盤) AND (軽量 OR 省人化)…', pct:22, ev:9, owner:'担当 佐藤 ・ 8/23 更新',
+    detail:{ tag:'実行中', tagFg:'#6B45B0', tagBg:'#EDE7F6', meta:[['対象','NETIS・自社技術'],['進捗','22%'],['根拠','9件'],['担当','佐藤 健一']], body:'Copilotの会話「軟弱地盤で重機が沈下…」から保存された調査案件です。', citations:['元の会話ログ','検索式 Q-0121'], actions:[{label:'元の会話を開く',screen:'copilot',primary:true},{label:'調査を停止'}] } },
+  { f:'done', st:'完了', stFg:'#1F8255', stBg:'#E4F3EC', title:'鋼矢板腐食モニタリング 開放特許の導入前調査', meta:'対象: 特許・NETIS ・ 報告書 先行技術調査書 R-0087', pct:null, ev:21, owner:'担当 高橋 ・ 8/15 完了',
+    detail:{ tag:'完了', tagFg:'#1F8255', tagBg:'#E4F3EC', meta:[['対象','特許・NETIS'],['成果物','先行技術調査書 R-0087（PDF）'],['根拠','21件'],['担当','高橋 直樹'],['完了','8/15']], body:'開放特許の導入評価に向けた先行技術調査です。調査書はライセンス審査案件の添付資料になっています。', citations:['先行技術調査書 R-0087'], actions:[{label:'調査書を開く',screen:'report',primary:true},{label:'審査案件を見る',screen:'approve'}] } }
+];
+const INVENT = [
+  { name:'浚渫土の高含水比改良材の配合', inventor:'田中 美咲', stage:'技術レビュー', stFg:'#6B45B0', stBg:'#EDE7F6', cls:'C4', clsFg:'#C5392F', clsBg:'#FCE9E7', exam:'拒絶リスク 中 ・ 根拠8件', updated:'8/22',
+    detail:{ tag:'C4 機密', tagFg:'#C5392F', tagBg:'#FCE9E7', meta:[['発明届','INV-24'],['発明者','田中 美咲（04 技術・研究開発）'],['段階','技術レビュー（期限 9/5）'],['AI模擬審査','拒絶リスク 中']], body:'AI模擬審査では、最も近いJP6891234に対して構成要件2件が一致。配合比の範囲と工程順の2点が差別化候補です。想定拒絶理由は進歩性（29条2項）が中心と推定されています。', citations:['JP6891234 請求項1','模擬審査レポート run-0128','構成要件表'], note:'出願するかを決めるのは技術部門・知財部門・経営です。AIは決めません。', actions:[{label:'技術レビューを開く',screen:'approve',primary:true},{label:'Claim比較を見る',screen:'copilot'}] } },
+  { name:'ケーソン据付誘導AIカメラ', inventor:'伊藤 彩', stage:'法務レビュー', stFg:'#B5701A', stBg:'#FDEFE0', cls:'C4', clsFg:'#C5392F', clsBg:'#FCE9E7', exam:'拒絶リスク 低 ・ 根拠12件', updated:'8/21',
+    detail:{ tag:'C4 機密', tagFg:'#C5392F', tagBg:'#FCE9E7', meta:[['発明届','INV-27'],['発明者','伊藤 彩（08 船舶事業部）'],['段階','法務レビュー（期限 9/12）'],['AI模擬審査','拒絶リスク 低']], body:'競合A社の新規公開出願（水中カメラ校正方法）との比較が推奨されています。法務レビューはConstruction-LegalOps-DXで進行中です。', citations:['模擬審査レポート','JP2026-101234 公開公報'], actions:[{label:'法務レビューを開く',screen:'approve',primary:true},{label:'競合出願と比較',screen:'watchs'}] } },
+  { name:'無人化法面吹付ノズルの角度自動調整機構', inventor:'鈴木 大輔', stage:'出願決定', stFg:'#1F8255', stBg:'#E4F3EC', cls:'C3', clsFg:'#B5701A', clsBg:'#FDEFE0', exam:'完了 ・ 根拠15件', updated:'8/18',
+    detail:{ tag:'出願決定', tagFg:'#1F8255', tagBg:'#E4F3EC', meta:[['発明届','INV-19'],['発明者','鈴木 大輔（03 施工・作業所）'],['段階','出願決定（8/18 経営決裁）'],['状態','知財部門で明細書作成中']], body:'現場の工夫として登録され、AI整理→先行技術調査→技術・知財レビュー→経営決裁の全工程を通過した1件目の発明です。', citations:['決裁記録 8/18','先行技術調査書'], actions:[{label:'明細書の進捗を見る',primary:true}] } },
+  { name:'船上クレーンの動揺補償装置', inventor:'高橋 直樹', stage:'下書き', stFg:'#5A6678', stBg:'#F2F4F8', cls:'C4', clsFg:'#C5392F', clsBg:'#FCE9E7', exam:'未実行', updated:'8/23',
+    detail:{ tag:'下書き', tagFg:'#5A6678', tagBg:'#F2F4F8', meta:[['発明届','INV-29（下書き）'],['発明者','高橋 直樹（08 船舶事業部）'],['更新','8/23']], body:'まだAI整理を実行していません。「AI整理を実行」すると、構成要件の分解と類似特許の確認が自動で行われます（結果には根拠が付きます）。', actions:[{label:'AI整理を実行',primary:true},{label:'下書きを編集'}] } }
+];
+const APPROVE = [
+  { f:'tech', kind:'発明届', kindFg:'#6B45B0', kindBg:'#EDE7F6', title:'「浚渫土の高含水比改良材の配合」発明届', sub:'起案 田中 美咲 ・ 段階 技術レビュー ・ AI模擬審査 根拠8件', due:'期限 9/05', dueColor:'#5A6678',
+    detail:{ tag:'技術レビュー', tagFg:'#6B45B0', tagBg:'#EDE7F6', meta:[['種別','発明届（INV-24）'],['起案','田中 美咲'],['期限','9/05'],['AI模擬審査','拒絶リスク 中・根拠8件']], body:'技術的な新規性・実施可能性の観点でレビューしてください。AI模擬審査の結果は参考情報であり、判断はレビュー担当者が行います。', citations:['発明届 INV-24','模擬審査レポート'], actions:[{label:'承認して次へ',primary:true},{label:'差し戻す'},{label:'保留'}] } },
+  { f:'ip', kind:'技術導入', kindFg:'#2E5AAC', kindBg:'#E9F0FB', title:'ICT盛土転圧管理システムの現場導入', sub:'起案 鈴木 大輔 ・ 段階 知財レビュー ・ 現場スコア 82 / 100', due:'8/21 超過', dueColor:'#C5392F',
+    detail:{ tag:'知財レビュー', tagFg:'#2E5AAC', tagBg:'#E9F0FB', meta:[['種別','技術導入'],['起案','鈴木 大輔'],['期限','8/21（超過）'],['現場スコア','82 / 100']], body:'他社特許のライセンス条件（利用分野・地域）の確認が残っています。期限を超過しているため、優先対応をお願いします。', citations:['ライセンス条件表','現場適用性評価'], note:'期限超過 2日目です。', actions:[{label:'承認して次へ',primary:true},{label:'差し戻す'},{label:'現場スコアを見る',screen:'field'}] } },
+  { f:'mine', kind:'ライセンス', kindFg:'#B5701A', kindBg:'#FDEFE0', title:'開放特許「鋼矢板腐食モニタリング」導入評価', sub:'起案 高橋 直樹 ・ 段階 起案確認 ・ 調査報告 R-0087', due:'期限 8/28', dueColor:'#5A6678',
+    detail:{ tag:'起案確認', tagFg:'#B5701A', tagBg:'#FDEFE0', meta:[['種別','ライセンス（導入）'],['起案','高橋 直樹'],['期限','8/28'],['添付','先行技術調査書 R-0087']], body:'開放特許の導入評価です。ロイヤルティ条件と利用分野の確認後、法務レビューに進みます。', citations:['先行技術調査書 R-0087'], actions:[{label:'承認して次へ',primary:true},{label:'差し戻す'},{label:'調査書を開く',screen:'report'}] } },
+  { f:'legal', kind:'発明届', kindFg:'#6B45B0', kindBg:'#EDE7F6', title:'「ケーソン据付誘導AIカメラ」発明届', sub:'起案 伊藤 彩 ・ 段階 法務レビュー ・ Construction-LegalOps-DX で審査中', due:'期限 9/12', dueColor:'#5A6678',
+    detail:{ tag:'法務レビュー', tagFg:'#6B45B0', tagBg:'#EDE7F6', meta:[['種別','発明届（INV-27）'],['起案','伊藤 彩'],['期限','9/12'],['連携','Construction-LegalOps-DX']], body:'正式な法務審査は別システム（Construction-LegalOps-DX）で行われます。このシステムは審査状況の表示と、法務に渡す資料の準備までを受け持ちます。', actions:[{label:'LegalOps-DXで開く',primary:true},{label:'資料を確認'}] } },
+  { f:'mine', kind:'安全・品質・環境', kindFg:'#C5392F', kindBg:'#FCE9E7', title:'無人化法面吹付工法の東北支店導入 最終確認', sub:'起案 佐藤 健一 ・ 段階 導入可否判断（止める権限を持つ審査）', due:'期限 9/02', dueColor:'#5A6678',
+    detail:{ tag:'SQE審査', tagFg:'#C5392F', tagBg:'#FCE9E7', meta:[['種別','技術導入（最終確認）'],['起案','佐藤 健一'],['期限','9/02'],['審査部門','05 安全・品質・環境']], body:'安全・品質・環境部門による導入可否の最終判断です。この部門は導入を止める権限を持ちます。AIのスコアは判断を代替しません。', citations:['NETIS KT-210033-VE 事後評価','現場適用性評価'], actions:[{label:'導入を承認',primary:true},{label:'導入を止める'},{label:'条件付き承認'}] } },
+  { f:'done', kind:'承認済', kindFg:'#1F8255', kindBg:'#E4F3EC', title:'無人化法面吹付工法を東北支店で導入', sub:'起案 佐藤 健一 ・ 経営会議 8/18 決裁 ・ アーカイブ', due:'完了 8/18', dueColor:'#1F8255',
+    detail:{ tag:'承認済', tagFg:'#1F8255', tagBg:'#E4F3EC', meta:[['種別','技術導入'],['決裁','経営会議 8/18'],['状態','導入準備中']], body:'全レビュー工程を通過し、経営会議で決裁されました。承認履歴は監査ログから追跡できます。', actions:[{label:'承認履歴を見る',screen:'audit',primary:true}] } }
+];
+const WATCH = [
+  { type:'新規出願', typeFg:'#C5392F', typeBg:'#FCE9E7', sev:'高', sevFg:'#C5392F', sevBg:'#FCE9E7', title:'競合A社「函体沈設の遠隔操作システム」出願公開', sub:'ウォッチ: 特許ウォッチ IPC E02D23/00 ・ 自社の調査案件「ケーソン据付自動化」に関連', date:'8/22',
+    detail:{ tag:'重要度 高', tagFg:'#C5392F', tagBg:'#FCE9E7', meta:[['種別','新規出願（公開）'],['出願人','競合A社'],['公報','JP2026-101234'],['AI重要度','高（当社調査案件と重複）']], body:'当社の調査案件「ケーソン据付自動化」および発明届INV-27と技術領域が重なります。構成要件の比較を推奨します。', citations:['JP2026-101234 公開公報'], actions:[{label:'Claim比較を開く',screen:'copilot',primary:true},{label:'調査案件に追加',screen:'invest'}] } },
+  { type:'新規出願', typeFg:'#C5392F', typeBg:'#FCE9E7', sev:'高', sevFg:'#C5392F', sevBg:'#FCE9E7', title:'競合A社「据付誘導用の水中カメラ校正方法」出願公開', sub:'ウォッチ: 競合企業ウォッチ ・ 自社発明届「ケーソン据付誘導AIカメラ」と要比較', date:'8/22',
+    detail:{ tag:'重要度 高', tagFg:'#C5392F', tagBg:'#FCE9E7', meta:[['種別','新規出願（公開）'],['出願人','競合A社'],['AI重要度','高（自社発明届INV-27と近接）']], body:'自社発明届INV-27（法務レビュー中）と構成が近い可能性があります。知財部門への共有と比較検討を推奨します。', actions:[{label:'発明届と比較',screen:'invent',primary:true},{label:'知財部門に共有'}] } },
+  { type:'権利変化', typeFg:'#2E5AAC', typeBg:'#E9F0FB', sev:'中', sevFg:'#B5701A', sevBg:'#FDEFE0', title:'ウォッチ中の特許 JP7198221 が登録査定', sub:'ウォッチ: 特許ウォッチ ・ ライセンス候補として評価中の技術', date:'8/20',
+    detail:{ tag:'重要度 中', tagFg:'#B5701A', tagBg:'#FDEFE0', meta:[['種別','権利状態変更'],['特許','JP7198221（東亜建設工業）'],['変化','審査中 → 登録査定']], body:'ライセンス候補として評価中の据付誘導装置が登録査定になりました。権利範囲が確定するため、ライセンス条件の再確認を推奨します。', actions:[{label:'特許詳細を見る',screen:'search',primary:true},{label:'ライセンス評価を開く'}] } },
+  { type:'NETIS', typeFg:'#1F8255', typeBg:'#E4F3EC', sev:'低', sevFg:'#5A6678', sevBg:'#F2F4F8', title:'法面吹付関連の新技術3件がNETIS登録', sub:'ウォッチ: 技術分野ウォッチ「法面工」', date:'8/19',
+    detail:{ tag:'重要度 低', tagFg:'#5A6678', tagBg:'#F2F4F8', meta:[['種別','NETIS新規登録'],['分野','法面工'],['件数','3件']], body:'導入済みの無人化法面吹付工法の周辺技術です。次回の技術評価時に比較対象として参照できます。', actions:[{label:'NETIS検索で見る',screen:'search',primary:true}] } }
+];
+const REPORT = [
+  { f:'prior', name:'先行技術調査書 R-0087（鋼矢板腐食モニタリング）', kind:'先行技術調査書', kindFg:'#2E5AAC', kindBg:'#E9F0FB', fmt:'PDF', author:'高橋 直樹', date:'8/15', status:'確定', stFg:'#1F8255', stBg:'#E4F3EC',
+    detail:{ tag:'確定', tagFg:'#1F8255', tagBg:'#E4F3EC', meta:[['番号','R-0087'],['種類','先行技術調査書'],['形式','PDF'],['作成','高橋 直樹（8/15）'],['根拠','21件']], body:'開放特許の導入評価に向けた先行技術調査書です。本文中のすべてのAI生成箇所に出典が付いています。', citations:['調査案件 IV-0042'], note:'社外に出す場合は技術部門の確認が必要です。', actions:[{label:'PDFを開く（ダミー）',primary:true},{label:'調査案件を見る',screen:'invest'}] } },
+  { f:'comp', name:'競合A社 出願動向分析（2025下期〜2026上期）', kind:'競合分析', kindFg:'#6B45B0', kindBg:'#EDE7F6', fmt:'DOCX', author:'佐藤 健一', date:'8/21', status:'下書き', stFg:'#5A6678', stBg:'#F2F4F8',
+    detail:{ tag:'下書き', tagFg:'#5A6678', tagBg:'#F2F4F8', meta:[['種類','競合分析'],['形式','DOCX'],['作成','佐藤 健一（8/21）'],['元データ','Competitor Agent run-0127']], body:'Copilotの会話「競合A社の直近1年の出願」から生成された下書きです。確定前に数値と出典の確認が必要です。', citations:['run-0127（根拠15件）'], actions:[{label:'下書きを編集',primary:true},{label:'元の会話を開く',screen:'copilot'}] } },
+  { f:'field', name:'現場適用性評価（新潟東港 防波堤改良）', kind:'現場適用性評価', kindFg:'#1F8255', kindBg:'#E4F3EC', fmt:'PDF', author:'佐藤 健一', date:'8/20', status:'確定', stFg:'#1F8255', stBg:'#E4F3EC',
+    detail:{ tag:'確定', tagFg:'#1F8255', tagBg:'#E4F3EC', meta:[['種類','現場適用性評価'],['形式','PDF'],['作成','佐藤 健一（8/20）'],['スコア','78 / 100（8軸内訳付き）']], body:'水中不分離コンクリート自動打設工法の適用性評価レポートです。スコア単独ではなく必ず軸別内訳と注記が併記されます。', actions:[{label:'PDFを開く（ダミー）',primary:true},{label:'スコア画面を見る',screen:'field'}] } },
+  { f:'exec', name:'技術・知財 月次経営サマリー（2026年7月）', kind:'経営サマリー', kindFg:'#B5701A', kindBg:'#FDEFE0', fmt:'PDF', author:'田中 美咲', date:'8/05', status:'確定', stFg:'#1F8255', stBg:'#E4F3EC',
+    detail:{ tag:'確定', tagFg:'#1F8255', tagBg:'#E4F3EC', meta:[['種類','経営サマリー'],['形式','PDF'],['作成','田中 美咲（8/05）'],['宛先','01 経営・統治・委員会']], body:'発明届の件数、調査案件の進捗、競合動向、ライセンス収支見込みをまとめた月次サマリーです。', actions:[{label:'PDFを開く（ダミー）',primary:true}] } }
+];
+const AUDIT = [
+  { f:'ai', time:'08-23 11:42', action:'ai_run', acFg:'#6B45B0', acBg:'#EDE7F6', user:'佐藤 健一', target:'Civil Engineer Agent（現場適用スコア）・根拠 12件', result:'成功', resFg:'#1F8255', resBg:'#E4F3EC',
+    detail:{ tag:'ai_run', tagFg:'#6B45B0', tagBg:'#EDE7F6', meta:[['実行ID','run-0126'],['ユーザー','佐藤 健一'],['モデル','Claude（推論）'],['根拠','12件（ai_citations）'],['入力トークン','48,211']], body:'AI実行は必ずai_runsとai_citationsに記録されます。根拠が0件の成功実行は保存されません（invalid扱い）。', actions:[{label:'実行結果を見る',screen:'field',primary:true}] } },
+  { f:'search', time:'08-23 11:38', action:'search', acFg:'#2E5AAC', acBg:'#E9F0FB', user:'佐藤 健一', target:'横断検索「ケーソン 据付 自動化」', result:'成功', resFg:'#1F8255', resBg:'#E4F3EC',
+    detail:{ tag:'search', tagFg:'#2E5AAC', tagBg:'#E9F0FB', meta:[['ユーザー','佐藤 健一'],['検索語','ケーソン 据付 自動化'],['結果','特許24・論文12・NETIS10・自社8']], body:'検索条件と結果件数が記録されます。権限条件はSQLのWHERE句で適用されるため、件数からも機密は漏れません。', actions:[{label:'検索結果を見る',screen:'search',primary:true}] } },
+  { f:'all', time:'08-23 10:56', action:'access_denied', acFg:'#C5392F', acBg:'#FCE9E7', user:'山田 太郎', target:'発明届 INV-24（C4・権限なし → 404）', result:'拒否', resFg:'#C5392F', resBg:'#FCE9E7',
+    detail:{ tag:'access_denied', tagFg:'#C5392F', tagBg:'#FCE9E7', meta:[['ユーザー','山田 太郎（07 支店）'],['対象','発明届 INV-24（C4）'],['応答','404 Not Found']], body:'行レベル権限がない場合は403ではなく404を返します。C3/C4のデータは「存在すること自体」を見せません。拒否操作も監査ログに記録されます。', actions:[{label:'権限設定を見る',screen:'admin',primary:true}] } },
+  { f:'export', time:'08-23 10:12', action:'export', acFg:'#B5701A', acBg:'#FDEFE0', user:'高橋 直樹', target:'先行技術調査書 R-0087（PDF）', result:'成功', resFg:'#1F8255', resBg:'#E4F3EC',
+    detail:{ tag:'export', tagFg:'#B5701A', tagBg:'#FDEFE0', meta:[['ユーザー','高橋 直樹'],['対象','R-0087（PDF）'],['機密区分','C2']], body:'Export操作はすべて記録されます。C2以上の資料を社外に出す場合は技術部門の確認が必要です。', actions:[{label:'レポートを見る',screen:'report',primary:true}] } },
+  { f:'login', time:'08-23 09:03', action:'user_login', acFg:'#1F8255', acBg:'#E4F3EC', user:'佐藤 健一', target:'SSO + MFA（Cloudflare Access）', result:'成功', resFg:'#1F8255', resBg:'#E4F3EC',
+    detail:{ tag:'user_login', tagFg:'#1F8255', tagBg:'#E4F3EC', meta:[['ユーザー','佐藤 健一'],['方式','SSO + MFA'],['IP','203.0.113.24（社内）']], body:'ログインはCloudflare Access（SSO+MFA）を経由します。MVP環境ではデモログインに置き換えられています。' } },
+  { f:'login', time:'08-23 08:47', action:'user_login_failed', acFg:'#C5392F', acBg:'#FCE9E7', user:'不明（外部IP）', target:'MFA失敗 3回 → ブロック', result:'拒否', resFg:'#C5392F', resBg:'#FCE9E7',
+    detail:{ tag:'user_login_failed', tagFg:'#C5392F', tagBg:'#FCE9E7', meta:[['ユーザー','不明'],['IP','198.51.100.7（外部）'],['措置','3回失敗で自動ブロック']], body:'セキュリティイベントとして記録され、管理者に通知されています。', actions:[{label:'セキュリティイベント一覧',primary:true}] } }
+];
+const USERS = [
+  { name:'佐藤 健一', dept:'04 技術・研究開発', role:'R&D', roleFg:'#E08A2B', roleBd:'rgba(224,138,43,.4)' },
+  { name:'田中 美咲', dept:'04 技術・研究開発', role:'R&D', roleFg:'#E08A2B', roleBd:'rgba(224,138,43,.4)' },
+  { name:'鈴木 大輔', dept:'03 施工・調達・作業所', role:'SITE', roleFg:'#2E5AAC', roleBd:'#C9D7EC' },
+  { name:'伊藤 彩', dept:'05 安全・品質・環境', role:'SQE（止める権限）', roleFg:'#C5392F', roleBd:'#F0C4C0' },
+  { name:'高橋 直樹', dept:'06 管理本部・経営企画', role:'ADMIN', roleFg:'#6B45B0', roleBd:'#D8CCEE' }
+];
+const SETTINGS = ['AIモデル設定','Agent設定','API設定','外部データ連携','通知設定','ワークフロー設定','マスタ設定','Feature Flags'];
+const MODULES = [
+  { icon:'🔎', label:'統合検索', items:[{l:'すべて検索',go:'search'},{l:'特許検索',go:'search'},{l:'技術検索',go:'search'},{l:'論文・研究検索',go:'search'},{l:'NETIS検索',go:'search'},{l:'出願人・企業検索'},{l:'発明者・研究者検索'},{l:'IPC / CPC検索'},{l:'Claim検索'},{l:'AI自然言語検索',go:'copilot'},{l:'類似技術検索'},{l:'検索履歴・保存検索'}] },
+  { icon:'💡', label:'技術インテリジェンス', items:[{l:'技術一覧'},{l:'工法一覧'},{l:'材料・製品'},{l:'建設機械・設備'},{l:'ICT施工'},{l:'BIM / CIM'},{l:'AI・自動施工'},{l:'ロボティクス'},{l:'技術比較'},{l:'類似技術'},{l:'技術評価'},{l:'技術関連マップ'}] },
+  { icon:'📜', label:'特許インテリジェンス', items:[{l:'特許一覧',go:'search'},{l:'国内特許'},{l:'海外特許'},{l:'特許ファミリー'},{l:'出願人分析'},{l:'発明者分析'},{l:'IPC / CPC分析'},{l:'引用・被引用'},{l:'権利状態'},{l:'審査経過'},{l:'類似特許'},{l:'お気に入り・ウォッチ',go:'watchs'}] },
+  { icon:'🔬', label:'先行技術調査', items:[{l:'新規調査',go:'copilot'},{l:'調査案件一覧',go:'invest'},{l:'先行特許'},{l:'先行論文'},{l:'NETIS・公開技術'},{l:'類似技術調査'},{l:'構成要件別調査'},{l:'引用文献分析'},{l:'重要文献ランキング'},{l:'調査検索式'},{l:'調査履歴',go:'invest'},{l:'調査レポート',go:'report'}] },
+  { icon:'🧩', label:'Claim解析', items:[{l:'Claim解析'},{l:'独立請求項'},{l:'従属請求項'},{l:'構成要件分解'},{l:'Claim Tree'},{l:'Claim Chart'},{l:'Claim Matrix'},{l:'自社技術との比較'},{l:'他社特許との比較'},{l:'複数特許比較'},{l:'類似度分析'},{l:'差分・特徴抽出'}] },
+  { icon:'🤖', label:'AI特許レビュー', items:[{l:'AI Patent Examiner'},{l:'新規性レビュー'},{l:'進歩性レビュー'},{l:'記載要件レビュー'},{l:'明確性レビュー'},{l:'先行文献比較'},{l:'容易想到性分析'},{l:'想定拒絶理由'},{l:'拒絶リスク評価'},{l:'差別化ポイント'},{l:'補正方向候補'},{l:'意見書論点候補'},{l:'AIレビュー履歴'}] },
+  { icon:'📚', label:'論文・研究・NETIS', items:[{l:'論文',go:'search'},{l:'学会資料'},{l:'研究成果'},{l:'大学・研究機関'},{l:'研究者'},{l:'NETIS',go:'search'},{l:'国交省技術資料'},{l:'公開施工事例'},{l:'特許との関連'},{l:'技術との関連'},{l:'最新研究トレンド'}] },
+  { icon:'🏗️', label:'土木技術・現場適用', items:[{l:'現場条件入力'},{l:'現場課題登録',go:'field'},{l:'適用技術検索',go:'field'},{l:'Field Applicability Score',go:'field'},{l:'工種適合性',go:'field'},{l:'地盤・地形適合性',go:'field'},{l:'気象・海象適合性',go:'field'},{l:'安全性評価',go:'field'},{l:'品質評価',go:'field'},{l:'CO₂・環境評価',go:'field'},{l:'生産性・省人化評価',go:'field'},{l:'導入難易度評価',go:'field'},{l:'土木技術分類（港湾・河川・道路ほか13分類）'}] },
+  { icon:'🏢', label:'競合・特許ランドスケープ', items:[{l:'競合企業'},{l:'企業別出願分析'},{l:'技術分野比較'},{l:'工種別比較'},{l:'出願推移'},{l:'共同出願分析'},{l:'大学連携分析'},{l:'技術クラスタ'},{l:'Patent Landscape'},{l:'技術マップ'},{l:'特許密度'},{l:'成長・衰退領域'},{l:'新興技術'},{l:'ホワイトスペース'},{l:'自社ポジション'}] },
+  { icon:'🚀', label:'R&D・発明管理', items:[{l:'R&Dダッシュボード',go:'dashboard'},{l:'研究テーマ'},{l:'技術課題'},{l:'技術ニーズ'},{l:'発明アイデア',go:'invent'},{l:'発明届',go:'invent'},{l:'発明者'},{l:'AI発明整理'},{l:'Claim候補生成'},{l:'先行技術調査',go:'invest'},{l:'発明評価'},{l:'ホワイトスペース候補'},{l:'改良発明候補'},{l:'周辺発明候補'},{l:'技術ロードマップ'},{l:'出願候補',go:'invent'}] },
+  { icon:'🤝', label:'ライセンス・知財ポートフォリオ', items:[{l:'ライセンス候補'},{l:'開放特許'},{l:'技術導入候補'},{l:'技術供与候補'},{l:'ライセンサー'},{l:'ライセンシー'},{l:'自社開発との比較'},{l:'Buy / Build / Partner'},{l:'ライセンス評価'},{l:'自社特許一覧'},{l:'審査中特許'},{l:'登録特許'},{l:'失効・放棄'},{l:'活用状況'},{l:'維持優先度'}] },
+  { icon:'⚖️', label:'法務・知財レビュー', items:[{l:'法務審査依頼'},{l:'知財審査依頼'},{l:'審査案件一覧'},{l:'NDA確認'},{l:'権利状態確認'},{l:'独占 / 非独占'},{l:'利用分野'},{l:'地域条件'},{l:'契約期間'},{l:'ロイヤルティ'},{l:'サブライセンス'},{l:'改良発明'},{l:'契約リスク'},{l:'法務確認事項'},{l:'Construction-LegalOps-DX連携'}] },
+  { icon:'👁️', label:'ウォッチ・モニタリング', items:[{l:'マイウォッチ',go:'watchs'},{l:'特許ウォッチ',go:'watchs'},{l:'競合企業ウォッチ',go:'watchs'},{l:'技術分野ウォッチ',go:'watchs'},{l:'IPC / CPCウォッチ'},{l:'発明者ウォッチ'},{l:'論文ウォッチ'},{l:'NETISウォッチ'},{l:'権利状態変更',go:'watchs'},{l:'新規出願',go:'watchs'},{l:'AI重要度判定',go:'watchs'},{l:'アラート一覧',go:'watchs'},{l:'週次AIダイジェスト',go:'watchs'}] },
+  { icon:'🧠', label:'AIアシスタント', items:[{l:'Civil IP Copilot',go:'copilot'},{l:'技術調査Agent',go:'copilot'},{l:'Patent Search Agent'},{l:'Research Agent'},{l:'Claim Agent',go:'copilot'},{l:'Examiner Agent'},{l:'Competitor Agent',go:'copilot'},{l:'Landscape Agent'},{l:'Civil Engineer Agent',go:'copilot'},{l:'R&D Agent'},{l:'Licensing Agent'},{l:'Legal Agent'},{l:'Report Agent'},{l:'Agent実行履歴'},{l:'自律調査ジョブ',go:'invest'}] },
+  { icon:'📖', label:'ナレッジ', items:[{l:'技術ナレッジ'},{l:'特許ナレッジ'},{l:'論文ナレッジ'},{l:'NETISナレッジ'},{l:'過去調査',go:'invest'},{l:'AIレビュー'},{l:'発明事例',go:'invent'},{l:'ライセンス事例'},{l:'法務レビュー結果'},{l:'施工事例'},{l:'FAQ'},{l:'RAG検索'}] },
+  { icon:'📊', label:'レポート', items:[{l:'レポート作成',go:'report'},{l:'技術調査報告書',go:'report'},{l:'特許調査報告書',go:'report'},{l:'先行技術調査書',go:'report'},{l:'Claim比較レポート'},{l:'新規性レビュー'},{l:'進歩性レビュー'},{l:'AI模擬審査報告'},{l:'競合分析',go:'report'},{l:'Patent Landscape'},{l:'ホワイトスペース分析'},{l:'現場適用性評価',go:'report'},{l:'R&D提案'},{l:'経営サマリー',go:'report'},{l:'出力履歴',go:'report'}] },
+  { icon:'✅', label:'ワークフロー・承認', items:[{l:'マイタスク',go:'approve'},{l:'承認待ち',go:'approve'},{l:'技術レビュー',go:'approve'},{l:'知財レビュー',go:'approve'},{l:'法務レビュー',go:'approve'},{l:'差戻案件'},{l:'承認済',go:'approve'},{l:'保留'},{l:'アーカイブ'},{l:'コメント'},{l:'承認履歴',go:'audit'}] },
+  { icon:'🗃️', label:'データ管理', items:[{l:'データソース'},{l:'特許データ'},{l:'論文データ'},{l:'NETISデータ'},{l:'技術マスタ'},{l:'IPC / CPCマスタ'},{l:'土木工種マスタ'},{l:'企業マスタ'},{l:'発明者マスタ'},{l:'データクレンジング'},{l:'名寄せ'},{l:'重複管理'},{l:'AI分類'},{l:'データ品質'},{l:'Provenance / 出典'}] },
+  { icon:'⚙️', label:'システム管理', items:[{l:'ユーザー管理',go:'admin'},{l:'ロール・権限',go:'admin'},{l:'部門管理'},{l:'プロジェクト権限'},{l:'AIモデル設定'},{l:'Agent設定'},{l:'API設定'},{l:'外部データ連携'},{l:'通知設定'},{l:'ワークフロー設定'},{l:'マスタ設定'},{l:'バックアップ'},{l:'システム状態',go:'admin'},{l:'Feature Flags'}] },
+  { icon:'🛡️', label:'セキュリティ・監査', items:[{l:'監査ログ',go:'audit'},{l:'ログイン履歴',go:'audit'},{l:'AI利用履歴',go:'audit'},{l:'検索履歴',go:'audit'},{l:'データ閲覧履歴'},{l:'Export履歴',go:'audit'},{l:'更新・削除履歴'},{l:'承認履歴',go:'audit'},{l:'権限変更履歴'},{l:'セキュリティイベント',go:'audit'},{l:'データアクセス監査'}] }
+];
+const TITLES = {
+  copilot: { title:'Civil IP Copilot', subtitle:'普通の日本語で聞く。答えには必ず出どころが付く。決めるのは人。' },
+  dashboard: { title:'ダッシュボード', subtitle:'今日の動きと、あなたの対応が必要なこと' },
+  search: { title:'横断検索', subtitle:'特許・論文・NETIS・自社技術をひとつの検索窓から' },
+  field: { title:'現場適用性評価', subtitle:'この現場で本当に使えるかを、点数と内訳で示します' },
+  invest: { title:'調査案件', subtitle:'AIが調べ、人が確認する先行技術調査の一覧' },
+  invent: { title:'発明・出願', subtitle:'現場の工夫を発明として蓄え、出願は人が決める' },
+  approve: { title:'承認・レビュー', subtitle:'あなたの対応が必要なワークフロー' },
+  watchs: { title:'ウォッチ・アラート', subtitle:'競合・特許・NETISの動きを見張る' },
+  report: { title:'レポート', subtitle:'調査・分析の出力履歴と新規作成' },
+  audit: { title:'セキュリティ・監査', subtitle:'誰が・いつ・何をしたかを追記専用ログで追跡する' },
+  admin: { title:'システム管理', subtitle:'ユーザー・権限・稼働状態・設定の管理' },
+  modules: { title:'全モジュール', subtitle:'構想中の20モジュール・全機能の一覧（青い項目は実装済み画面へ移動できます）' }
+};
+class Component extends DCLogic {
+  state = { screen: null, convo: 0, detail: null, searchTab: 'patent', investF: 'active', approveF: 'mine', reportF: 'all', auditF: 'all' };
+  go(screen) { this.setState({ screen, detail: null }); }
+  od(spec) { return () => this.setState({ detail: spec }); }
+  chips(defs, cur, key) {
+    return defs.map(c => ({
+      label: c.label, count: c.count,
+      color: cur === c.key ? '#B5701A' : '#5A6678',
+      bg: cur === c.key ? '#FDEFE0' : '#fff',
+      bd: cur === c.key ? '#E08A2B' : '#E3E8EF',
+      go: () => this.setState({ [key]: c.key })
+    }));
+  }
+  renderVals() {
+    const screen = this.state.screen ?? this.props.screen ?? 'copilot';
+    const showRecents = this.props.showRecents ?? true;
+    const convoIdx = this.state.convo ?? 0;
+    const convo = CONVOS[convoIdx] || CONVOS[0];
+    const det = this.state.detail || {};
+    const navItem = (icon, label, key, count) => ({
+      icon, label, count: count || null,
+      active: screen === key,
+      color: screen === key ? '#1A2433' : '#5A6678',
+      bg: screen === key ? '#F2F4F8' : 'transparent',
+      go: () => this.go(key)
+    });
+    const citeDetail = (label) => this.od({ title: label, tag:'原文', tagFg:'#5A6678', tagBg:'#F2F4F8',
+      meta:[['出典',label],['取得','2026-07-14（自動取り込み）']], body: CITE_BODY,
+      note:'原文の閲覧も監査ログに記録されます。' });
+    const searchRows = SEARCH_DATA[this.state.searchTab] || SEARCH_DATA.patent;
+    const invRows = INVEST.filter(r => this.state.investF === 'all' ? true : r.f === this.state.investF);
+    const apRows = APPROVE.filter(r => this.state.approveF === 'mine' ? r.f !== 'done' : r.f === this.state.approveF);
+    const repRows = REPORT.filter(r => this.state.reportF === 'all' ? true : r.f === this.state.reportF);
+    const audRows = AUDIT.filter(r => this.state.auditF === 'all' ? true : r.f === this.state.auditF);
+    const actionBtn = (a) => ({
+      label: a.label,
+      color: a.primary ? '#fff' : (a.screen ? '#2E5AAC' : '#5A6678'),
+      bg: a.primary ? '#E08A2B' : '#fff',
+      bd: a.primary ? '#E08A2B' : (a.screen ? '#C9D7EC' : '#E3E8EF'),
+      go: () => a.screen ? this.setState({ screen: a.screen, detail: null }) : this.setState({ detail: null })
+    });
+    return {
+      navMain: [
+        navItem('🧠', 'Copilot に聞く', 'copilot'),
+        navItem('📊', 'ダッシュボード', 'dashboard'),
+        navItem('🔎', '横断検索', 'search')
+      ],
+      tasks: [
+        navItem('🏗️', '現場の困りごと', 'field', 4),
+        navItem('🔬', '調査案件', 'invest', 3),
+        navItem('🚀', '発明・出願', 'invent', 4),
+        navItem('✅', '承認・レビュー', 'approve', 5),
+        navItem('👁️', 'ウォッチ・アラート', 'watchs', 7),
+        navItem('📊', 'レポート', 'report', null),
+        navItem('🛡️', 'セキュリティ・監査', 'audit', null),
+        navItem('⚙️', 'システム管理', 'admin', null)
+      ],
+      recents: showRecents ? CONVOS.map((c, i) => ({ c, i })).filter(x => x.c.label).map(x => {
+        const active = screen === 'copilot' && convoIdx === x.i;
+        return {
+          label: x.c.label,
+          color: active ? '#1A2433' : '#8A97A8',
+          bg: active ? '#F2F4F8' : 'transparent',
+          go: () => this.setState({ screen: 'copilot', convo: x.i, detail: null })
+        };
+      }) : [],
+      promptChips: [
+        { label:'狭隘部の配筋検査を省人化したい', go: () => this.setState({ screen:'copilot', convo: 5, detail: null }) },
+        { label:'この発明届に似た特許はある？', go: () => this.setState({ screen:'copilot', convo: 2, detail: null }) },
+        { label:'競合A社の最近の出願動向は？', go: () => this.setState({ screen:'copilot', convo: 4, detail: null }) }
+      ],
+      askDefault: () => this.setState({ screen:'copilot', convo: 0, detail: null }),
+      agents: AGENTS.map(a => ({ ...a, go: this.od({ title: a.label, tag:'Agent', tagFg:'#6B45B0', tagBg:'#EDE7F6',
+        meta:[['状態', a.state],['担当領域', a.desc],['参照データ','担当領域の一次データのみ']],
+        body:'各Agentは自身の担当領域のデータのみを参照し、回答には必ず根拠（出典）が付きます。根拠が1件も付かない実行は保存されません。',
+        actions:[{label:'このAgentに聞く', screen:'copilot', primary:true}] }) })),
+      candidates: convo.candidates.map(c => ({ ...c, go: this.od({ title: c.name, tag: c.tag, tagFg: c.tagFg, tagBg: c.tagBg,
+        meta:[['適用スコア', c.score + ' / 100（目印であり判断ではありません）'],['概要', c.meta]],
+        body:'このスコアはAIが現場条件と技術情報を突き合わせた目安です。導入には安全・品質・環境部門の承認が必要です。',
+        citations: convo.citations.slice(0, 2),
+        actions:[{label:'現場スコアの内訳を見る', screen:'field', primary:true},{label:'調査案件に追加', screen:'invest'}] }) })),
+      citations: convo.citations.map(cit => ({ label: cit, go: citeDetail(cit) })),
+      convoQ: convo.q, convoAgent: convo.agent, convoScope: convo.scope,
+      convoEvidence: convo.evidence, convoAnswer: convo.answer,
+      searchChips: [
+        { label:'特許', key:'patent', count: SEARCH_DATA.patent.length },
+        { label:'論文', key:'paper', count: SEARCH_DATA.paper.length },
+        { label:'NETIS', key:'netis', count: SEARCH_DATA.netis.length },
+        { label:'自社技術', key:'tech', count: SEARCH_DATA.tech.length }
+      ].map(c => ({ ...this.chips([{key:c.key,label:c.label,count:c.count}], this.state.searchTab, 'searchTab')[0] })),
+      results: searchRows.map(r => ({ ...r, go: this.od({ title: r.title, tag: r.detail.tag || r.tag, tagFg: r.detail.tagFg || r.tagFg, tagBg: r.detail.tagBg || r.tagBg,
+        meta: (r.detail.meta || []).map(m => ({ k: m[0], v: m[1] })), body: r.detail.body, citations: r.detail.citations, note: r.detail.note, actions: r.detail.actions }) })),
+      axes: AXES.map(a => ({
+        axis: a.axis, kind: a.kind, val: a.val.toFixed(2), pct: Math.round(a.val * 100), weight: a.weight, basis: a.basis,
+        fg: a.kind === 'AI推定' ? '#B5701A' : '#2E5AAC',
+        bg: a.kind === 'AI推定' ? '#FDEFE0' : '#E9F0FB',
+        bar: a.kind === 'AI推定' ? '#E08A2B' : '#3E76D6',
+        open: this.od({ title: a.axis + ' の評価根拠', tag: a.kind, tagFg: a.kind === 'AI推定' ? '#B5701A' : '#2E5AAC', tagBg: a.kind === 'AI推定' ? '#FDEFE0' : '#E9F0FB',
+          meta:[['評価値', a.val.toFixed(2) + '（重み ' + a.weight + '）'],['算出方法', a.kind === 'AI推定' ? 'AIによる推定（類似事例参照）' : '規則ベース（条件照合）']],
+          body: a.basis + '。' + (a.kind === 'AI推定' ? 'AI推定の軸は、参照した類似事例が根拠として記録されます。' : '規則ベースの軸は、照合した条件表が根拠として記録されます。'),
+          citations:[a.cite], note:'この軸の値だけで判断せず、必ず内訳全体と原文をご確認ください。' })
+      })),
+      investChips: this.chips([{key:'active',label:'進行中',count:3},{key:'done',label:'完了',count:1},{key:'all',label:'すべて',count:4}], this.state.investF, 'investF'),
+      investRows: invRows.map(r => ({ ...r, go: this.od({ title: r.title, tag: r.detail.tag, tagFg: r.detail.tagFg, tagBg: r.detail.tagBg,
+        meta: (r.detail.meta || []).map(m => ({ k: m[0], v: m[1] })), body: r.detail.body, citations: r.detail.citations, note: r.detail.note, actions: r.detail.actions }) })),
+      inventRows: INVENT.map(r => ({ ...r, go: this.od({ title: r.name, tag: r.detail.tag, tagFg: r.detail.tagFg, tagBg: r.detail.tagBg,
+        meta: (r.detail.meta || []).map(m => ({ k: m[0], v: m[1] })), body: r.detail.body, citations: r.detail.citations, note: r.detail.note, actions: r.detail.actions }) })),
+      approveChips: this.chips([{key:'mine',label:'マイタスク',count:5},{key:'tech',label:'技術レビュー',count:1},{key:'ip',label:'知財レビュー',count:1},{key:'legal',label:'法務レビュー',count:1},{key:'done',label:'承認済・アーカイブ',count:1}], this.state.approveF, 'approveF'),
+      approveRows: apRows.map(r => ({ ...r, go: this.od({ title: r.title, tag: r.detail.tag, tagFg: r.detail.tagFg, tagBg: r.detail.tagBg,
+        meta: (r.detail.meta || []).map(m => ({ k: m[0], v: m[1] })), body: r.detail.body, citations: r.detail.citations, note: r.detail.note, actions: r.detail.actions }) })),
+      watchRows: WATCH.map(r => ({ ...r, go: this.od({ title: r.title, tag: r.detail.tag, tagFg: r.detail.tagFg, tagBg: r.detail.tagBg,
+        meta: (r.detail.meta || []).map(m => ({ k: m[0], v: m[1] })), body: r.detail.body, citations: r.detail.citations, actions: r.detail.actions }) })),
+      reportChips: this.chips([{key:'all',label:'すべて',count:4},{key:'prior',label:'先行技術調査書',count:1},{key:'comp',label:'競合分析',count:1},{key:'field',label:'現場適用性評価',count:1},{key:'exec',label:'経営サマリー',count:1}], this.state.reportF, 'reportF'),
+      reportRows: repRows.map(r => ({ ...r, go: this.od({ title: r.name, tag: r.detail.tag, tagFg: r.detail.tagFg, tagBg: r.detail.tagBg,
+        meta: (r.detail.meta || []).map(m => ({ k: m[0], v: m[1] })), body: r.detail.body, citations: r.detail.citations, note: r.detail.note, actions: r.detail.actions }) })),
+      auditChips: this.chips([{key:'all',label:'すべて',count:6},{key:'login',label:'ログイン',count:2},{key:'ai',label:'AI利用',count:1},{key:'search',label:'検索',count:1},{key:'export',label:'Export',count:1}], this.state.auditF, 'auditF'),
+      auditRows: audRows.map(r => ({ ...r, go: this.od({ title: r.action + ' — ' + r.time, tag: r.detail.tag, tagFg: r.detail.tagFg, tagBg: r.detail.tagBg,
+        meta: (r.detail.meta || []).map(m => ({ k: m[0], v: m[1] })), body: r.detail.body, actions: r.detail.actions }) })),
+      adminUsers: USERS.map(u => ({ ...u, go: this.od({ title: u.name, tag: u.role, tagFg: u.roleFg, tagBg: '#F2F4F8',
+        meta:[['部署', u.dept],['ロール', u.role],['最終ログイン','08-23 09:03'],['多要素認証','有効']],
+        body:'権限のないモジュールは項目自体が表示されません。行レベル権限（C3/C4）はプロジェクト単位で付与します。',
+        actions:[{label:'権限を変更', primary:true},{label:'監査ログを見る', screen:'audit'}] }) })),
+      settingsChips: SETTINGS.map(s => ({ label: s, go: this.od({ title: s, tag:'バックログ', tagFg:'#5A6678', tagBg:'#F2F4F8',
+        meta:[['状態','未実装（本番実装フェーズで着手）']],
+        body:'この設定画面はMVPの範囲外です。MVP評価の完了後、本番実装フェーズのバックログとして着手します。' }) })),
+      dashRows: APPROVE.filter(r => r.f !== 'done').slice(0, 4).map(r => ({ kind: r.kind, kindFg: r.kindFg, kindBg: r.kindBg, title: r.title, stage: (r.detail.tag || ''), due: r.due.replace('期限 ',''), dueColor: r.dueColor,
+        go: this.od({ title: r.title, tag: r.detail.tag, tagFg: r.detail.tagFg, tagBg: r.detail.tagBg,
+          meta: (r.detail.meta || []).map(m => ({ k: m[0], v: m[1] })), body: r.detail.body, citations: r.detail.citations, note: r.detail.note, actions: r.detail.actions }) })),
+      d: {
+        job1: this.od({ title:'ケーソン据付自動化の横断調査', tag:'実行中', tagFg:'#6B45B0', tagBg:'#EDE7F6', meta:[['進捗','64%'],['根拠','38件']], body:'自律調査ジョブとして実行中です。完了後は調査案件の「人の確認待ち」に進みます。', actions:[{label:'調査案件で見る',screen:'invest',primary:true}] }),
+        job2: this.od({ title:'浚渫土改良材の先行技術調査', tag:'実行中', tagFg:'#6B45B0', tagBg:'#EDE7F6', meta:[['進捗','88%'],['根拠','52件']], body:'まもなく完了します。完了後は重要文献ランキングの人の確認が必要です。', actions:[{label:'調査案件で見る',screen:'invest',primary:true}] }),
+        run1: this.od({ title:'run-0128 新規性レビュー（発明届 INV-24）', tag:'ai_run', tagFg:'#6B45B0', tagBg:'#EDE7F6', meta:[['Agent','Examiner Agent'],['根拠','8件'],['結果','拒絶リスク 中']], body:'発明届INV-24のAI模擬審査です。最も近いJP6891234との差分2点が差別化候補として整理されました。', citations:['JP6891234 請求項1','構成要件表'], actions:[{label:'発明届を見る',screen:'invent',primary:true}] }),
+        run2: this.od({ title:'run-0127 競合A社の出願動向サマリー', tag:'ai_run', tagFg:'#6B45B0', tagBg:'#EDE7F6', meta:[['Agent','Competitor Agent'],['根拠','15件']], body:'競合A社の直近1年の出願38件を分析。レポート下書きが生成されています。', citations:['出願人分析 A社'], actions:[{label:'会話を開く',screen:'copilot',primary:true},{label:'レポートを見る',screen:'report'}] }),
+        run3: this.od({ title:'run-0126 現場適用スコア（新潟東港）', tag:'ai_run', tagFg:'#6B45B0', tagBg:'#EDE7F6', meta:[['Agent','Civil Engineer Agent'],['根拠','12件'],['スコア','78 / 100']], body:'水中不分離コンクリート自動打設工法の適用性評価です。', actions:[{label:'スコアを見る',screen:'field',primary:true}] }),
+        queryEdit: this.od({ title:'検索条件を直す', tag:'AI生成', tagFg:'#6B45B0', tagBg:'#EDE7F6',
+          form:[{label:'検索式（編集できます）', textarea:true, input:false, placeholder:'(ケーソン OR 函体) AND (据付 OR 沈設 OR 位置決め) AND (自動 OR 誘導 OR 支援)'}],
+          body:'AIが組み立てた検索式は自由に編集できます。編集した式は検索履歴に保存されます。', actions:[{label:'この条件で再検索', primary:true},{label:'キャンセル'}] }),
+        fieldTech: this.od({ title:'水中不分離コンクリート自動打設工法', tag:'NETIS', tagFg:'#1F8255', tagBg:'#E4F3EC', meta:[['NETIS番号','KT-230045-VE'],['評価','事後評価済'],['省人化','30%（実績値）']], body:'NETIS登録技術です。事後評価の実績値が現場適用スコアの「生産性・省人化」軸の根拠になっています。', citations:['NETIS 事後評価票'], actions:[{label:'検索結果で見る',screen:'search',primary:true}] }),
+        siteEdit: this.od({ title:'現場条件を直す', tag:'現場', tagFg:'#2E5AAC', tagBg:'#E9F0FB',
+          form:[{label:'現場名', input:true, textarea:false, placeholder:'新潟東港 防波堤改良工事'},{label:'水深（m）', input:true, textarea:false, placeholder:'12'},{label:'困りごと（普通の文章でOK）', textarea:true, input:false, placeholder:'波高1.5m超の日が多く、据付作業が月8日中断している'}],
+          body:'条件を直すとスコアが再計算されます（再計算もAI実行として記録されます）。', actions:[{label:'保存して再計算', primary:true},{label:'キャンセル'}] }),
+        digest: this.od({ title:'週次AIダイジェスト（8/17〜8/23）', tag:'ダイジェスト', tagFg:'#2E5AAC', tagBg:'#E9F0FB',
+          meta:[['新規出願','5件（うち重要度高 2件）'],['権利状態変更','1件（JP7198221 登録査定）'],['NETIS新規登録','3件（法面工）']],
+          body:'今週の要点: 競合A社がケーソン据付関連で2件出願し、当社の調査案件・発明届と重なる領域が拡大しています。知財部門への共有を推奨します。',
+          citations:['JP2026-101234','JP7198221','NETIS 新着一覧'], note:'重要度はAIの目安です。', actions:[{label:'アラート一覧を見る', primary:true}] }),
+        newInvention: this.od({ title:'現場の工夫を書き込む', tag:'発明届', tagFg:'#6B45B0', tagBg:'#EDE7F6',
+          form:[{label:'現場', input:true, textarea:false, placeholder:'例: 新潟東港 防波堤改良工事'},{label:'工夫の内容（普通の文章でOK・1分で終わります）', textarea:true, input:false, placeholder:'例: ケーソンの据付時、カメラ映像にAIで目標位置を重ねて表示する治具を作った'}],
+          body:'必須はこの2つだけ。写真も添付できます。分類・整理と類似特許の確認はAIが行います。', note:'書き込んだ内容はC4機密として扱われ、関係者以外には存在自体が見えません。',
+          actions:[{label:'下書きを保存', primary:true},{label:'キャンセル'}] }),
+        newReport: this.od({ title:'レポート作成', tag:'新規', tagFg:'#B5701A', tagBg:'#FDEFE0',
+          form:[{label:'種類', input:true, textarea:false, placeholder:'先行技術調査書 / 競合分析 / 現場適用性評価 / 経営サマリー'},{label:'元にするデータ', input:true, textarea:false, placeholder:'例: 調査案件 IV-0042、run-0127'}],
+          body:'AIが下書きを生成します。生成物のすべての記述に出典が付き、確定は人が行います。', actions:[{label:'下書きを生成', primary:true},{label:'キャンセル'}] }),
+        newUser: this.od({ title:'ユーザー追加', tag:'管理', tagFg:'#6B45B0', tagBg:'#EDE7F6',
+          form:[{label:'氏名', input:true, textarea:false, placeholder:'例: 山本 花子'},{label:'部署', input:true, textarea:false, placeholder:'例: 07 支店・営業所'},{label:'ロール', input:true, textarea:false, placeholder:'R&D / SITE / SQE / ADMIN ほか'}],
+          body:'本番ではIdP（SSO）と連携し、ロールはグループから自動付与されます。MVPでは手動追加のみです。', actions:[{label:'追加', primary:true},{label:'キャンセル'}] }),
+        dlq: this.od({ title:'DLQ（失敗ジョブ）1件', tag:'要調査', tagFg:'#B5701A', tagBg:'#FDEFE0',
+          meta:[['ジョブ','embed（埋め込み生成）'],['対象','JP2026-101234'],['失敗理由','文書サイズ超過（章分割で再実行可）']],
+          body:'特許明細書がトークン上限を超えたため失敗しました。章単位に分割して再実行できます。', actions:[{label:'分割して再実行', primary:true},{label:'スキップ'}] })
+      },
+      title: TITLES[screen].title,
+      subtitle: TITLES[screen].subtitle,
+      isCopilot: screen === 'copilot', isDash: screen === 'dashboard', isSearch: screen === 'search', isField: screen === 'field',
+      isInvest: screen === 'invest', isInvent: screen === 'invent', isApprove: screen === 'approve', isWatch: screen === 'watchs', isReport: screen === 'report',
+      isAudit: screen === 'audit', isAdmin: screen === 'admin', isModules: screen === 'modules',
+      goModules: () => this.go('modules'),
+      modColor: screen === 'modules' ? '#1A2433' : '#5A6678',
+      modBg: screen === 'modules' ? '#F2F4F8' : 'transparent',
+      modules: MODULES.map((m, i) => ({
+        icon: m.icon, label: m.label, num: String(i + 1).padStart(2, '0'),
+        items: m.items.map(it => it.go ? {
+          label: it.l, go: () => this.go(it.go), color: '#2E5AAC', bg: '#E9F0FB', bd: '#C9D7EC'
+        } : {
+          label: it.l, color: '#8A97A8', bg: '#F8FAFB', bd: '#EEF1F5',
+          go: this.od({ title: it.l, tag:'バックログ', tagFg:'#5A6678', tagBg:'#F2F4F8', meta:[['状態','未実装（テーブル設計のみ先行）']], body:'この機能はMVPの範囲外です。MVP評価の完了後、本番実装フェーズのバックログとして着手します。' })
+        })
+      })),
+      goField: () => this.go('field'),
+      goSearch: () => this.go('search'),
+      goInvest: () => this.go('invest'),
+      goApprove: () => this.go('approve'),
+      goWatch: () => this.go('watchs'),
+      goCopilot: () => this.setState({ screen: 'copilot', convo: 0, detail: null }),
+      hasDetail: !!this.state.detail,
+      closeDetail: () => this.setState({ detail: null }),
+      detail: det,
+      detailHasTag: !!det.tag,
+      detailHasMeta: !!(det.meta && det.meta.length),
+      detailMeta: (det.meta || []).map(m => Array.isArray(m) ? { k: m[0], v: m[1] } : m),
+      detailHasBody: !!det.body,
+      detailHasForm: !!(det.form && det.form.length),
+      detailForm: det.form || [],
+      detailHasCitations: !!(det.citations && det.citations.length),
+      detailCitations: det.citations || [],
+      detailHasNote: !!det.note,
+      detailHasActions: !!(det.actions && det.actions.length),
+      detailActions: (det.actions || []).map(actionBtn)
+    };
+  }
+}
+</script>
+</body>
+</html>

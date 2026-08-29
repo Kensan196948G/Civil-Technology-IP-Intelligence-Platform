@@ -1,7 +1,6 @@
 import { ListView } from '@/components/ListView';
 import { loadFieldAxisRows } from '../_lib';
 
-export const runtime = 'edge';
 
 export default async function FieldAxisProductivityPage() {
   const rows = await loadFieldAxisRows(['生産性・省人化評価', '生産性', '省人化']);

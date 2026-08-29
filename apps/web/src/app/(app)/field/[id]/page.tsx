@@ -8,7 +8,6 @@ import { Meter, Notice, Panel, Tag } from '@/components/ui';
 import { DetailChip } from '@/components/detail/DetailOpener';
 import { siteConditionLabel, siteConditionValue } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 // 設計案（design-B-copilot）の「現場適用性評価」。
 // 左にリング表示のスコアと現場条件、右に8軸の内訳。各軸から評価根拠（原文）を開ける。

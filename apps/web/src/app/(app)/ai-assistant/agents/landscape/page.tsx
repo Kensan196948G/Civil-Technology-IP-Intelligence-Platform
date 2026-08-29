@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 import { InfoPage } from '@/components/InfoPage';
 
-export const runtime = 'edge';
 
 type CountRow = { key: string; n: number };
 

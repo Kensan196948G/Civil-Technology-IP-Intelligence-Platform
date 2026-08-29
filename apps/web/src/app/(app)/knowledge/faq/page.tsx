@@ -6,7 +6,6 @@ const FAQS = [
   { q: '契約や法務判断はこのシステムで完結しますか？', a: 'いいえ。正式な契約・権利判断はConstruction-LegalOps-DXと連携します。このシステムは技術・知財インテリジェンスの正本です。' }
 ];
 
-export const runtime = 'edge';
 
 export default function FaqPage() {
   return (

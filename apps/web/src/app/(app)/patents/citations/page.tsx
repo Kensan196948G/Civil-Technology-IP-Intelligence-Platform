@@ -5,7 +5,6 @@ import { desc, eq, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { ymd } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 // 特許同士の引用関係（親出願・優先権・審査官引用等）はMVPスキーマに存在しないため、
 // AI実行が根拠として特許を引用した記録（ai_citations, source_type='patent'）を

@@ -5,7 +5,6 @@ import { loginAsAction } from './actions';
 // 割り当てられず、同一パスへのServer Action POSTが405になる
 // （next start ローカル/CI環境では発生しないため見過ごされていた）。
 // 動的レンダリングを強制してPOSTを受けられるようにする。
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 export default function LoginPage() {

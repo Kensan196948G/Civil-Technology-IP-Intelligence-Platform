@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { asc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 // kind='match'/'similar' の要件は先行技術と重複するため、補正の方向性をAIが提案する。
 const AMENDMENT_SUGGESTION: Record<string, string> = {

@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { asc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 // CodeRabbit指摘: 構成要件単位の一致・類似は容易想到性（特許法29条2項）の
 // 確定判断ではない（複数文献の組合せ・動機付け等、専門家による総合判断が必要）。

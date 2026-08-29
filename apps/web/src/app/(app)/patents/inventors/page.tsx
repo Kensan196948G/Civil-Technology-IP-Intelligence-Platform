@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { asc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 // 特許スキーマは出願人（applicant_name）のみを保持し、発明者個人を紐づけるカラムを
 // 持たない（MVPスキーマの制約）。そのため、社内外の技術者・研究者を管理する

@@ -1,6 +1,5 @@
 import { createReportAction } from './actions';
 
-export const runtime = 'edge';
 
 const KIND_OPTIONS = [
   ['tech-survey', '技術調査報告書'], ['patent-survey', '特許調査報告書'], ['prior-art', '先行技術調査書'],

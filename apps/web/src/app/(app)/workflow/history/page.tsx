@@ -5,7 +5,6 @@ import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { stamp } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 const DECISION_LABEL: Record<string, string> = { approved: '承認', rejected: '差戻し', hold: '保留' };
 

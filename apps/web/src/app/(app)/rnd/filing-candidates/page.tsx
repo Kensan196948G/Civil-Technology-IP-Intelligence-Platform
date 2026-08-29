@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { desc, eq, and, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 const STATUS_LABEL: Record<string, string> = {
   ip_review: '知財レビュー中', legal_review: '法務レビュー中', approved: '承認済み'

@@ -1,7 +1,6 @@
 import { ListView } from '@/components/ListView';
 import { loadFieldAxisRows } from '../_lib';
 
-export const runtime = 'edge';
 
 export default async function FieldAxisWeatherPage() {
   const rows = await loadFieldAxisRows(['気象・海象適合性', '海象', '気象']);

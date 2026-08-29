@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { count } from 'drizzle-orm';
 import { InfoPage } from '@/components/InfoPage';
 
-export const runtime = 'edge';
 
 export default async function AdminStatusPage() {
   const db = getDb(getDatabaseUrl());

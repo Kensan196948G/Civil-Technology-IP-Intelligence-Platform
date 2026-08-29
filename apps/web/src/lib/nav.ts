@@ -6,6 +6,85 @@ export type NavGroup = { label: string; children: NavLeaf[] };
 export type NavItem = NavLeaf | NavGroup;
 export type NavSection = { key: string; icon: string; label: string; items: NavItem[] };
 
+// ---- デザインB（AI対話型）のサイドバー構造 ----
+export type PrimaryNavItem = { icon: string; label: string; href: string };
+export type TaskNavItem = { icon: string; label: string; href: string; count?: number };
+
+/** 主要メニュー（サイドバー上部） */
+export const PRIMARY_NAV: PrimaryNavItem[] = [
+  { icon: '🧠', label: 'Copilot に聞く', href: '/ai-assistant' },
+  { icon: '📊', label: 'ダッシュボード', href: '/dashboard' },
+  { icon: '🔎', label: '横断検索', href: '/search' }
+];
+
+/** 会話から始まる仕事（タスクナビ） */
+export const TASK_NAV: TaskNavItem[] = [
+  { icon: '🏗️', label: '現場の困りごと', href: '/field', count: 4 },
+  { icon: '🔬', label: '調査案件', href: '/investigations', count: 3 },
+  { icon: '🚀', label: '発明・出願', href: '/inventions', count: 4 },
+  { icon: '✅', label: '承認・レビュー', href: '/approvals', count: 5 },
+  { icon: '👁️', label: 'ウォッチ・アラート', href: '/watch', count: 7 },
+  { icon: '📊', label: 'レポート', href: '/reports' },
+  { icon: '🛡️', label: 'セキュリティ・監査', href: '/audit' },
+  { icon: '⚙️', label: 'システム管理', href: '/admin' }
+];
+
+/** 最近の会話（デモデータ。実装後は会話履歴テーブルに置き換える） */
+export const RECENT_CONVOS: Array<{ label: string; href: string }> = [
+  { label: 'ケーソン据付の自動化技術', href: '/ai-assistant' },
+  { label: '浚渫土の改良材、既存特許との違い', href: '/ai-assistant' },
+  { label: '無人化法面吹付のNETIS事後評価', href: '/ai-assistant' },
+  { label: '競合A社の直近1年の出願', href: '/ai-assistant' }
+];
+
+/** ヘッダーのタイトル・サブタイトル（デザインBのTITLESに対応） */
+export type RouteMeta = { title: string; subtitle: string };
+
+const PRIMARY_ROUTE_META: Record<string, RouteMeta> = {
+  '/ai-assistant': { title: 'Civil IP Copilot', subtitle: '普通の日本語で聞く。答えには必ず出どころが付く。決めるのは人。' },
+  '/dashboard': { title: 'ダッシュボード', subtitle: '今日の動きと、あなたの対応が必要なこと' },
+  '/search': { title: '横断検索', subtitle: '特許・論文・NETIS・自社技術をひとつの検索窓から' },
+  '/field': { title: '現場適用性評価', subtitle: 'この現場で本当に使えるかを、点数と内訳で示します' },
+  '/investigations': { title: '調査案件', subtitle: 'AIが調べ、人が確認する先行技術調査の一覧' },
+  '/inventions': { title: '発明・出願', subtitle: '現場の工夫を発明として蓄え、出願は人が決める' },
+  '/approvals': { title: '承認・レビュー', subtitle: 'あなたの対応が必要なワークフロー' },
+  '/watch': { title: 'ウォッチ・アラート', subtitle: '競合・特許・NETISの動きを見張る' },
+  '/reports': { title: 'レポート', subtitle: '調査・分析の出力履歴と新規作成' },
+  '/audit': { title: 'セキュリティ・監査', subtitle: '誰が・いつ・何をしたかを追記専用ログで追跡する' },
+  '/admin': { title: 'システム管理', subtitle: 'ユーザー・権限・稼働状態・設定の管理' },
+  '/modules': { title: '全モジュール', subtitle: '構想中の20モジュール・全機能の一覧（青い項目は実装済み画面へ移動できます）' }
+};
+
+/** パス名からヘッダー表示用のタイトル/サブタイトルを解決する */
+export function resolveRouteMeta(pathname: string): RouteMeta {
+  const exact = PRIMARY_ROUTE_META[pathname];
+  if (exact) return exact;
+
+  // 主要ルートの配下（例 /approvals/[id]）は親のメタを継承
+  const parents = Object.keys(PRIMARY_ROUTE_META)
+    .filter(p => p !== '/admin' && pathname.startsWith(p + '/'))
+    .sort((a, b) => b.length - a.length);
+  const parent = parents[0];
+  if (parent) {
+    const meta = PRIMARY_ROUTE_META[parent];
+    if (meta) return meta;
+  }
+
+  // 従来メニューの葉ラベルからタイトルを導出
+  for (const section of NAV_SECTIONS) {
+    for (const item of section.items) {
+      const leaves = 'children' in item ? item.children : [item];
+      for (const leaf of leaves) {
+        const p = leaf.href.split('?')[0]!;
+        if (p !== '/search' && p !== '/field' && p !== '/approvals' && p !== '/watch' && p !== '/reports' && p !== '/audit' && p !== '/admin' && p !== '/ai-assistant' && p !== '/dashboard' && p !== '/investigations' && p !== '/inventions' && (pathname === p || pathname.startsWith(p + '/'))) {
+          return { title: leaf.label, subtitle: `${section.label} — 一覧・詳細` };
+        }
+      }
+    }
+  }
+  return { title: pathname, subtitle: '' };
+}
+
 function isGroup(item: NavItem): item is NavGroup {
   return 'children' in item;
 }

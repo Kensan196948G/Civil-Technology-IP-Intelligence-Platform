@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 import Link from 'next/link';
 
-export const runtime = 'edge';
 
 type SimilarRow = {
   id: string; our_text: string; quoted_text: string; rationale: string | null;

@@ -6,7 +6,6 @@ import { ListView } from '@/components/ListView';
 import { resolveCitationLabels } from '@/lib/citations';
 import { stampSec } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 const KIND_LABEL: Record<string, string> = {
   examine: 'AI調査', claim_compare: 'Claim比較', field_score: '現場適用性スコアリング'

@@ -5,7 +5,6 @@ import { count, desc } from 'drizzle-orm';
 import { InfoPage } from '@/components/InfoPage';
 import { stampSec } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 export default async function AdminBackupPage() {
   const db = getDb(getDatabaseUrl());

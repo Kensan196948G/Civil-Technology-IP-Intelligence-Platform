@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 import Link from 'next/link';
 
-export const runtime = 'edge';
 
 type ClaimRow = {
   id: string; claim_no: number; is_independent: boolean; text: string;

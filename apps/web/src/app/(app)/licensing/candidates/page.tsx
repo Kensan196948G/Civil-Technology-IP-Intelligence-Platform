@@ -5,7 +5,6 @@ import { desc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { resolveLicenseSubjects, LICENSE_KIND_LABEL, LICENSE_STATUS_LABEL, LICENSE_STATUS_COLOR } from '@/lib/licensing-subjects';
 
-export const runtime = 'edge';
 
 export default async function LicensingCandidatesPage() {
   const db = getDb(getDatabaseUrl());

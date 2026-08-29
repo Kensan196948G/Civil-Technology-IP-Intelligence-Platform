@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { asc, or, ilike } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 export default async function LandscapeUniversityTiesPage() {
   const db = getDb(getDatabaseUrl());

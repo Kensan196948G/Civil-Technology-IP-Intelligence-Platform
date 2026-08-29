@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 // MVPスキーマは特許庁の公式な権利状態（登録・拒絶・存続期間満了等）を保持しない。
 // 出願日・公開日という実データから、特許法上の存続期間（出願から原則20年）を

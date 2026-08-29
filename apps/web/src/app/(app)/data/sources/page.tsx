@@ -4,7 +4,6 @@ import { sql } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { stampSec } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 const KIND_LABEL: Record<string, string> = { patent: '特許', paper: '論文', netis: 'NETIS' };
 

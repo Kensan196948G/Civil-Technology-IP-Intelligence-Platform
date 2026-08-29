@@ -5,7 +5,6 @@ import { desc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { resolveLicenseSubjects, LICENSE_STATUS_LABEL, LICENSE_STATUS_COLOR } from '@/lib/licensing-subjects';
 
-export const runtime = 'edge';
 
 type Row = { id: string; strategy: 'Build' | 'Buy' | 'Partner'; title: string; sub: string; status?: string };
 

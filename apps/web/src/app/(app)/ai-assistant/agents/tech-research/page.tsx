@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 type Row = { id: string; title: string; sub: string; source: 'technology' | 'netis'; href: string | null };
 

@@ -5,7 +5,6 @@ import { desc, eq, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { stamp } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 export default async function RndClaimCandidatesPage() {
   const db = getDb(getDatabaseUrl());

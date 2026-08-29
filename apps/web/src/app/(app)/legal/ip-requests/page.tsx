@@ -5,7 +5,6 @@ import { desc, eq, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { WORKFLOW_KIND_LABEL, WORKFLOW_STATUS_LABEL } from '@/lib/legal-workflow-labels';
 
-export const runtime = 'edge';
 
 export default async function LegalIpRequestsPage() {
   const db = getDb(getDatabaseUrl());

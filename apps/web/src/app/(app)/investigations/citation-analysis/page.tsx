@@ -5,7 +5,6 @@ import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { resolveCitationLabels } from '@/lib/citations';
 
-export const runtime = 'edge';
 
 const RUN_KIND_LABEL: Record<string, string> = {
   examine: 'AI模擬審査', claim_compare: 'Claim比較', field_score: '現場適用性スコアリング'

@@ -6,7 +6,6 @@ import { ListView } from '@/components/ListView';
 import { resolveCitationLabels } from '@/lib/citations';
 import { stampSec } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 const RUN_KIND_LABEL: Record<string, string> = {
   examine: 'AI模擬審査',

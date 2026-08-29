@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { sql } from 'drizzle-orm';
 
-export const runtime = 'edge';
 
 // MVP版の検索API。本番のハイブリッド検索（pg_trgm+pgvector+RRF）は
 // docs/30-design/06-search-and-rag-design.md の設計に基づき別途実装する。

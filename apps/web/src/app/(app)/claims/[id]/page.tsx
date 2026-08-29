@@ -5,7 +5,6 @@ import { eq, sql } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { updateRowKind } from '../actions';
 
-export const runtime = 'edge';
 
 const KIND_LABEL: Record<string, string> = { match: '一致', similar: '類似', differ: '相違' };
 const KIND_COLOR: Record<string, string> = { match: 'var(--green)', similar: 'var(--amber)', differ: 'var(--brick)' };

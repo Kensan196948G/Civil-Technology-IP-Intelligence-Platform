@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { like } from 'drizzle-orm';
 import { InfoPage, type InfoBlock } from '@/components/InfoPage';
 
-export const runtime = 'edge';
 
 type IntegrationValue = { enabled?: boolean; note?: string };
 

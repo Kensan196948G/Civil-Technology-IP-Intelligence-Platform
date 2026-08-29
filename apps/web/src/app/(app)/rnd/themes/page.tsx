@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 const KIND_LABEL: Record<string, string> = {
   technology: '技術', method: '工法', material: '材料', machine: '建設機械'

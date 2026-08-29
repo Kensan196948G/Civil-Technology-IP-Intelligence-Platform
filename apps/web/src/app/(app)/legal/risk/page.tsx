@@ -5,7 +5,6 @@ import { desc, isNotNull } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { WORKFLOW_KIND_LABEL, type AiRiskSummary } from '@/lib/legal-workflow-labels';
 
-export const runtime = 'edge';
 
 const RISK_AXES: { key: keyof AiRiskSummary; label: string }[] = [
   { key: 'novelty', label: '新規性' },

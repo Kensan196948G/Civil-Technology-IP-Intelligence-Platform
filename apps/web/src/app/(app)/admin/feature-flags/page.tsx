@@ -5,7 +5,6 @@ import { asc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { stampSec } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 export default async function AdminFeatureFlagsPage() {
   const db = getDb(getDatabaseUrl());

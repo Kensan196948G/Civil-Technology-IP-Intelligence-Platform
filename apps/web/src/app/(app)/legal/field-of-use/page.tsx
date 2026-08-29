@@ -7,7 +7,6 @@ import {
   LICENSE_KIND_LABEL, licenseSubjectLabel, resolveLicenseSubjects, termField
 } from '@/lib/legal-license-subjects';
 
-export const runtime = 'edge';
 
 // 契約上の利用分野（terms.fieldOfUse）に加えて、対象特許・技術に登録された
 // work_types（工種）を参考情報として表示する（土木領域での「利用分野」に直結する実データ）。

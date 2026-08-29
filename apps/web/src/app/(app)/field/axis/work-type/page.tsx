@@ -1,7 +1,6 @@
 import { ListView } from '@/components/ListView';
 import { loadFieldAxisRows } from '../_lib';
 
-export const runtime = 'edge';
 
 export default async function FieldAxisWorkTypePage() {
   const rows = await loadFieldAxisRows(['工種適合性', '工種']);

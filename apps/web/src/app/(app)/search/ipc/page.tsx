@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 import Link from 'next/link';
 
-export const runtime = 'edge';
 
 type CodeRow = { code: string; patent_n: number };
 type PatentRow = { id: string; title: string; applicant_name: string; country: string; ipc_codes: string[] };

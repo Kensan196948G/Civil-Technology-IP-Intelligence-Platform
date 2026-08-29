@@ -5,7 +5,6 @@ import { eq, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { LICENSE_KIND_LABEL, LICENSE_STATUS_LABEL, LICENSE_STATUS_COLOR } from '@/lib/licensing-subjects';
 
-export const runtime = 'edge';
 
 export default async function OpenPatentsPage() {
   const db = getDb(getDatabaseUrl());

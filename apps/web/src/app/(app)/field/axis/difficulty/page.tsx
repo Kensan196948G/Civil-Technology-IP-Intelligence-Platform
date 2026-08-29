@@ -1,7 +1,6 @@
 import { ListView } from '@/components/ListView';
 import { loadFieldAxisRows } from '../_lib';
 
-export const runtime = 'edge';
 
 export default async function FieldAxisDifficultyPage() {
   const rows = await loadFieldAxisRows(['導入難易度評価', '導入難易度', '難易度']);

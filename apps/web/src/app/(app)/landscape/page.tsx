@@ -5,7 +5,6 @@ import { sql, count } from 'drizzle-orm';
 import Link from 'next/link';
 import { InfoPage } from '@/components/InfoPage';
 
-export const runtime = 'edge';
 
 const SUB_PAGES = [
   { label: '競合企業', href: '/landscape/competitors' },

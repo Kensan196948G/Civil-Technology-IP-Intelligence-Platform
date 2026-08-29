@@ -19,10 +19,10 @@ export async function submitSiteIssue(formData: FormData) {
 
   // 業務データ作成と監査ログ記録を原子的に行う
   const sql = getRawSql(dbUrl);
-  await sql.transaction([
-    sql`insert into site_issues (id, site_id, body, photos, status, created_by)
+  await sql.transaction((txn) => [
+    txn`insert into site_issues (id, site_id, body, photos, status, created_by)
         values (${issueId}, ${siteId}, ${body}, '{}', 'open', ${me.id})`,
-    sql`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
+    txn`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
         values (${auditId}, ${me.id}, 'create', 'site_issue', ${issueId}, 'success', '{}'::jsonb)`
   ]);
 

@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 const KIND_LABEL: Record<string, string> = { invention: '発明届', field_adoption: '現場導入', license_in: 'ライセンスIN' };
 

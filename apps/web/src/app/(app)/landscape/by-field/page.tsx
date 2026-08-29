@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 const SOURCE_LABEL: Record<string, string> = { technology: '自社技術台帳', netis: 'NETIS登録技術' };
 

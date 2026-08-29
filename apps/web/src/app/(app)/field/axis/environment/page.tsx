@@ -1,7 +1,6 @@
 import { ListView } from '@/components/ListView';
 import { loadFieldAxisRows } from '../_lib';
 
-export const runtime = 'edge';
 
 export default async function FieldAxisEnvironmentPage() {
   const rows = await loadFieldAxisRows(['CO₂・環境評価', '環境', 'CO2', 'CO₂']);

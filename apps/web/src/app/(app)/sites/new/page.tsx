@@ -5,7 +5,6 @@ import { desc } from 'drizzle-orm';
 import Link from 'next/link';
 import { createSite } from './actions';
 
-export const runtime = 'edge';
 
 // /tech/civil-category/* と同じ工種区分コード・ラベルを使う（現場のタグ付けと技術検索の
 // 工種区分を揃えることで、後の現場適用性評価の候補技術検索と整合させるため）。

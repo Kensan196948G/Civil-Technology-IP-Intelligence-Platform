@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import Link from 'next/link';
 
-export const runtime = 'edge';
 
 export default async function SitesPage() {
   const db = getDb(getDatabaseUrl());

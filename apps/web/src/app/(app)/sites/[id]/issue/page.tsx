@@ -6,7 +6,6 @@ import { submitSiteIssue } from '../../actions';
 import { notFound } from 'next/navigation';
 import { stamp } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 export default async function SiteIssuePage({ params }: { params: { id: string } }) {
   const db = getDb(getDatabaseUrl());

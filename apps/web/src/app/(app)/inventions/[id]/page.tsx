@@ -6,7 +6,6 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { resolveCitationLabels } from '@/lib/citations';
 
-export const runtime = 'edge';
 
 export default async function InventionDetailPage({ params }: { params: { id: string } }) {
   const db = getDb(getDatabaseUrl());

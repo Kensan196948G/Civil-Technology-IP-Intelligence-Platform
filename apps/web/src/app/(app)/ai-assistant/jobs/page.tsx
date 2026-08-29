@@ -5,7 +5,6 @@ import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { stamp } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 const KIND_LABEL: Record<string, string> = {
   examine: 'AI模擬審査（Examiner Agent）',

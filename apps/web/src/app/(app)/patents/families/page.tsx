@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 // CodeRabbit指摘: titleでのgroup byは、無関係な特許を誤って同一ファミリーに
 // 統合したり（表記揺れ）、真に同一発明でも表記差異で別集計になったりする

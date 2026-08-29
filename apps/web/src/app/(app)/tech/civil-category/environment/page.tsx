@@ -1,7 +1,6 @@
 import { ListView } from '@/components/ListView';
 import { loadCivilCategoryRows, KIND_LABEL } from '../_lib';
 
-export const runtime = 'edge';
 
 export default async function CivilCategoryEnvironmentPage() {
   const rows = await loadCivilCategoryRows(['environment'], '環境');

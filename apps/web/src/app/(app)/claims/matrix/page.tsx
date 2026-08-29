@@ -2,7 +2,6 @@ import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 
-export const runtime = 'edge';
 
 type Row = {
   id: string; patent_title: string; applicant_name: string; tech_name: string;

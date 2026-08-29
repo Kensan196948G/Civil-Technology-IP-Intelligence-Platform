@@ -5,7 +5,6 @@ import { desc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { LICENSE_KIND_LABEL, licenseSubjectLabel, resolveLicenseSubjects } from '@/lib/legal-license-subjects';
 
-export const runtime = 'edge';
 
 // MVPスキーマにNDA専用テーブルは存在しないため、ライセンス案件（licenses）の
 // ステータスをNDA締結プロセスの進捗の代理指標として表示する

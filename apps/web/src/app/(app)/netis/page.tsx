@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import Link from 'next/link';
 
-export const runtime = 'edge';
 
 export default async function NetisPage() {
   const db = getDb(getDatabaseUrl());

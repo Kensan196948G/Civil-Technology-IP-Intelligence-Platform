@@ -5,7 +5,6 @@ import { desc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { WORKFLOW_KIND_LABEL, type AiRiskSummary } from '@/lib/legal-workflow-labels';
 
-export const runtime = 'edge';
 
 function checkState(row: { humanCheckRequired: boolean; humanCheckCompletedAt: Date | string | null }) {
   if (!row.humanCheckRequired) return { label: '確認不要', color: 'var(--ink-2)' };

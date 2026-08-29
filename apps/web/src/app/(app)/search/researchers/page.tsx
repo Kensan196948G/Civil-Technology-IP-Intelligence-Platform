@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { asc, or, ilike } from 'drizzle-orm';
 
-export const runtime = 'edge';
 
 export default async function ResearcherSearchPage({ searchParams }: { searchParams: { q?: string } }) {
   const db = getDb(getDatabaseUrl());

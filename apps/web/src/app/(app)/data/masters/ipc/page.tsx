@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 type IpcRow = { id: string; ipc: string; n: number; firstSeen: string | null; lastSeen: string | null };
 type RawRow = { ipc: string; n: number; first_seen: string | null; last_seen: string | null };

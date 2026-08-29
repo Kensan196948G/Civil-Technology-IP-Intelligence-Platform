@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { resolveCitationLabels } from '@/lib/citations';
 import { stamp } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 type Run = typeof s.aiRuns.$inferSelect;
 

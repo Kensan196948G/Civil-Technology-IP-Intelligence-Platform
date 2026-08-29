@@ -5,7 +5,6 @@ import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { ymd } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 const STATUS_LABEL: Record<string, string> = { open: '調査中', closed: '完了' };
 

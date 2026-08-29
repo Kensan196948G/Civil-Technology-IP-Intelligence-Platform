@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { asc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 // CodeRabbit指摘: 構成要件単位の一致・類似・相違（claim_chart_rows.kind）は
 // 比較上の事実であり、新規性（特許法29条1項）の確定判断ではない

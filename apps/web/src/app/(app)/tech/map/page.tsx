@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { count, sql } from 'drizzle-orm';
 import { InfoPage, type InfoBlock } from '@/components/InfoPage';
 
-export const runtime = 'edge';
 
 const KIND_LABEL: Record<string, string> = {
   technology: '技術（technology）', method: '工法（method）', material: '材料（material）', machine: '機械（machine）'

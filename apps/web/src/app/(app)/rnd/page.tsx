@@ -5,7 +5,6 @@ import { count, eq, and, notInArray } from 'drizzle-orm';
 import Link from 'next/link';
 import { InfoPage } from '@/components/InfoPage';
 
-export const runtime = 'edge';
 
 async function loadCounts() {
   const db = getDb(getDatabaseUrl());

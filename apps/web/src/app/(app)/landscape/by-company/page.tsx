@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 type Row = { id: string; applicantName: string; n: number; countries: number };
 type RawRow = { applicant_name: string; n: number; countries: number };

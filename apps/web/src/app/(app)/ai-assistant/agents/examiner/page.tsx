@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { desc, isNotNull } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 type RiskSummary = { novelty?: string; inventive?: string; note?: string };
 

@@ -5,7 +5,6 @@ import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { ymd } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 export default async function TechComparePage() {
   const db = getDb(getDatabaseUrl());

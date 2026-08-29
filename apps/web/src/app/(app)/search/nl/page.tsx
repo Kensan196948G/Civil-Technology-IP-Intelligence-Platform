@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 import Link from 'next/link';
 
-export const runtime = 'edge';
 
 type NlRow = { kind: string; id: string; title: string; sub: string | null; snippet: string | null };
 

@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import { createInvestigation } from '../actions';
 
-export const runtime = 'edge';
 
 export default async function NewInvestigationPage() {
   const db = getDb(getDatabaseUrl());

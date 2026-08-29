@@ -5,7 +5,6 @@ import { count, desc } from 'drizzle-orm';
 import { InfoPage } from '@/components/InfoPage';
 import { stamp } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 const AI_KIND_LABEL: Record<string, string> = {
   examine: 'AI模擬審査', claim_compare: 'Claim比較', field_score: '現場適用性スコアリング'

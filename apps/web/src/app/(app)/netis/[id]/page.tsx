@@ -5,7 +5,6 @@ import { eq, and } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
-export const runtime = 'edge';
 
 export default async function NetisDetailPage({ params }: { params: { id: string } }) {
   const db = getDb(getDatabaseUrl());

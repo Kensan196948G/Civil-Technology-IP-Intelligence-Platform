@@ -7,7 +7,6 @@ import { getCurrentUser } from '@/lib/auth/current-user';
 import { decideAction, completeHumanCheck } from '../actions';
 import { stamp } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 export default async function ApprovalDetail({ params }: { params: { id: string } }) {
   const db = getDb(getDatabaseUrl());

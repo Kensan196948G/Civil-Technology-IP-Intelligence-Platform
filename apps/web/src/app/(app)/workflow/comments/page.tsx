@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { desc, isNotNull, inArray, and, ne } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 export default async function WorkflowCommentsPage() {
   const db = getDb(getDatabaseUrl());

@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 import { InfoPage, type InfoBlock } from '@/components/InfoPage';
 
-export const runtime = 'edge';
 
 function renderCount(n: number) {
   return n > 0

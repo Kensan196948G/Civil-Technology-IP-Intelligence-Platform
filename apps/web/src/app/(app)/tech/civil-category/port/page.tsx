@@ -1,7 +1,6 @@
 import { ListView } from '@/components/ListView';
 import { loadCivilCategoryRows, KIND_LABEL } from '../_lib';
 
-export const runtime = 'edge';
 
 export default async function CivilCategoryPortPage() {
   const rows = await loadCivilCategoryRows(['port', 'marine'], '港湾・海洋');

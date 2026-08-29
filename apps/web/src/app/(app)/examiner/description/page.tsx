@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 // CodeRabbit指摘: 要約有無・請求項数だけでは特許法36条（記載要件）の充足を
 // 確定できない。「充足」という確定的な法的結論ではなく、形式データの有無を

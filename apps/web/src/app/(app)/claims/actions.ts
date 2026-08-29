@@ -18,9 +18,9 @@ export async function updateRowKind(formData: FormData) {
 
   // 業務データ更新と監査ログ記録を原子的に行う（片方だけ成功する状態を防ぐ）
   const sql = getRawSql(dbUrl);
-  await sql.transaction([
-    sql`update claim_chart_rows set kind = ${kind}, edited_by = ${me.id}, edited_at = now() where id = ${rowId}`,
-    sql`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
+  await sql.transaction((txn) => [
+    txn`update claim_chart_rows set kind = ${kind}, edited_by = ${me.id}, edited_at = now() where id = ${rowId}`,
+    txn`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
         values (${auditId}, ${me.id}, 'update', 'claim_chart_row', ${rowId}, 'success', ${JSON.stringify({ kind })}::jsonb)`
   ]);
 

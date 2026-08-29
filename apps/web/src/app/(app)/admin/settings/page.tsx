@@ -5,7 +5,6 @@ import { asc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { stampSec } from '@/lib/labels';
 
-export const runtime = 'edge';
 
 // settings.key の接頭辞でグループを分ける（lib/db/seed.ts の settingDefs 参照）。
 const GROUP_META: Record<string, { label: string; prefix: string }> = {

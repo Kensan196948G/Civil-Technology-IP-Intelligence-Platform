@@ -1,7 +1,6 @@
 import { ListView } from '@/components/ListView';
 import { loadCivilCategoryRows, KIND_LABEL } from '../_lib';
 
-export const runtime = 'edge';
 
 export default async function CivilCategoryRepairPage() {
   const rows = await loadCivilCategoryRows(['repair', 'reinforcement'], '補修');

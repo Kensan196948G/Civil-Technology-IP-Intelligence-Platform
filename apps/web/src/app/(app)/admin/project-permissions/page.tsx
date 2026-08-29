@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 const KIND_LABEL: Record<string, string> = {
   invention: '発明届', field_adoption: '現場導入', license_in: 'ライセンスイン'

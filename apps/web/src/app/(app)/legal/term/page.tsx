@@ -8,7 +8,6 @@ import {
   LICENSE_KIND_LABEL, licenseSubjectLabel, resolveLicenseSubjects, termField
 } from '@/lib/legal-license-subjects';
 
-export const runtime = 'edge';
 
 export default async function LegalTermPage() {
   const db = getDb(getDatabaseUrl());

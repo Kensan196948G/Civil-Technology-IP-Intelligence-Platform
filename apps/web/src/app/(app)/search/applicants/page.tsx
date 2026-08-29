@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { sql } from 'drizzle-orm';
 
-export const runtime = 'edge';
 
 type ApplicantRow = { name: string; patent_n: number; countries: string[]; latest_publication: string | null };
 

@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { asc, eq } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 const ROLE_LABEL: Record<string, string> = {
   engineer: '技術者', tech_manager: '技術管理者', rnd: '研究開発',

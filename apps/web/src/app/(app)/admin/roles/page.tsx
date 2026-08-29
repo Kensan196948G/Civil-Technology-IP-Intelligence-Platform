@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 // role_t enum（schema.ts）に対応するロール定義。権限テーブルは持たないため、
 // enumで定義された固定ロールに対し、実際の割当人数を users テーブルから集計する。

@@ -1,7 +1,6 @@
 import { ListView } from '@/components/ListView';
 import { loadFieldAxisRows } from '../_lib';
 
-export const runtime = 'edge';
 
 export default async function FieldAxisGroundPage() {
   const rows = await loadFieldAxisRows(['地盤・地形適合性', '地盤', '地形']);

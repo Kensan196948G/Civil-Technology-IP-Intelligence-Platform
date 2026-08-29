@@ -1,7 +1,6 @@
 import { ListView } from '@/components/ListView';
 import { loadFieldAxisRows } from '../_lib';
 
-export const runtime = 'edge';
 
 export default async function FieldAxisSafetyPage() {
   const rows = await loadFieldAxisRows(['安全性評価', '安全']);

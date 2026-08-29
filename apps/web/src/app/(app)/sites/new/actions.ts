@@ -49,10 +49,10 @@ export async function createSite(formData: FormData) {
 
   // 現場登録と監査ログ記録を原子的に行う
   const sql = getRawSql(dbUrl);
-  await sql.transaction([
-    sql`insert into sites (id, code, name, work_types, conditions)
+  await sql.transaction((txn) => [
+    txn`insert into sites (id, code, name, work_types, conditions)
         values (${siteId}, ${code}, ${name}, ${workTypes}::text[], ${JSON.stringify(conditions)}::jsonb)`,
-    sql`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
+    txn`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
         values (${auditId}, ${me.id}, 'create', 'site', ${siteId}, 'success', ${JSON.stringify({ name, workTypes })}::jsonb)`
   ]);
 

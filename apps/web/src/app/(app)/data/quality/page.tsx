@@ -3,7 +3,6 @@ import { getDatabaseUrl } from '@/lib/env';
 import { sql } from 'drizzle-orm';
 import { InfoPage, type InfoBlock } from '@/components/InfoPage';
 
-export const runtime = 'edge';
 
 function pct(part: number, total: number) {
   return total > 0 ? `${Math.round((part / total) * 100)}%` : '—';

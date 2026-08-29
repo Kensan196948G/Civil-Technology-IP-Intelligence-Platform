@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { asc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 function trunc(text: string, n: number) {
   return text.length > n ? text.slice(0, n) + '…' : text;

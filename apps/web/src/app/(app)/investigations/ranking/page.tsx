@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { ListView } from '@/components/ListView';
 import { resolveCitationLabels } from '@/lib/citations';
 
-export const runtime = 'edge';
 
 export default async function RankingPage() {
   const db = getDb(getDatabaseUrl());

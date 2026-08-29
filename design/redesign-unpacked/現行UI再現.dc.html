@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Shippori+Mincho+B1:wght@700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#EAEDEE;}
+body{font-family:'Zen Kaku Gothic New',system-ui,sans-serif;font-size:14px;line-height:1.7;color:#16262E;-webkit-font-smoothing:antialiased;}
+a{color:#0D6E8C;text-decoration:none;} a:hover{color:#095972;text-decoration:underline;}
+</style>
+</helmet>
+<div data-screen-label="現行UI" style="display:flex;flex-direction:column;min-height:100vh;background:#EAEDEE;color:#16262E;font-family:'Zen Kaku Gothic New',system-ui,sans-serif;font-size:14px;line-height:1.7;">
+  <div style="display:flex;align-items:center;gap:16px;height:52px;padding:0 20px;background:#16262E;color:#DEE9EC;flex:none;">
+    <span style="font-family:'Shippori Mincho B1',serif;font-weight:700;font-size:15px;">土木技術・知財インテリジェンス</span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#63C2E0;">CTIIP</span>
+    <div style="flex-grow:1;"></div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#93A8B0;">
+      <span>佐藤 健一</span><span>／</span><span>研究員</span><span>／</span><span>04 技術・研究開発</span>
+      <a href="#" style="color:#93A8B0;margin-left:8px;">切替</a>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;padding:6px 20px;background:#F2E7D0;border-bottom:1px solid #E0CFA8;color:#7A5008;font-size:12px;flex:none;">
+    <strong>MVP環境</strong><span> — 表示されているデータはすべてデモ用のダミーデータです。この画面の数値で業務判断をしないでください。</span>
+    <span style="flex-grow:1;"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;">ctiip-mvp.mirai-dx-platform.com</span>
+  </div>
+  <div style="display:flex;flex-grow:1;align-items:stretch;">
+    <div style="width:214px;flex:none;background:#DFE4E5;border-right:1px solid #BFCACD;padding:14px 0;display:flex;flex-direction:column;">
+      <a onClick="{{ goDash }}" style="display:flex;align-items:center;gap:9px;height:34px;padding:0 14px;font-size:13px;font-weight:700;border-left:3px solid {{ dashBd }};color:{{ dashColor }};background:{{ dashBg }};cursor:pointer;text-decoration:none;">🏠 ダッシュボード</a>
+      <div style="padding:8px 14px;">
+        <input placeholder="メニューを検索..." style="width:100%;height:30px;padding:0 10px;border:1px solid #BFCACD;border-radius:3px;font-size:12.5px;font-family:inherit;background:#fff;box-sizing:border-box;">
+      </div>
+      <div style="overflow-y:auto;flex-grow:1;max-height:640px;">
+        <sc-for list="{{ sections }}" as="sec" hint-placeholder-count="10">
+          <div>
+            <button onClick="{{ sec.toggle }}" style="width:100%;display:flex;align-items:center;gap:8px;padding:9px 14px;background:transparent;border:none;cursor:pointer;text-align:left;font-family:inherit;font-size:12.5px;line-height:1.7;font-weight:{{ sec.fw }};color:{{ sec.color }};">
+              <span>{{ sec.icon }}</span>
+              <span style="flex-grow:1;">{{ sec.label }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#516268;">{{ sec.mark }}</span>
+            </button>
+            <sc-if value="{{ sec.open }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;">
+                <sc-for list="{{ sec.items }}" as="it" hint-placeholder-count="3">
+                  <sc-if value="{{ it.group }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:6px 14px 6px 30px;font-size:11px;color:#516268;font-weight:700;">{{ it.label }}</div>
+                  </sc-if>
+                  <sc-if value="{{ it.leaf }}" hint-placeholder-val="{{ true }}">
+                    <a onClick="{{ it.go }}" style="display:flex;align-items:center;gap:9px;height:34px;padding:0 14px 0 {{ it.pad }}px;font-size:12.5px;border-left:3px solid {{ it.bd }};color:{{ it.color }};background:{{ it.bg }};font-weight:{{ it.fw }};cursor:pointer;text-decoration:none;flex:none;">{{ it.label }}</a>
+                  </sc-if>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="margin:10px 14px;padding:10px;border:1px dashed #93A3A8;border-radius:3px;color:#516268;font-size:11px;line-height:1.6;">
+        権限のないモジュールは項目自体を表示しません（MVPでは全ロールに全項目を表示しています）。
+      </div>
+    </div>
+    <div style="flex-grow:1;padding:22px 26px 40px;min-width:0;">
+
+      <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+        <div data-screen-label="ダッシュボード" style="display:flex;flex-direction:column;gap:18px;">
+          <div style="display:flex;align-items:baseline;gap:12px;">
+            <h1 style="font-family:'Shippori Mincho B1',serif;font-weight:700;margin:0;font-size:22px;">ダッシュボード</h1>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#516268;">S-01 / EXECUTIVE DASHBOARD</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
+            <a href="#" style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;color:#16262E;text-decoration:none;"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#516268;">特許</span><span style="font-family:'IBM Plex Mono',monospace;font-size:30px;color:#0D6E8C;">24</span></a>
+            <a href="#" style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;color:#16262E;text-decoration:none;"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#516268;">論文</span><span style="font-family:'IBM Plex Mono',monospace;font-size:30px;color:#0D6E8C;">12</span></a>
+            <a href="#" style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;color:#16262E;text-decoration:none;"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#516268;">NETIS</span><span style="font-family:'IBM Plex Mono',monospace;font-size:30px;color:#0D6E8C;">10</span></a>
+            <a href="#" style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;color:#16262E;text-decoration:none;"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#516268;">自社技術</span><span style="font-family:'IBM Plex Mono',monospace;font-size:30px;color:#0D6E8C;">8</span></a>
+            <a href="#" style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;color:#16262E;text-decoration:none;"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#516268;">承認・案件</span><span style="font-family:'IBM Plex Mono',monospace;font-size:30px;color:#0D6E8C;">6</span></a>
+          </div>
+          <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;">
+            <div style="padding:12px 16px;border-bottom:1px solid #BFCACD;background:#DFE4E5;font-weight:700;font-size:13px;">要対応・最近の案件</div>
+            <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+              <thead><tr>
+                <th style="text-align:left;padding:8px 12px;background:#DFE4E5;font-size:11px;">種別</th>
+                <th style="text-align:left;padding:8px 12px;background:#DFE4E5;font-size:11px;">件名</th>
+                <th style="text-align:left;padding:8px 12px;background:#DFE4E5;font-size:11px;">ステータス</th>
+                <th style="text-align:left;padding:8px 12px;background:#DFE4E5;font-size:11px;">起案</th>
+                <th style="text-align:left;padding:8px 12px;background:#DFE4E5;font-size:11px;">期限</th>
+              </tr></thead>
+              <tbody>
+                <tr><td style="padding:8px 12px;border-top:1px solid #BFCACD;font-family:'IBM Plex Mono',monospace;font-size:11px;">invention_filing</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;"><a href="#">「浚渫土の高含水比改良材の配合」発明届</a></td><td style="padding:8px 12px;border-top:1px solid #BFCACD;">technical_review</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;">田中 美咲</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;font-family:'IBM Plex Mono',monospace;">2026-09-05</td></tr>
+                <tr><td style="padding:8px 12px;border-top:1px solid #BFCACD;font-family:'IBM Plex Mono',monospace;font-size:11px;">tech_adoption</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;"><a href="#">ICT盛土転圧管理システムの現場導入</a></td><td style="padding:8px 12px;border-top:1px solid #BFCACD;">ip_review</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;">鈴木 大輔</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;font-family:'IBM Plex Mono',monospace;">2026-09-01</td></tr>
+                <tr><td style="padding:8px 12px;border-top:1px solid #BFCACD;font-family:'IBM Plex Mono',monospace;font-size:11px;">license_review</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;"><a href="#">開放特許「鋼矢板腐食モニタリング」導入評価</a></td><td style="padding:8px 12px;border-top:1px solid #BFCACD;">pending</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;">高橋 直樹</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;font-family:'IBM Plex Mono',monospace;">2026-08-28</td></tr>
+                <tr><td style="padding:8px 12px;border-top:1px solid #BFCACD;font-family:'IBM Plex Mono',monospace;font-size:11px;">invention_filing</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;"><a href="#">「ケーソン据付誘導AIカメラ」発明届</a></td><td style="padding:8px 12px;border-top:1px solid #BFCACD;">legal_review</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;">伊藤 彩</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;font-family:'IBM Plex Mono',monospace;">2026-09-12</td></tr>
+                <tr><td style="padding:8px 12px;border-top:1px solid #BFCACD;font-family:'IBM Plex Mono',monospace;font-size:11px;">tech_adoption</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;"><a href="#">NETIS登録工法「無人化法面吹付」適用審査</a></td><td style="padding:8px 12px;border-top:1px solid #BFCACD;">approved</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;">佐藤 健一</td><td style="padding:8px 12px;border-top:1px solid #BFCACD;font-family:'IBM Plex Mono',monospace;">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isSearch }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="横断検索" style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;align-items:baseline;gap:12px;">
+            <h1 style="font-family:'Shippori Mincho B1',serif;font-weight:700;margin:0;font-size:22px;">横断検索</h1>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#516268;">S-02 / UNIVERSAL SEARCH</span>
+          </div>
+          <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;display:flex;gap:10px;padding:12px;">
+            <input value="ケーソン 据付" style="flex-grow:1;height:36px;padding:0 12px;border:1px solid #BFCACD;border-radius:3px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box;">
+            <button style="display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 18px;border-radius:3px;font-size:13px;font-weight:700;border:1px solid transparent;background:#0D6E8C;color:#fff;font-family:inherit;cursor:pointer;">検索</button>
+          </div>
+          <div style="display:flex;gap:0;border-bottom:1px solid #BFCACD;">
+            <a href="#" style="padding:9px 16px;margin-bottom:-1px;border-bottom:2px solid #0D6E8C;color:#0D6E8C;font-weight:700;font-size:13px;">特許 <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;">3</span></a>
+            <a href="#" style="padding:9px 16px;margin-bottom:-1px;border-bottom:2px solid transparent;color:#516268;font-size:13px;">論文 <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;">1</span></a>
+            <a href="#" style="padding:9px 16px;margin-bottom:-1px;border-bottom:2px solid transparent;color:#516268;font-size:13px;">NETIS <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;">2</span></a>
+            <a href="#" style="padding:9px 16px;margin-bottom:-1px;border-bottom:2px solid transparent;color:#516268;font-size:13px;">自社技術 <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;">1</span></a>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:9px;">
+            <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:13px 15px;display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;align-items:baseline;gap:9px;">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;border-radius:999px;padding:0 7px;border:1px solid #0D6E8C;color:#0D6E8C;">patent</span>
+                <span style="font-size:15px;font-weight:700;">ケーソン据付時の位置決め支援システムおよび方法</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;border-radius:2px;padding:1px 6px;color:#A9700D;border:1px solid #A9700D;">デモ</span>
+              </div>
+              <div style="font-size:12px;color:#516268;">五洋建設株式会社 ｜ 出典 jpo:j-platpat ｜ 取得 <span style="font-family:'IBM Plex Mono',monospace;">2026-07-14</span></div>
+              <a href="#" style="font-size:12px;">特許詳細を見る →</a>
+            </div>
+            <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:13px 15px;display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;align-items:baseline;gap:9px;">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;border-radius:999px;padding:0 7px;border:1px solid #0D6E8C;color:#0D6E8C;">patent</span>
+                <span style="font-size:15px;font-weight:700;">水中構造物の据付誘導装置（音響測位併用）</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;border-radius:2px;padding:1px 6px;color:#A9700D;border:1px solid #A9700D;">デモ</span>
+              </div>
+              <div style="font-size:12px;color:#516268;">東亜建設工業株式会社 ｜ 出典 jpo:j-platpat ｜ 取得 <span style="font-family:'IBM Plex Mono',monospace;">2026-07-14</span></div>
+              <a href="#" style="font-size:12px;">特許詳細を見る →</a>
+            </div>
+            <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:13px 15px;display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;align-items:baseline;gap:9px;">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;border-radius:999px;padding:0 7px;border:1px solid #0D6E8C;color:#0D6E8C;">patent</span>
+                <span style="font-size:15px;font-weight:700;">ケーソン函体の姿勢制御用バラスト注水制御装置</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;border-radius:2px;padding:1px 6px;color:#A9700D;border:1px solid #A9700D;">デモ</span>
+              </div>
+              <div style="font-size:12px;color:#516268;">五洋建設株式会社 ｜ 出典 jpo:j-platpat ｜ 取得 <span style="font-family:'IBM Plex Mono',monospace;">2026-07-14</span></div>
+              <a href="#" style="font-size:12px;">特許詳細を見る →</a>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isField }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="現場適用スコア" style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;align-items:baseline;gap:12px;">
+            <h1 style="font-family:'Shippori Mincho B1',serif;font-weight:700;margin:0;font-size:22px;">現場適用性評価</h1>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#516268;">S-19 / FIELD APPLICATION</span>
+          </div>
+          <div style="font-size:13px;color:#516268;">新潟東港 防波堤改良工事 ｜ 候補技術：水中不分離コンクリート自動打設工法</div>
+          <div style="display:flex;gap:18px;align-items:flex-start;">
+            <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;width:320px;flex:none;padding:18px 20px;display:flex;flex-direction:column;gap:12px;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.18em;color:#516268;">FIELD APPLICABILITY SCORE</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:48px;color:#0D6E8C;line-height:1.2;">78<span style="font-size:15px;color:#516268;"> / 100</span></div>
+              <div style="height:8px;background:#DFE4E5;border-radius:999px;overflow:hidden;"><div style="height:100%;width:78%;background:#0D6E8C;"></div></div>
+              <div style="display:flex;gap:10px;padding:12px 14px;border-radius:3px;border:1px solid #DDC08A;background:#F2E7D0;color:#7A5008;font-size:12px;line-height:1.7;"><span><strong>このスコアは導入可否の判断を代替しません。</strong> 安全・品質・環境部門の承認を経てはじめて導入できます。</span></div>
+              <a href="#" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;height:34px;padding:0 18px;border-radius:3px;font-size:13px;font-weight:700;background:#0D6E8C;color:#fff;text-decoration:none;">導入検討を起票する →</a>
+              <div style="font-size:11px;color:#516268;text-align:center;">起票であって決定ではありません（承認一覧のデモ案件をご覧ください）</div>
+            </div>
+            <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;flex-grow:1;">
+              <div style="padding:12px 16px;border-bottom:1px solid #BFCACD;background:#DFE4E5;font-weight:700;font-size:13px;">軸別の内訳（スコア単独では表示しません）</div>
+              <div>
+                <sc-for list="{{ axes }}" as="a" hint-placeholder-count="8">
+                  <div style="padding:10px 16px;border-bottom:1px solid #E8EDED;display:flex;flex-direction:column;gap:4px;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                      <span style="width:110px;font-size:12.5px;flex:none;">{{ a.axis }}</span>
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;border-radius:2px;padding:1px 6px;color:{{ a.tone }};border:1px solid {{ a.tone }};flex:none;">{{ a.kind }}</span>
+                      <span style="flex-grow:1;height:6px;background:#E4E9EA;border-radius:999px;overflow:hidden;"><span style="display:block;height:100%;width:{{ a.pct }}%;background:{{ a.tone }};"></span></span>
+                      <span style="font-family:'IBM Plex Mono',monospace;width:34px;text-align:right;flex:none;">{{ a.val }}</span>
+                      <span style="width:50px;text-align:right;font-size:11px;color:#516268;flex:none;">重み{{ a.weight }}</span>
+                    </div>
+                    <div style="font-size:11.5px;color:#516268;padding-left:122px;">{{ a.basis }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isAi }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="AIアシスタント" style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;align-items:baseline;gap:12px;">
+            <h1 style="font-family:'Shippori Mincho B1',serif;font-weight:700;margin:0;font-size:22px;">Civil IP Copilot</h1>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#516268;">S-14 / AI ASSISTANT</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;border-radius:2px;padding:1px 6px;color:#A9700D;border:1px solid #A9700D;">MVP</span>
+          </div>
+          <p style="font-size:12.5px;color:#516268;margin:0;">土木技術・知財に関する13種のAI Agentへの入口です。各Agentは自身の担当領域のデータのみを参照し、回答には必ず根拠（出典）が付きます。</p>
+          <div style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;">
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #E8EDED;"><span style="font-size:12.5px;color:#516268;width:200px;flex-shrink:0;">AI実行件数（累計）</span><span style="font-size:13px;">128 件</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #E8EDED;"><span style="font-size:12.5px;color:#516268;width:200px;flex-shrink:0;">根拠（引用）件数</span><span style="font-size:13px;">512 件</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #E8EDED;"><span style="font-size:12.5px;color:#516268;width:200px;flex-shrink:0;">進行中の調査案件</span><span style="font-size:13px;">3 件</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;"><span style="font-size:12.5px;color:#516268;width:200px;flex-shrink:0;">実行種別の内訳</span><span style="font-size:13px;">search(42) ／ examine(31) ／ field(37) ／ claim(18)</span></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;">
+            <sc-for list="{{ agents }}" as="ag" hint-placeholder-count="13">
+              <a href="#" style="background:#F7F9F9;border:1px solid #BFCACD;border-radius:3px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;color:#16262E;text-decoration:none;">
+                <span style="font-weight:700;font-size:13px;">{{ ag.label }}</span>
+                <span style="font-size:11.5px;color:#516268;">{{ ag.desc }}</span>
+              </a>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:10px;padding:12px 14px;border-radius:3px;border:1px solid #9CC3D0;background:#D8E9EF;color:#0A5B75;font-size:12px;line-height:1.7;">AIは決めません。各Agentの出力は必ず特許・NETIS・自社技術・論文などの一次データに紐づき、実行履歴は「自律調査ジョブ」および「AI実行履歴・根拠」画面から追跡できます。</div>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;1440px&quot;,&quot;height&quot;:&quot;940px&quot;},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dashboard&quot;,&quot;options&quot;:[&quot;dashboard&quot;,&quot;search&quot;,&quot;field&quot;,&quot;ai&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;画面&quot;}}">
+const NAV = [
+  { key:'search', icon:'🔎', label:'01. 統合検索', items:['すべて検索','特許検索','技術検索','論文・研究検索','NETIS検索','出願人・企業検索','発明者・研究者検索','IPC / CPC検索','Claim検索','AI自然言語検索','類似技術検索','検索履歴・保存検索'] },
+  { key:'tech', icon:'💡', label:'02. 技術インテリジェンス', items:['技術一覧','工法一覧','材料・製品','建設機械・設備','ICT施工','BIM / CIM','AI・自動施工','ロボティクス','技術比較','類似技術','技術評価','技術関連マップ'] },
+  { key:'patents', icon:'📜', label:'03. 特許インテリジェンス', items:['特許一覧','国内特許','海外特許','特許ファミリー','出願人分析','発明者分析','IPC / CPC分析','引用・被引用','権利状態','審査経過','類似特許','お気に入り・ウォッチ'] },
+  { key:'prior-art', icon:'🔬', label:'04. 先行技術調査', items:['新規調査','調査案件一覧','先行特許','先行論文','NETIS・公開技術','類似技術調査','構成要件別調査','引用文献分析','重要文献ランキング','調査検索式','調査履歴','調査レポート'] },
+  { key:'claims', icon:'🧩', label:'05. Claim解析', items:['Claim解析','独立請求項','従属請求項','構成要件分解','Claim Tree','Claim Chart','Claim Matrix','自社技術との比較','他社特許との比較','複数特許比較','類似度分析','差分・特徴抽出'] },
+  { key:'examiner', icon:'🤖', label:'06. AI特許レビュー', items:['AI Patent Examiner','新規性レビュー','進歩性レビュー','記載要件レビュー','明確性レビュー','先行文献比較','容易想到性分析','想定拒絶理由','拒絶リスク評価','差別化ポイント','補正方向候補','意見書論点候補','AIレビュー履歴'] },
+  { key:'research', icon:'📚', label:'07. 論文・研究・NETIS', items:['論文','学会資料','研究成果','大学・研究機関','研究者','NETIS','国交省技術資料','公開施工事例','特許との関連','技術との関連','最新研究トレンド'] },
+  { key:'field', icon:'🏗️', label:'08. 土木技術・現場適用', items:[{group:'土木技術分類'},{leaf:'港湾・海洋',pad:44},{leaf:'河川',pad:44},{leaf:'道路',pad:44},{leaf:'橋梁',pad:44},{leaf:'トンネル',pad:44},{leaf:'地盤・基礎',pad:44},{leaf:'土工',pad:44},{leaf:'浚渫・埋立',pad:44},{leaf:'コンクリート',pad:44},{leaf:'維持管理',pad:44},{leaf:'補修・補強',pad:44},{leaf:'防災',pad:44},{leaf:'環境',pad:44},'現場条件入力','現場課題登録','適用技術検索','Field Applicability Score','工種適合性','地盤・地形適合性','気象・海象適合性','安全性評価','品質評価','CO₂・環境評価','生産性・省人化評価','導入難易度評価'] },
+  { key:'landscape', icon:'🏢', label:'09. 競合・特許ランドスケープ', items:['競合企業','企業別出願分析','技術分野比較','工種別比較','出願推移','共同出願分析','大学連携分析','技術クラスタ','Patent Landscape','技術マップ','特許密度','成長・衰退領域','新興技術','ホワイトスペース','自社ポジション'] },
+  { key:'rnd', icon:'🚀', label:'10. R&D・発明管理', items:['R&Dダッシュボード','研究テーマ','技術課題','技術ニーズ','発明アイデア','発明届','発明者','AI発明整理','Claim候補生成','先行技術調査','発明評価','ホワイトスペース候補','改良発明候補','周辺発明候補','技術ロードマップ','出願候補'] },
+  { key:'licensing', icon:'🤝', label:'11. ライセンス・知財ポートフォリオ', items:['ライセンス候補','開放特許','技術導入候補','技術供与候補','ライセンサー','ライセンシー','自社開発との比較','Buy / Build / Partner','ライセンス評価','自社特許一覧','審査中特許','登録特許','失効・放棄','活用状況','維持優先度','ライセンスアウト候補'] },
+  { key:'legal', icon:'⚖️', label:'12. 法務・知財レビュー', items:['法務審査依頼','知財審査依頼','審査案件一覧','NDA確認','権利状態確認','独占 / 非独占','利用分野','地域条件','契約期間','ロイヤルティ','サブライセンス','改良発明','契約リスク','法務確認事項','Construction-LegalOps-DX連携'] },
+  { key:'watch', icon:'👁️', label:'13. ウォッチ・モニタリング', items:['マイウォッチ','特許ウォッチ','競合企業ウォッチ','技術分野ウォッチ','IPC / CPCウォッチ','発明者ウォッチ','論文ウォッチ','NETISウォッチ','権利状態変更','新規出願','登録・拒絶・失効','AI重要度判定','アラート一覧','週次AIダイジェスト'] },
+  { key:'ai', icon:'🧠', label:'14. AIアシスタント', items:['Civil IP Copilot','技術調査Agent','Patent Search Agent','Research Agent','Claim Agent','Examiner Agent','Competitor Agent','Landscape Agent','Civil Engineer Agent','R&D Agent','Licensing Agent','Legal Agent','Report Agent','Agent実行履歴','自律調査ジョブ'] },
+  { key:'knowledge', icon:'📖', label:'15. ナレッジ', items:['技術ナレッジ','特許ナレッジ','論文ナレッジ','NETISナレッジ','過去調査','AIレビュー','発明事例','ライセンス事例','法務レビュー結果','施工事例','FAQ','RAG検索'] },
+  { key:'reports', icon:'📊', label:'16. レポート', items:['レポート作成','技術調査報告書','特許調査報告書','先行技術調査書','Claim比較レポート','新規性レビュー','進歩性レビュー','AI模擬審査報告','競合分析','Patent Landscape','ホワイトスペース分析','現場適用性評価','R&D提案','ライセンス評価','経営サマリー','出力履歴'] },
+  { key:'workflow', icon:'✅', label:'17. ワークフロー・承認', items:['マイタスク','承認待ち','技術レビュー','知財レビュー','法務レビュー','差戻案件','承認済','保留','アーカイブ','コメント','承認履歴'] },
+  { key:'data', icon:'🗃️', label:'18. データ管理', items:['データソース','特許データ','論文データ','NETISデータ','技術マスタ','IPC / CPCマスタ','土木工種マスタ','企業マスタ','発明者マスタ','データクレンジング','名寄せ','重複管理','AI分類','データ品質','Provenance / 出典'] },
+  { key:'admin', icon:'⚙️', label:'19. システム管理', items:['ユーザー管理','ロール・権限','部門管理','プロジェクト権限','AIモデル設定','Agent設定','API設定','外部データ連携','通知設定','ワークフロー設定','マスタ設定','バックアップ','システム状態','Feature Flags'] },
+  { key:'security', icon:'🛡️', label:'20. セキュリティ・監査', items:['監査ログ','ログイン履歴','AI利用履歴','検索履歴','データ閲覧履歴','Export履歴','更新・削除履歴','承認履歴','権限変更履歴','セキュリティイベント','データアクセス監査'] }
+];
+const ACTIVE = { search:{section:'search',label:'すべて検索'}, field:{section:'field',label:'Field Applicability Score'}, ai:{section:'ai',label:'Civil IP Copilot'} };
+const AXES = [
+  { axis:'工種適合性', kind:'規則', val:0.85, weight:20, basis:'港湾・防波堤の水中コンクリート工に工種一致（技術台帳の適用工種と現場工種の照合）' },
+  { axis:'地盤・地形', kind:'規則', val:0.80, weight:15, basis:'水深12m・砂質地盤は適用範囲内（適用条件: 水深20m以内）' },
+  { axis:'気象・海象', kind:'AI推定', val:0.65, weight:15, basis:'波高1.5m超の日が月間8日。類似現場の施工実績から中断リスクを推定' },
+  { axis:'安全性', kind:'AI推定', val:0.82, weight:15, basis:'潜水士作業の削減効果あり。無人化施工の類似事例3件を参照' },
+  { axis:'品質', kind:'規則', val:0.78, weight:10, basis:'水中不分離性の品質規格（JSCE-D104）に適合' },
+  { axis:'環境・CO₂', kind:'AI推定', val:0.70, weight:10, basis:'材料使用量の削減見込み。CO₂原単位は類似工法比で推定' },
+  { axis:'生産性・省人化', kind:'規則', val:0.88, weight:10, basis:'NETIS事後評価で省人化30%の実績値' },
+  { axis:'導入難易度', kind:'AI推定', val:0.60, weight:5, basis:'専用打設船の調達リードタイム3ヶ月が制約' }
+];
+const AGENTS = [
+  { label:'技術調査Agent', desc:'自社技術・NETIS登録技術を横断調査' },
+  { label:'Patent Search Agent', desc:'先行技術調査案件の検索式・状況' },
+  { label:'Research Agent', desc:'学術論文の調査結果' },
+  { label:'Claim Agent', desc:'他社特許 vs 自社案の構成要件比較' },
+  { label:'Examiner Agent', desc:'AI模擬審査（新規性・進歩性リスク）' },
+  { label:'Competitor Agent', desc:'競合企業の動向モニタリング' },
+  { label:'Landscape Agent', desc:'特許ランドスケープ（国別・出願人別）' },
+  { label:'Civil Engineer Agent', desc:'現場適用性スコアリング' },
+  { label:'R&D Agent', desc:'社内研究者・発明者の知見' },
+  { label:'Licensing Agent', desc:'ライセンスIN/OUT案件の評価' },
+  { label:'Legal Agent', desc:'人間確認必須案件の法務・コンプライアンス確認' },
+  { label:'Report Agent', desc:'各種レポートの出力履歴' },
+  { label:'自律調査ジョブ', desc:'AI実行ジョブの一覧（根拠付き）' }
+];
+class Component extends DCLogic {
+  state = { screen: null, open: {} };
+  go(screen) { this.setState({ screen, open: {} }); }
+  renderVals() {
+    const open = this.state.open;
+    const screen = this.state.screen ?? this.props.screen ?? 'dashboard';
+    const act = ACTIVE[screen];
+    const sections = NAV.map(sec => {
+      const auto = act && act.section === sec.key;
+      const isOpen = open[sec.key] !== undefined ? open[sec.key] : auto;
+      const secActive = auto;
+      return {
+        key: sec.key, icon: sec.icon, label: sec.label,
+        open: isOpen, mark: isOpen ? '−' : '+',
+        fw: secActive ? 700 : 400, color: secActive ? '#0D6E8C' : '#16262E',
+        toggle: () => this.setState(s => ({ open: { ...s.open, [sec.key]: !isOpen } })),
+        items: sec.items.map(raw => {
+          if (typeof raw === 'object' && raw.group) return { group: true, leaf: false, label: raw.group };
+          const label = typeof raw === 'string' ? raw : raw.leaf;
+          const pad = typeof raw === 'object' && raw.pad ? raw.pad : 30;
+          const isActive = act && act.section === sec.key && act.label === label;
+          let go = null;
+          if (label === 'すべて検索') go = () => this.go('search');
+          else if (label === 'Field Applicability Score') go = () => this.go('field');
+          else if (label === 'Civil IP Copilot') go = () => this.go('ai');
+          return {
+            group: false, leaf: true, label, pad,
+            active: isActive, go: go || (() => {}),
+            bd: isActive ? '#0D6E8C' : 'transparent',
+            color: isActive ? '#0D6E8C' : '#16262E',
+            bg: isActive ? '#F7F9F9' : 'transparent',
+            fw: isActive ? 700 : 400
+          };
+        })
+      };
+    });
+    const dashActive = screen === 'dashboard';
+    return {
+      sections,
+      isDash: dashActive, isSearch: screen === 'search', isField: screen === 'field', isAi: screen === 'ai',
+      goDash: () => this.go('dashboard'),
+      dashBd: dashActive ? '#0D6E8C' : 'transparent',
+      dashColor: dashActive ? '#0D6E8C' : '#16262E',
+      dashBg: dashActive ? '#F7F9F9' : 'transparent',
+      axes: AXES.map(a => ({ axis: a.axis, kind: a.kind, val: a.val.toFixed(2), pct: Math.round(a.val * 100), weight: a.weight, basis: a.basis, tone: a.kind === 'AI推定' ? '#A9700D' : '#0D6E8C' })),
+      agents: AGENTS
+    };
+  }
+}
+</script>
+</body>
+</html>

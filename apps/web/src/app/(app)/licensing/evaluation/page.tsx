@@ -5,7 +5,6 @@ import { sql, desc } from 'drizzle-orm';
 import { InfoPage } from '@/components/InfoPage';
 import { resolveLicenseSubjects, LICENSE_KIND_LABEL, LICENSE_STATUS_LABEL, LICENSE_STATUS_COLOR } from '@/lib/licensing-subjects';
 
-export const runtime = 'edge';
 
 type StatusRow = { status: string; n: number };
 

@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { eq, and, desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 const STATUS_LABEL: Record<string, string> = { rejected: '却下', archived: '放棄（アーカイブ）' };
 

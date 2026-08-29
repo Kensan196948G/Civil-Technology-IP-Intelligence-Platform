@@ -4,7 +4,6 @@ import * as s from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 
-export const runtime = 'edge';
 
 const KIND_LABEL: Record<string, string> = { license_in: 'ライセンスIN', license_out: 'ライセンスOUT' };
 const STATUS_LABEL: Record<string, string> = { candidate: '候補', evaluating: '評価中', agreed: '合意', declined: '見送り' };
