@@ -2,9 +2,44 @@ import Link from 'next/link';
 import type { CSSProperties, ReactNode } from 'react';
 import { TAG_CLASS, type Tone } from './detail/types';
 
-/** 種別・段階などの小さなラベル。 */
-export function Tag({ tone = 'gray', children, style }: { tone?: Tone; children: ReactNode; style?: CSSProperties }) {
+/** 種別・段階などの小さなラベル。toneまたはfg/bgで色指定可能。 */
+export function Tag({ 
+  tone = 'gray', 
+  children, 
+  style,
+  fg,
+  bg
+}: { 
+  tone?: Tone; 
+  children: ReactNode; 
+  style?: CSSProperties;
+  fg?: string;
+  bg?: string;
+}) {
+  // fg/bgが指定されている場合はインラインスタイルで表示
+  if (fg && bg) {
+    return <span className="tag" style={{ color: fg, background: bg, ...style }}>{children}</span>;
+  }
   return <span className={`badge ${TAG_CLASS[tone]}`} style={style}>{children}</span>;
+}
+
+/** キー・バリューのペアを表示。詳細ドロワー用。 */
+export function Kv({ items }: { items: Array<[string, ReactNode]> }) {
+  return (
+    <dl className="kv">
+      {items.map(([k, v], i) => (
+        <div key={i} style={{ display: 'contents' }}>
+          <dt>{k}</dt>
+          <dd>{v}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** 注記。AIの判断制限事項など。 */
+export function Note({ children, tone }: { children: ReactNode; tone?: 'amber' | 'red' }) {
+  return <div className={`note${tone === 'red' ? ' note-red' : ''}`}>{children}</div>;
 }
 
 export function Panel({
