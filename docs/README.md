@@ -10,7 +10,7 @@
 | 🧪 MVP URL | `https://ctiip-mvp.mirai-dx-platform.com` |
 | ☁️ 基盤 | GitHub / Cloudflare / Neon |
 | 📅 本版 | v0.1（設計原案・実装着手前） |
-| 📝 最終更新 | 2026-08-22 |
+| 📝 最終更新 | 2026-09-04 |
 
 ---
 
@@ -126,6 +126,7 @@
 | [02-wbs.md](90-project/02-wbs.md) | WBS |
 | [03-risk-register.md](90-project/03-risk-register.md) | リスク登録簿 |
 | [04-required-company-information.md](90-project/04-required-company-information.md) | **本番デプロイ前に会社から必要な情報の一覧** |
+| [05-module-expansion-m26-m50.md](90-project/05-module-expansion-m26-m50.md) | **次期拡張モジュール計画（M26〜M50）。追加機能候補の正本** |
 
 ---
 
@@ -133,7 +134,7 @@
 
 | 記法 | 意味 |
 |---|---|
-| `M01`〜`M25` | モジュールID（機能ブロック） |
+| `M01`〜`M25` | モジュールID（機能ブロック）。拡張候補 `M26`〜`M50` は [90-project/05](90-project/05-module-expansion-m26-m50.md) で定義 |
 | `FR-M07-003` | 機能要件ID（モジュール別連番） |
 | `NFR-P-001` | 非機能要件ID（P=性能, A=可用性, S=セキュリティ, O=運用, C=互換, U=ユーザビリティ） |
 | `UC-05` | ユースケースID |
