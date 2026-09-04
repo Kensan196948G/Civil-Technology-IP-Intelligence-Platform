@@ -315,6 +315,18 @@ export const ftoComponents = pgTable('fto_components', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
+// M27 Patent Prosecution / Dossier Intelligence（第一拡張群・実装順位2）
+// 特許庁審査経過（出願→審査請求→拒絶理由→補正→意見書→登録）の時系列イベント。FR-M27-001/002/005。
+export const prosecutionEvents = pgTable('prosecution_events', {
+  id: uuid('id').primaryKey(),
+  patentId: uuid('patent_id').notNull().references(() => patents.id),
+  occurredOn: date('occurred_on').notNull(),              // イベント発生日
+  kind: text('kind').notNull(),                           // application / exam_request / rejection / amendment / opinion / registration / other
+  description: text('description').notNull(),             // 内容（拒絶理由の要旨・補正内容等）
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
 export const watches = pgTable('watches', {
   id: uuid('id').primaryKey(),
   kind: text('kind').notNull(), // patent / competitor / technology / ipc / researcher / paper / netis
