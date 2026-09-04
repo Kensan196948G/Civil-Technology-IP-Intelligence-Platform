@@ -67,9 +67,10 @@
 | M24 | Data Management | 全柱（基盤） |
 | M25 | Administration / Security / Audit | 全柱（基盤） |
 
-実装状況の現状（2026-09-04時点）は、Web アプリ（`apps/web`）に主要画面群が実装され、CI/CD・
-MVP 環境（https://ctiip-mvp.mirai-dx-platform.com）が運用されています。M01〜M25 の全機能実装は
-ロードマップ（Phase 0〜4）に沿って進行中です。
+実装状況の現状（2026-09-04時点）は、Web アプリ（`apps/web`）に主要画面群が実装されており、
+MVP 環境（https://ctiip-mvp.mirai-dx-platform.com・ダミーデータ表示）が公開されています。
+なお README の記載は「設計中（v0.1）・本番（https://ctiip.mirai-dx-platform.com）は未稼働」であり、
+M01〜M25 の全機能実装はロードマップ（Phase 0〜4）に沿って進行中です。
 
 ---
 
