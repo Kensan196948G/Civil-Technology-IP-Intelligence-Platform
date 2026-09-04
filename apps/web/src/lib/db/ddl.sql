@@ -374,3 +374,24 @@ CREATE TABLE IF NOT EXISTS prosecution_events (
 );
 CREATE INDEX IF NOT EXISTS idx_prosecution_patent_date ON prosecution_events (patent_id, occurred_on DESC);
 CREATE INDEX IF NOT EXISTS idx_prosecution_kind ON prosecution_events (kind);
+
+-- M29 IP Entity Intelligence（第一拡張群・実装順位4）
+CREATE TABLE IF NOT EXISTS ip_entities (
+  id uuid PRIMARY KEY,
+  kind text NOT NULL CHECK (kind IN ('company','institution','person','group')),
+  canonical_name text NOT NULL,
+  country text,
+  parent_entity_id uuid REFERENCES ip_entities(id),
+  note text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS entity_aliases (
+  id uuid PRIMARY KEY,
+  entity_id uuid NOT NULL REFERENCES ip_entities(id) ON DELETE CASCADE,
+  alias text NOT NULL UNIQUE,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_entity_aliases_alias ON entity_aliases (alias);
+CREATE INDEX IF NOT EXISTS idx_ip_entities_parent ON ip_entities (parent_entity_id);

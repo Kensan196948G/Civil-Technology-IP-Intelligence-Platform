@@ -1,7 +1,8 @@
 // MVP用スキーマ。本番設計は docs/30-design/02-database-design.md を正とし、
 // ここでは6画面の実動作に必要な最小サブセットのみを実装する。
 import {
-  pgTable, pgEnum, uuid, text, timestamp, integer, numeric, boolean, jsonb, date
+  pgTable, pgEnum, uuid, text, timestamp, integer, numeric, boolean, jsonb, date,
+  type AnyPgColumn
 } from 'drizzle-orm/pg-core';
 
 export const classificationEnum = pgEnum('classification_t', ['C1', 'C2', 'C3', 'C4']);
@@ -323,6 +324,27 @@ export const prosecutionEvents = pgTable('prosecution_events', {
   occurredOn: date('occurred_on').notNull(),              // イベント発生日
   kind: text('kind').notNull(),                           // application / exam_request / rejection / amendment / opinion / registration / other
   description: text('description').notNull(),             // 内容（拒絶理由の要旨・補正内容等）
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// M29 IP Entity Intelligence（第一拡張群・実装順位4）
+// 出願人・権利者・機関の名寄せと企業グループ。FR-M29-001〜005。
+export const ipEntities = pgTable('ip_entities', {
+  id: uuid('id').primaryKey(),
+  kind: text('kind').notNull(),                           // company / institution / person / group
+  canonicalName: text('canonical_name').notNull(),        // 正規名（表示・集計の基準）
+  country: text('country'),
+  parentEntityId: uuid('parent_entity_id').references((): AnyPgColumn => ipEntities.id), // 企業グループ（親）
+  note: text('note'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const entityAliases = pgTable('entity_aliases', {
+  id: uuid('id').primaryKey(),
+  entityId: uuid('entity_id').notNull().references(() => ipEntities.id, { onDelete: 'cascade' }),
+  alias: text('alias').notNull().unique(),                // 表記ゆれ（例: 株式会社ABC / ABC CONSTRUCTION CO.,LTD.）
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
