@@ -136,6 +136,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '海外特許', href: '/patents/foreign' },
       { label: '特許ファミリー', href: '/patents/families' },
       { label: '出願人分析', href: '/patents/applicants' },
+      { label: '出願人名寄せ（Entity）', href: '/entities' },
       { label: '発明者分析', href: '/patents/inventors' },
       { label: 'IPC / CPC分析', href: '/patents/ipc' },
       { label: '引用・被引用', href: '/patents/citations' },

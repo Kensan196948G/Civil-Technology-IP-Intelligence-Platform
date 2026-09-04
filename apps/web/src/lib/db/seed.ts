@@ -259,6 +259,50 @@ async function main() {
     );
   }
 
+  // IPエンティティ（出願人名寄せ・企業グループ。M29）
+  const entityDefs = [
+    {
+      canonical: '北浜重工デモ株式会社', kind: 'company', parent: null,
+      country: null,
+      aliases: ['北浜重工デモ（株）', 'KITAHAMA JUKO DEMO CO., LTD.', '北浜重工デモ']
+    },
+    {
+      canonical: '北浜重工デモグループ', kind: 'group', parent: null,
+      country: null,
+      aliases: ['北浜重工デモグループ（本社）']
+    },
+    {
+      canonical: '第一土木デモ建設株式会社', kind: 'company', parent: null,
+      country: null,
+      aliases: ['第一土木デモ建設（株）', 'DAIICHI DOBOKU DEMO CONSTRUCTION CO., LTD.']
+    },
+    {
+      canonical: '旭洋テクノデモ工業株式会社', kind: 'company', parent: null,
+      country: null,
+      aliases: ['旭洋テクノデモ（株）']
+    },
+    {
+      canonical: 'Northport Marine Robotics Demo Inc.', kind: 'company', country: 'US',
+      aliases: ['Northport Marine Robotics Demo', 'ノースポート・マリンロボティクスデモ（米国）']
+    }
+  ] as const;
+  const entityIdByCanonical: Record<string, string> = {};
+  for (const e of entityDefs) {
+    const eid = uuid(); entityIdByCanonical[e.canonical] = eid;
+    await sql(
+      `INSERT INTO ip_entities (id, kind, canonical_name, country, parent_entity_id, note, is_sample)
+       VALUES ($1,$2,$3,$4,NULL,'デモ名寄せエンティティ',true)`,
+      [eid, e.kind, e.canonical, e.country ?? null]
+    );
+    for (const alias of e.aliases) {
+      await sql(`INSERT INTO entity_aliases (id, entity_id, alias, is_sample) VALUES ($1,$2,$3,true)`,
+        [uuid(), eid, alias]);
+    }
+  }
+  // グループ親子関係の例（親: 北浜重工デモグループ → 子: 北浜重工デモ株式会社）
+  await sql(`UPDATE ip_entities SET parent_entity_id = $1 WHERE id = $2`,
+    [entityIdByCanonical['北浜重工デモグループ']!, entityIdByCanonical['北浜重工デモ株式会社']!]);
+
   // NETIS
   const netisId = uuid();
   await sql(
