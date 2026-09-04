@@ -78,9 +78,9 @@
 | ファイル | 内容 |
 |---|---|
 | [01-cloudflare-setup.md](40-infrastructure/01-cloudflare-setup.md) | Workers / R2 / KV / Queues / Access |
-| [02-neon-setup.md](40-infrastructure/02-neon-setup.md) | Neon プロジェクト、ブランチ運用 |
+| [02-neon-setup.md](40-infrastructure/02-neon-setup.md) | **DB構成（ローカル PostgreSQL 16。Neon から移行済み・[ADR-0007](20-architecture/adr/ADR-0007-local-postgresql.md)）** |
 | [03-dns-and-domain.md](40-infrastructure/03-dns-and-domain.md) | `ctiip` / `ctiip-mvp` サブドメインの設定 |
-| [04-environments.md](40-infrastructure/04-environments.md) | local / preview / **MVP** / **本番** とデータ方針 |
+| [04-environments.md](40-infrastructure/04-environments.md) | 環境定義（現行構成と目標アーキテクチャ）とデータ方針 |
 | [05-secrets-management.md](40-infrastructure/05-secrets-management.md) | シークレット管理方針 |
 
 ### 50-development — 開発

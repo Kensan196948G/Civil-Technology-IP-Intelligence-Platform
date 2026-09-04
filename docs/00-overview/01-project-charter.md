@@ -41,7 +41,7 @@
 - 外部公開データの取り込み（JPO/J-PlatPat系、WIPO、公開論文、NETIS・国交省公開情報）
 - `Construction-LegalOps-DX` への引き渡しインターフェース
 - `Civil-Research-Patent-Scout` からの資産移管
-- Cloudflare / Neon 上での本番運用
+- Cloudflare Tunnel 経由での本番運用（自社ホスト上で Next.js + ローカル PostgreSQL 16。2026-08-29 移行、[ADR-0007](../20-architecture/adr/ADR-0007-local-postgresql.md)）
 
 ### 3.2 対象外（Out of Scope）
 
@@ -57,7 +57,7 @@
 
 | 区分 | 内容 |
 |---|---|
-| 利用サービス | GitHub（ソース・CI/CD）、Cloudflare（実行基盤・CDN・認証）、Neon（PostgreSQL） |
+| 利用サービス | GitHub（ソース・CI/CD）、Cloudflare（Tunnel・CDN・認証）、ローカル PostgreSQL 16（主DB。旧Neon は ADR-0007 で廃止） |
 | ドメイン | `mirai-dx-platform.com`（取得済み） |
 | サブドメイン | `ctiip`（新規取得） → `ctiip.mirai-dx-platform.com` 🔒 承認必要 |
 | 言語 | UI・ドキュメントは日本語。コード内コメントは英語可 |

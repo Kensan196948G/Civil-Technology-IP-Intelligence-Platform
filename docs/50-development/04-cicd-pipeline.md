@@ -1,6 +1,11 @@
 # 🔁 CI/CD パイプライン
 
-## 1. 全体像
+> **現状（2026-08-29 移行）**: 実行基盤が自社ホスト（Next.js Node ＋ ローカル PostgreSQL ＋ Cloudflare Tunnel）へ移行したため、
+> 本ファイル中の **Neon ブランチ（db-preview 等）・preview Worker デプロイの記述は移行前のもの**で、現行は運用していません。
+> 実際のワークフローは `.github/workflows/`（`ci.yml`・`deploy-production.yml`）が正です（[ADR-0007](../20-architecture/adr/ADR-0007-local-postgresql.md)）。
+> マイグレーションは main 反映後にデプロイ先ホストで `pnpm db:migrate` を実行します。
+
+## 1. 全体像（移行前の目標設計を含む）
 
 ```text
 PR 作成/更新

@@ -1,13 +1,17 @@
 # 💾 バックアップと復旧
 
-## 1. 対象
+> **現状（2026-08-29 移行）**: 主DBは**ローカル PostgreSQL 16**（`civil_tech_ip_intelligence`）へ移行済みです。
+> 下表の Neon PITR・R2 保管は**移行前の設計**であり、現行はローカルホスト上で **日次 `pg_dump`** による論理バックアップを
+> 基本とします（保管先・保持期間・RPO/RTO は ⚠️ 要決定。[ADR-0007](../20-architecture/adr/ADR-0007-local-postgresql.md)、
+> [DB構成](../40-infrastructure/02-neon-setup.md)）。
+
+## 1. 対象（移行後）
 
 | データ | 保管 | 方式 | 頻度 |
 |---|---|---|---|
-| Neon PostgreSQL | Neon PITR | 継続 | 継続（保持期間 ⚠️ 要決定） |
-| Neon PostgreSQL | R2 `ctiip-backup` | 論理バックアップ（`pg_dump`） | 日次 |
-| R2 `ctiip-docs` | — | ⚠️ **要決定** — 別リージョンへの複製を検討 | — |
-| R2 `ctiip-reports` | — | 再生成可能。バックアップ対象外 | — |
+| ローカル PostgreSQL（`civil_tech_ip_intelligence`） | ホスト内／外部ストレージ（⚠️ 要決定） | 論理バックアップ（`pg_dump`） | 日次 |
+| R2 `ctiip-docs`（移行前） | — | ⚠️ **要決定** — 別リージョンへの複製を検討 | — |
+| R2 `ctiip-reports`（移行前） | — | 再生成可能。バックアップ対象外 | — |
 | 設定（wrangler / Access ポリシー） | Git | コード管理 | コミットごと |
 | シークレット | — | バックアップしない。再発行で対応 | — |
 
