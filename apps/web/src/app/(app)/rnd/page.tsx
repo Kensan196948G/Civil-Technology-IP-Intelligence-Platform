@@ -37,6 +37,7 @@ const LINKS: { label: string; href: string; sub: string }[] = [
   { label: '改良発明', href: '/rnd/improvement-candidates', sub: '他社特許と近接する要件（改良余地）' },
   { label: '周辺発明候補', href: '/rnd/adjacent-candidates', sub: '他社特許と異なる要件（周辺出願余地）' },
   { label: '技術ロードマップ', href: '/rnd/roadmap', sub: '研究テーマの成熟度別分布' },
+  { label: 'PoC実験管理', href: '/rnd/poc', sub: '仮説→実証→結果→採用/中止（M36）' },
   { label: '出願候補', href: '/rnd/filing-candidates', sub: '知財・法務審査段階まで進んだ発明' }
 ];
 

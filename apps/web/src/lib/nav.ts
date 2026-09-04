@@ -272,6 +272,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '研究テーマ', href: '/rnd/themes' },
       { label: '技術課題', href: '/rnd/challenges' },
       { label: '技術ニーズ', href: '/rnd/needs' },
+      { label: 'PoC実験', href: '/rnd/poc' },
       { label: '発明アイデア', href: '/rnd/ideas' },
       { label: '発明届', href: '/inventions' },
       { label: '発明者', href: '/research/researchers' },
