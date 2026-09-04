@@ -288,8 +288,13 @@ M11 Patent Landscape の White Space を一段進め、**研究テーマ候補�
 実装まで徹底します（`../10-requirements/05-rbac-matrix.md` §4 と整合）。
 
 > **追記（2026-09-04）**: `main` ブランチの CI（quality ジョブの Cloudflare Pages build (next-on-pages) verification ステップ）が
-> 現時点で失敗状態です（`2bf88d1` 以降の既存事象。ローカル PostgreSQL＋Tunnel 構成への移行に伴うものと推測）。
-> 本件は上記 Issue と独立に、デプロイ経路の見直し（next-on-pages 検証の要否含む）として別途対応を検討します（⚠️ 要決定）。
+> 失敗状態でしたが、原因を特定しました。`@cloudflare/next-on-pages` v1.13.16 は**非静的ルートすべてに
+> `export const runtime = 'edge'` を要求**します。一方 `2bf88d1` は本番を Node ランタイム＋ローカル PostgreSQL＋
+> Cloudflare Tunnel 構成へ移行するため edge 宣言を全削除しており、**現行アーキテクチャとは両立不能**です
+> （`next build` 自体は force-dynamic 化により成功し、cf:build の変換段階のみが失敗する状態）。
+> 対応の選択肢: **案A** CI の next-on-pages 検証ステップを撤去し `next build`＋スモークで代替（現行アーキテクチャに整合・推奨）／
+> **案B** CF Pages デプロイへ回帰（edge 宣言復元＋Neon HTTP ドライバ運用）。
+> 本件の扱いは **⚠️ 要決定（D-5）** です。
 
 ---
 
