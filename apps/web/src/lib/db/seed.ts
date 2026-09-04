@@ -160,11 +160,36 @@ async function main() {
     ['港湾工事における自動据付技術の適用性評価', '土木学会論文集 B3（海洋開発）デモ号'],
     ['動揺補償制御を用いた海上施工の高精度化', '海洋工学シンポジウムデモ予稿集']
   ];
+  const paperIds: string[] = [];
   for (const [title, venue] of paperDefs) {
+    const pid = uuid(); paperIds.push(pid);
     await sql(
       `INSERT INTO papers (id, title, abstract, venue, published_on, source, source_url, retrieved_at, is_sample)
        VALUES ($1,$2,$3,$4,'2025-04-01','デモ用サンプルデータ',NULL, now(), true)`,
-      [uuid(), title, title + 'についての要旨（デモ）。', venue]
+      [pid, title, title + 'についての要旨（デモ）。', venue]
+    );
+  }
+
+  // 特許引用関係（M26 Patent Citation Intelligence）
+  // 後方引用(backward)・NPL引用(npl)のデモエッジ。前方引用は登録後に他特許が引用した際に付与される想定。
+  const citationDefs: Array<[number, string, number | 'paper0' | 'paper1', string]> = [
+    [0, 'backward', 2, '審査官引用（デモ）'],
+    [0, 'npl', 'paper0', '技術論文を根拠に引用（デモ）'],
+    [1, 'backward', 0, '自社先行特許を引用（デモ）'],
+    [2, 'backward', 1, '基本特許として引用（デモ）'],
+    [3, 'npl', 'paper1', '制御方式の学術的背景（デモ）'],
+    [4, 'backward', 0, '同一発明者の周辺特許（デモ）']
+  ];
+  for (const [srcIdx, kind, tgt, note] of citationDefs) {
+    let citedPatent: string | null = null;
+    let citedPaper: string | null = null;
+    if (tgt === 'paper0') citedPaper = paperIds[0]!;
+    else if (tgt === 'paper1') citedPaper = paperIds[1]!;
+    else citedPatent = patentIds[tgt as number]!;
+    await sql(
+      `INSERT INTO patent_citations (id, source_patent_id, kind, cited_patent_id, cited_paper_id, note, is_sample)
+       VALUES ($1,$2,$3,$4,$5,$6,true)`,
+      [uuid(), patentIds[srcIdx]!, kind, citedPatent, citedPaper, note]
     );
   }
 

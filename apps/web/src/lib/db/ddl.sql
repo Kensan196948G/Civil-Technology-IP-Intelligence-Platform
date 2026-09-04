@@ -318,3 +318,19 @@ CREATE TABLE IF NOT EXISTS poc_experiments (
 );
 CREATE INDEX IF NOT EXISTS idx_poc_experiments_created ON poc_experiments (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_poc_experiments_result ON poc_experiments (result);
+
+-- M26 Patent Citation Intelligence（第一拡張群・実装順位3）
+CREATE TABLE IF NOT EXISTS patent_citations (
+  id uuid PRIMARY KEY,
+  source_patent_id uuid NOT NULL REFERENCES patents(id),
+  kind text NOT NULL CHECK (kind IN ('backward','forward','npl')),
+  cited_patent_id uuid REFERENCES patents(id),
+  cited_paper_id uuid REFERENCES papers(id),
+  note text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CHECK (cited_patent_id IS NOT NULL OR cited_paper_id IS NOT NULL)
+);
+CREATE INDEX IF NOT EXISTS idx_patent_citations_source ON patent_citations (source_patent_id);
+CREATE INDEX IF NOT EXISTS idx_patent_citations_cited_patent ON patent_citations (cited_patent_id);
+CREATE INDEX IF NOT EXISTS idx_patent_citations_kind ON patent_citations (kind);

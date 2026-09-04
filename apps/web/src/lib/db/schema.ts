@@ -67,6 +67,19 @@ export const claimElements = pgTable('claim_elements', {
   charEnd: integer('char_end')
 });
 
+// M26 Patent Citation Intelligence（第一拡張群・実装順位3）
+// 特許間（後方/前方引用）と NPL（論文等）への引用関係。FR-M26-001/006。
+export const patentCitations = pgTable('patent_citations', {
+  id: uuid('id').primaryKey(),
+  sourcePatentId: uuid('source_patent_id').notNull().references(() => patents.id),
+  kind: text('kind').notNull(), // backward（後方引用）/ forward（前方引用）/ npl（非特許文献引用）
+  citedPatentId: uuid('cited_patent_id').references(() => patents.id),
+  citedPaperId: uuid('cited_paper_id').references(() => papers.id),
+  note: text('note'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
 export const papers = pgTable('papers', {
   id: uuid('id').primaryKey(),
   title: text('title').notNull(),
