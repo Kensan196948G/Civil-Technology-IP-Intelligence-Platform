@@ -48,8 +48,9 @@
 | Cloudflare Queues | 非同期ジョブキュー。データ取り込みとAIジョブに使用 |
 | Cloudflare R2 | オブジェクトストレージ。PDF・図面・レポート成果物 |
 | Cloudflare Access | ゼロトラスト認証。SSO / MFA を担う |
-| Neon | サーバーレス PostgreSQL。主データベース |
-| Neon Branch | DBのブランチ機能。PRごとの検証用DBに使用 |
+| ローカル PostgreSQL | 主データベース。自社ホスト上の PostgreSQL 16（`127.0.0.1:5432/civil_tech_ip_intelligence`）。2026-08-29 に Neon から移行（[ADR-0007](../20-architecture/adr/ADR-0007-local-postgresql.md)） |
+| Neon（廃止） | サーバーレス PostgreSQL。旧主DB。2026-08-29 に廃止。旧文書中の記述は移行前として読替 |
+| Neon Branch（廃止） | DBのブランチ機能。PRごとの検証用DBに使用していた。移行により不使用 |
 | pgvector | PostgreSQL のベクトル検索拡張 |
 | pg_trgm | PostgreSQL のトライグラム検索拡張。日本語字句検索に使用 |
 | RRF | Reciprocal Rank Fusion。字句検索と意味検索の結果を融合する手法 |

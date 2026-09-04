@@ -1,6 +1,22 @@
 # 🧪 環境定義
 
-## 1. 一覧
+> **現状（2026-08-29 移行）**: 本番・MVP は Cloudflare Workers ではなく
+> **自社ホスト上の Next.js（Node.js）＋ Cloudflare Tunnel** で運用しており、DB は**ローカル PostgreSQL 16**
+> （[ADR-0007](../20-architecture/adr/ADR-0007-local-postgresql.md)）です。
+> 下表 §1 以降の Workers／Neon ブランチの記述は **目標アーキテクチャ（本番設計）** のもので、
+> preview（PR ごとの自動環境）は現行では運用していません。
+
+## 0. 現行の実行構成（2026-09-04）
+
+| 環境 | URL | 実行プロセス | DB（ローカル PostgreSQL） | データ |
+|---|---|---|---|---|
+| local | `http://localhost:3000` | `pnpm dev` | 開発用 DB（各自） | ダミー |
+| **MVP** | `https://ctiip-mvp.mirai-dx-platform.com` 🔒 | `ctiip-mvp-adhoc.service`（`next start -p 3001`） | `civil_tech_ip_intelligence` | **ダミー中心**（C2以上禁止） |
+| **本番** | `https://ctiip.mirai-dx-platform.com` 🔒 | `ctip-web.service`（`next start -p 18940`） | `civil_tech_ip_intelligence` | 実データ（初期はダミー併存） |
+
+公開は Cloudflare Tunnel（`ctip-web-cloudflared.service` ほか）による。昇格は `local → MVP → 本番` の一方向。
+
+## 1. 一覧（目標アーキテクチャ）
 
 | 環境 | URL | Worker 名 | Neon ブランチ | データ | 用途 |
 |---|---|---|---|---|---|

@@ -197,38 +197,39 @@ AIの出力をそのままお客様向けの資料に貼ることは禁止して
 
 ## 🔧 9. アーキテクチャ概要
 
+> **実行基盤の現状（2026-08-29 移行）**: 本番・MVP は **自社ホスト上の Next.js（Node.js ランタイム）＋ Cloudflare Tunnel**
+> で運用し、DB は **ローカル PostgreSQL 16**（`127.0.0.1:5432/civil_tech_ip_intelligence`）です。
+> 右側の Workers／Workflows／Queues 分割構成は **本番設計（バックログ）** です（[ADR-0007](docs/20-architecture/adr/ADR-0007-local-postgresql.md)）。
+
 ```text
-利用者 → Cloudflare Access (SSO/MFA)
-          ↓ JWT
-        ctiip[-mvp].mirai-dx-platform.com
-          ↓
-        ctiip-web   (Next.js App Router on Cloudflare Workers)
-          ↓ Service Binding
-        ctiip-api   (Hono on Workers)  ※60秒超の処理を持たない
-          ├→ Neon PostgreSQL 16+ (pgvector / pg_trgm)
-          ├→ R2 (原文PDF・図面・帳票)
-          ├→ Workers KV (設定・Rate Limit)
-          └→ Queues → ingest / embed / ai / report / notify (Consumer Workers)
-                        ↓
-                      Cloudflare Workflows (agent-orchestrator / M21 の12段連鎖)
-                        ↓
-              Anthropic Claude API ／ Workers AI (埋め込み) ／ 外部データ源
+【現行（2026-08-29〜）】                      【本番設計（バックログ）】
+利用者 ── Cloudflare Tunnel                  利用者 → Cloudflare Access (SSO/MFA) → JWT
+             ↓                                            ↓
+   ctiip / ctiip-mvp（自社ホスト上の Next.js        ctiip-web (Next.js App Router on Workers)
+   Node.js ランタイム, 127.0.0.1:18940/3001）         ↓ Service Binding
+             ↓                                    ctiip-api (Hono on Workers)
+   ローカル PostgreSQL 16                            ├→ PostgreSQL（旧: Neon。ADR-0007 で廃止）
+   (127.0.0.1:5432 / civil_tech_ip_intelligence)     ├→ R2 (原文PDF・図面・帳票)
+                                                     ├→ Workers KV (設定・Rate Limit)
+                                                     └→ Queues → ingest / embed / ai / report / notify
+                                                               ↓ Cloudflare Workflows (M21 の多段連鎖)
+                                                               ↓ Claude API ／ Workers AI ／ 外部データ源
 ```
 
-詳細 → [システムアーキテクチャ](docs/20-architecture/01-system-architecture.md)
+詳細 → [システムアーキテクチャ](docs/20-architecture/01-system-architecture.md)（本番設計）
 
 ## 🔧 10. 技術スタック
 
 | 層 | 採用 |
 |---|---|
 | 言語 / モノレポ | TypeScript / pnpm workspaces + Turborepo |
-| フロント | Next.js（App Router）→ Cloudflare Workers（OpenNext アダプタ） |
-| API | Hono on Workers、Zod による入出力検証、OpenAPI 3.1 自動生成 |
-| ORM / DB | Drizzle ORM / Neon PostgreSQL（Pooler 経由） |
-| 検索 | `pg_trgm`（字句）＋ `pgvector` HNSW（意味）を **RRF** で融合 |
-| 非同期 | Cloudflare Queues（単発）／ Cloudflare Workflows（多段・永続） |
-| ストレージ | R2（docs / reports / raw / backup）、Workers KV |
-| 認証 | Cloudflare Access（SSO + MFA）→ アプリで JWT 検証 → RBAC + 行レベル制御 |
+| フロント | Next.js（App Router）。**現行: 自社ホストで Node ランタイム実行**（本番設計では Cloudflare Workers へ OpenNext で載せる） |
+| API | Hono on Workers（本番設計）／ 現行は Next.js Route + Server Actions |
+| ORM / DB | Drizzle ORM / **ローカル PostgreSQL 16**（2026-08-29 に Neon から移行・[ADR-0007](docs/20-architecture/adr/ADR-0007-local-postgresql.md)） |
+| 検索 | `pg_trgm`（字句）＋ `pgvector` HNSW（意味）を **RRF** で融合（実装フェーズで拡張導入） |
+| 非同期 | Cloudflare Queues（単発）／ Cloudflare Workflows（多段・永続）（本番設計） |
+| ストレージ | R2（docs / reports / raw / backup）、Workers KV（本番設計） |
+| 認証 | 現行: デモ認証（cookie＋ロール選択）。本番は Cloudflare Access（SSO + MFA）へ置換（バックログ） |
 | AI | Anthropic Claude API（推論）／ Workers AI（埋め込み） |
 | CI/CD | GitHub Actions + GitHub Environments（production は Required reviewers） |
 | テスト | Vitest / Playwright |
@@ -241,7 +242,7 @@ AIの出力をそのままお客様向けの資料に貼ることは禁止して
 **MVP実装（現状のコード）は Next.js 単体アプリに意図的に簡略化**している（垂直スライスを早く動かす判断。詳細は §16）。
 
 ```text
-apps/web/               MVP実装（唯一の実装単位。Next.js App Router、Cloudflare Pages で稼働）
+apps/web/               MVP実装（唯一の実装単位。Next.js App Router。自社ホスト Node ランタイムで稼働）
   src/app/(app)/         認証後の画面（ダッシュボード・検索・Claim・現場適用・現場課題・承認）
   src/app/login/         デモログイン（ロール切替）
   src/app/api/           REST API（health・search）
@@ -251,18 +252,17 @@ apps/web/               MVP実装（唯一の実装単位。Next.js App Router�
 docs/                    設計・運用ドキュメント一式（本番設計の正）
 ```
 
-**依存の向き**: `apps/web` → `Neon`。パッケージ分割（`packages/*`）は本番実装着手時に導入する（バックログ）。
+**依存の向き**: `apps/web` → `ローカル PostgreSQL`（`127.0.0.1:5432`）。パッケージ分割（`packages/*`）は本番実装着手時に導入する（バックログ）。
 
 ## 🔧 12. 環境
 
-| 環境 | URL | Worker | Neon ブランチ | データ |
+| 環境 | URL | 実行 | DB（ローカル PostgreSQL） | データ |
 |---|---|---|---|---|
-| local | `localhost:3000` | — | 個人ブランチ | ダミー |
-| preview | Workers preview URL | `ctiip-*-pr{n}` | `pr-{n}` | ダミー |
-| **MVP** | `ctiip-mvp.mirai-dx-platform.com` | `ctiip-*-mvp` | `mvp` | **ダミー中心**（C2以上の実データ禁止） |
-| **本番** | `ctiip.mirai-dx-platform.com` | `ctiip-*-prod` | `main` | 実データ（ダミーは段階的にゼロ） |
+| local | `http://localhost:3000` | `pnpm dev` | 開発用 DB（各自） | ダミー |
+| **MVP** | `ctiip-mvp.mirai-dx-platform.com` | `ctiip-mvp-adhoc.service`（`next start -p 3001`） | `civil_tech_ip_intelligence` | **ダミー中心**（C2以上の実データ禁止） |
+| **本番** | `ctiip.mirai-dx-platform.com` | `ctip-web.service`（`next start -p 18940`） | `civil_tech_ip_intelligence` | 実データ（ダミーは段階的にゼロ） |
 
-昇格は `preview → MVP → 本番` の一方向。**MVP を経ずに本番へ出さない。**
+公開は Cloudflare Tunnel 経由。昇格は `local → MVP → 本番` の一方向。**MVP を経ずに本番へ出さない。**
 
 詳細 → [環境定義](docs/40-infrastructure/04-environments.md) / [DNS](docs/40-infrastructure/03-dns-and-domain.md)
 
@@ -273,9 +273,11 @@ git clone https://github.com/Kensan196948G/Civil-Technology-IP-Intelligence-Plat
 cd Civil-Technology-IP-Intelligence-Platform
 corepack enable && pnpm install
 
-# apps/web/.env.local に DATABASE_URL=postgresql://... を設定（Neon の接続文字列。値は管理者から受領）
+# apps/web/.env.local に DATABASE_URL を設定（ローカル PostgreSQL。実値は管理者から受領。例は .env.example）
 pnpm --filter @ctiip/web db:migrate   # DDL適用（初回のみ）
-CTIIP_ALLOW_SEED_TRUNCATE=true pnpm --filter @ctiip/web db:seed   # 架空ダミーデータ投入（既存データを洗い替えるため明示フラグが必須）
+# seed は接続先の許可リスト（ホスト名・DB名の完全一致）が必要
+CTIIP_ALLOW_SEED_TRUNCATE=true CTIIP_SEED_ALLOWED_HOST=127.0.0.1 CTIIP_SEED_ALLOWED_DB=civil_tech_ip_intelligence \
+  pnpm --filter @ctiip/web db:seed   # 架空ダミーデータ投入（既存データを洗い替えるため明示フラグが必須）
 
 pnpm dev                               # http://localhost:3000
 ```
@@ -311,12 +313,10 @@ pnpm --filter @ctiip/web exec playwright test   # 7 passed
 ## 🔧 15. CI/CD
 
 ```text
-PR        → lint / typecheck / test / build / secret-scan / dep-audit
-             + Neon ブランチ作成 → マイグレーション & ロールバック検証
-             + preview デプロイ → E2E / 権限テスト / Provenance テスト
-main      → MVP へ自動デプロイ
-tag v*    → 🔒 Required reviewers 承認 → 本番マイグレーション → デプロイ → スモークテスト
-PR close  → Neon ブランチ・preview Worker を自動削除
+PR        → lint / typecheck / test / build / secret-scan / dep-audit（現行 CI = ci.yml）
+             + （移行前）Neon ブランチ作成 → preview デプロイ → E2E。現行は preview 自動環境なし
+main      → （現行）レビュー後にマージ。デプロイは自社ホスト側で systemd を更新
+tag v*    → 🔒 Required reviewers 承認 → マイグレーション → デプロイ → スモークテスト（旧 Pages 経路。現行は未使用）
 ```
 
 **高リスク変更**（DNS、本番シークレット、認証・認可モデル、破壊的マイグレーション、
@@ -338,7 +338,7 @@ MVPは「主要ユースケースを実際に操作できること」を優先�
 | 監査ログ（`audit_logs`）は主要操作のみ記録 | 全操作・拒否操作を含む完全な監査（[NFR-L-001](docs/10-requirements/03-non-functional-requirements.md)） |
 | RBAC は画面上の表示のみ（行レベル制御なし） | プロジェクト単位の行レベル制御・C3/C4の404秘匿（[詳細設計 §3.1](docs/30-design/01-detailed-design.md)） |
 | データ取り込みなし（シード投入のみ） | JPO/WIPO/NETIS等の自動取り込み（[データフロー](docs/20-architecture/03-data-flow.md)） |
-| Cloudflare Pages（Next.js on Pages） | Cloudflare Workers + Workflows + Queues 構成（[ADR-0001](docs/20-architecture/adr/ADR-0001-cloudflare-neon-github.md)） |
+| 自社ホストの Next.js（Node）＋Cloudflare Tunnel（2026-08-29〜） | Cloudflare Workers + Workflows + Queues 構成（[ADR-0001](docs/20-architecture/adr/ADR-0001-cloudflare-neon-github.md)。DB は [ADR-0007](docs/20-architecture/adr/ADR-0007-local-postgresql.md)） |
 
 これらは**MVPの評価が完了し本番実装フェーズへ進む際の実装バックログ**である。
 現時点でのP0（致命的な欠落・障害）はない。
@@ -360,12 +360,12 @@ MVPは「主要ユースケースを実データで最後まで動かせるこ�
 
 | 制約 | 対応 | 参照 |
 |---|---|---|
-| **Neon に日本語形態素解析拡張（PGroonga / pg_bigm）が無い** | `pg_trgm` + `pgvector` の RRF ハイブリッド。Phase 1 で検索品質を実測し、達成できなければ外部検索エンジンを再検討 | [ADR-0003](docs/20-architecture/adr/ADR-0003-japanese-search.md) |
-| Workers の CPU 時間・サブリクエスト上限 | 重い処理は Queues / Workflows へ分離 | [ADR-0004](docs/20-architecture/adr/ADR-0004-async-ai-execution.md) |
+| **日本語形態素解析拡張（PGroonga / pg_bigm）が未導入の DB 環境** | `pg_trgm` + `pgvector` の RRF ハイブリッド。Phase 1 で検索品質を実測し、達成できなければ外部検索エンジンを再検討 | [ADR-0003](docs/20-architecture/adr/ADR-0003-japanese-search.md) |
+| Workers の CPU 時間・サブリクエスト上限 | 重い処理は Queues / Workflows へ分離（本番設計） | [ADR-0004](docs/20-architecture/adr/ADR-0004-async-ai-execution.md) |
 | 埋め込みの次元数がテーブル定義に固定される | Phase 1 でモデルを比較評価し、本格取り込み前に確定 | [検索・RAG設計](docs/30-design/06-search-and-rag-design.md) |
-| サーバーレスの接続数 | Neon Pooler 必須。コネクションを保持しない | [Neon構成](docs/40-infrastructure/02-neon-setup.md) |
+| DB が単一ホストにある | ホスト障害＝サービス停止。バックアップ（日次 `pg_dump`）と可用性方針を本番設計で再定義 | [DB構成](docs/40-infrastructure/02-neon-setup.md) |
 | 特許明細書が LLM のトークン上限を超える | 章単位に分割して処理し結果を統合 | [AIエージェント構成](docs/20-architecture/04-ai-agent-architecture.md) |
-| エッジ実行と DB リージョンのレイテンシ | リージョン固定。N+1 を作らない | 同上 |
+| ネットワーク往復のレイテンシ | N+1 を作らない。ローカル接続のため旧「リージョン固定」の制約は消滅 | 同上 |
 
 ## 🔧 18. 運用
 
