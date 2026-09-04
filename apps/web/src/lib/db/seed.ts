@@ -248,6 +248,42 @@ async function main() {
     [fieldApplicationId, issueId, techId2, score, axes]
   );
 
+  // PoC / 実証実験（M36。失敗PoCも知見として記録する）
+  const pocDefs = [
+    {
+      title: 'ケーソン据付 動揺補償装置の現地PoC（デモ）',
+      hypothesis: '有義波高2.0m超の波浪下でも、動揺補償付き吊具なら潜水士中断なしで据付を続けられる',
+      kpis: { '据付可能な波高上限_m': 2.5, '潜水士水際作業_h/基': 0.5, '据付サイクル_h/基': 4.0 },
+      before: '潜水士の目視誘導による従来据付（波高2.0m超で中断）',
+      after: '動揺補償付き吊具＋遠隔計測による据付（デモ技術: ケーソン据付装置）',
+      cost: 8000000, result: 'success',
+      lesson: '2.0〜2.3mの波浪下で作業継続できた。残課題は強風時の吊荷のふれまわり（実証データ: デモ）'
+    },
+    {
+      title: '水中部材点検AIの適用性PoC（デモ）',
+      hypothesis: 'ROV動画からのAI損傷検出で、潜水士目視点検の3割を代替できる',
+      kpis: { '検出適合率': 0.82, '点検時間削減率': 0.3 },
+      before: '潜水士による目視・打音点検', after: 'ROV動画＋AI損傷検出', cost: 3500000, result: 'partial_success',
+      lesson: '照度が十分なら適合率0.8超。夜間・濁度大は精度低下（デモ）'
+    },
+    {
+      title: '養生コンクリート温度AI制御のPoC（デモ）',
+      hypothesis: '給熱量をAI制御すれば品質ばらつきを減らしつつ燃料を削減できる',
+      kpis: { '強度ばらつき_Cv': 0.08, '燃料削減率': 0.15 },
+      before: 'タイマーによる定時給熱養生', after: '温度センサ＋AI給熱制御', cost: 1200000, result: 'failed',
+      lesson: '養生初期の外気温急変への追随が遅れ強度Cvが目標未達。センサ配置と応答ゲインを再設計して再PoC（デモ）'
+    }
+  ] as const;
+  for (const p of pocDefs) {
+    await sql(
+      `INSERT INTO poc_experiments
+         (id, title, hypothesis, kpis, before_method, after_method, cost_yen, result, lesson, site_issue_id, created_by, is_sample)
+       VALUES ($1,$2,$3,$4::jsonb,$5,$6,$7,$8,$9,$10,$11,true)`,
+      [uuid(), p.title, p.hypothesis, p.kpis, p.before, p.after, p.cost, p.result, p.lesson, issueId,
+       U('inoue.akira@demo.ctiip.example')]
+    );
+  }
+
   // 発明届 → ワークフロー（AI模擬審査ステップ相当・人間確認未完了）
   const inventionId = uuid();
   await sql(

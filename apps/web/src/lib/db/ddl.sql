@@ -299,3 +299,22 @@ CREATE INDEX IF NOT EXISTS idx_patents_title ON patents (title);
 CREATE INDEX IF NOT EXISTS idx_technologies_name ON technologies (name);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_occurred ON audit_logs (occurred_at DESC);
 CREATE INDEX IF NOT EXISTS idx_workflow_status ON workflow_instances (status);
+
+-- M36 PoC / Experiment Management（第一拡張群・実装順位7）
+CREATE TABLE IF NOT EXISTS poc_experiments (
+  id uuid PRIMARY KEY,
+  title text NOT NULL,
+  hypothesis text NOT NULL,
+  kpis jsonb NOT NULL DEFAULT '{}',
+  before_method text,
+  after_method text,
+  cost_yen integer,
+  result text NOT NULL DEFAULT 'planned',
+  lesson text,
+  site_issue_id uuid REFERENCES site_issues(id),
+  created_by uuid NOT NULL REFERENCES users(id),
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_poc_experiments_created ON poc_experiments (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_poc_experiments_result ON poc_experiments (result);

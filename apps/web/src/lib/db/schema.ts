@@ -257,6 +257,24 @@ export const investigations = pgTable('investigations', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
+// M36 PoC / Experiment Management（第一拡張群・実装順位7）
+// 仮説 → 実証 → 結果 → 採用/中止 を管理する。詳細は docs/90-project/06-first-wave-fr-drafts.md（FR-M36）。
+export const pocExperiments = pgTable('poc_experiments', {
+  id: uuid('id').primaryKey(),
+  title: text('title').notNull(),
+  hypothesis: text('hypothesis').notNull(),               // 何を改善するか
+  kpis: jsonb('kpis').notNull().default({}),              // KPI（工数/品質/安全/CO₂等。キーと目標値）
+  beforeMethod: text('before_method'),                    // Before: 従来工法
+  afterMethod: text('after_method'),                      // After: 新技術・新工法
+  costYen: integer('cost_yen'),                           // 実証費（円）
+  result: text('result').notNull().default('planned'),    // planned / running / success / partial_success / failed / abandoned
+  lesson: text('lesson'),                                 // 得られた知見（失敗PoCも資産として記録）
+  siteIssueId: uuid('site_issue_id').references(() => siteIssues.id), // 起点の現場課題（導線 M13）
+  createdBy: uuid('created_by').notNull().references(() => users.id),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
 export const watches = pgTable('watches', {
   id: uuid('id').primaryKey(),
   kind: text('kind').notNull(), // patent / competitor / technology / ipc / researcher / paper / netis
