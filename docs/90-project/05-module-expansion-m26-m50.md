@@ -294,7 +294,12 @@ M11 Patent Landscape の White Space を一段進め、**研究テーマ候補�
 > （`next build` 自体は force-dynamic 化により成功し、cf:build の変換段階のみが失敗する状態）。
 > 対応の選択肢: **案A** CI の next-on-pages 検証ステップを撤去し `next build`＋スモークで代替（現行アーキテクチャに整合・推奨）／
 > **案B** CF Pages デプロイへ回帰（edge 宣言復元＋Neon HTTP ドライバ運用）。
-> 本件の扱いは **⚠️ 要決定（D-5）** です。
+>
+> **【方針決定 2026-09-04】案A（検証ステップ撤去）を採択**: ビルド検証は `next build` が担保し、
+> CF Pages へ回帰する場合は案B に従い復元する。
+> **ただし反映保留**: `ci.yml`／`deploy-production.yml` の変更は、本環境から GitHub への push に用いる
+> OAuth トークンが `workflow` スコープを持たないため push 不可（GitHub 側の制限）。変更内容はローカルに
+> 準備済みであり、**workflow スコープ付きトークン／手動操作で反映する（D-5 実施待ち）**。
 
 ---
 
@@ -362,7 +367,7 @@ M11 Patent Landscape の White Space を一段進め、**研究テーマ候補�
 | D-2 | 第一拡張群（M26〜M34＋M36＋M49）の着手順とリソース配分 | 01 経営／04 技術・研究開発 | 同上 |
 | D-3 | 採用モジュールの機能要件化（`FR-Mxx-nnn` 追記）と DB 設計・Issue 化の進め方 | 開発リード | 採否決定後 |
 | D-4 | 外部データ源（§6）の契約・利用条件の確認対象と優先順位 | 04 技術・研究開発／06 管理本部 | Phase 0 手順に従う |
-| D-5 | `main` CI の next-on-pages 検証ステップの扱い（修正 or 廃止） | 開発リード | 可及的速やか |
+| D-5 | `main` CI の next-on-pages 検証ステップの扱い（修正 or 廃止） | **方針決定済み（案A: 撤去）**。ci.yml / deploy-production.yml の変更は workflow スコープ付きトークンで反映（実施待ち） | トークン付与後 |
 | D-6 | README §16 と `05-rbac-matrix.md` §4 の行レベル制御に関する不整合の正（#11 に同旨） | ユーザー／プロダクトオーナー | #11 着手前 |
 
 ---
