@@ -127,6 +127,7 @@
 | [03-risk-register.md](90-project/03-risk-register.md) | リスク登録簿 |
 | [04-required-company-information.md](90-project/04-required-company-information.md) | **本番デプロイ前に会社から必要な情報の一覧** |
 | [05-module-expansion-m26-m50.md](90-project/05-module-expansion-m26-m50.md) | **次期拡張モジュール計画（M26〜M50）。追加機能候補の正本** |
+| [06-first-wave-fr-drafts.md](90-project/06-first-wave-fr-drafts.md) | **第一拡張群の機能要件 FR 草案（M26〜M34・M36・M38・M45・M49。未採択）** |
 
 ---
 
