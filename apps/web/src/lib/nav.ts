@@ -155,6 +155,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: 'NETIS・公開技術', href: '/netis' },
       { label: '類似技術調査', href: '/investigations/similar-tech' },
       { label: '構成要件別調査', href: '/investigations/by-element' },
+      { label: 'FTO予備調査', href: '/fto' },
       { label: '引用文献分析', href: '/investigations/citation-analysis' },
       { label: '重要文献ランキング', href: '/investigations/ranking' },
       { label: '調査検索式', href: '/investigations/queries' },

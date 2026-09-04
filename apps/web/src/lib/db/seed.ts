@@ -193,6 +193,51 @@ async function main() {
     );
   }
 
+  // FTO / Clearance 予備調査（M28。AI類似度は侵害判断ではない＝表示注記は画面側で強制）
+  const ftoCaseDefs = [
+    {
+      title: 'ケーソン据付装置のFTO予備調査（デモ）',
+      description: '新規開発する動揺補償付き据付装置。制御・油圧・位置検出・施工方法・安全制御の5構成に分解して照合する（デモ）',
+      status: 'in_review',
+      components: [
+        { label: 'A 制御装置', desc: '据付目標との偏差を打ち消す制御演算', patentIdx: 0, claim: '1', sim: 86, action: 'must_review', note: '制御演算が他社 Claim1 と近接。要専門確認' },
+        { label: 'B 油圧機構', desc: '吊具を動かす油圧アクチュエータ', patentIdx: 4, claim: '3', sim: 74, action: 'confirm', note: '油圧系統の構成は公知例も多く要確認' },
+        { label: 'C 位置検出', desc: 'RTK-GNSS・傾斜計による姿勢計測', patentIdx: 2, claim: '5', sim: 68, action: 'confirm', note: '計測センサ併用方式は参考レベル' },
+        { label: 'D 施工方法', desc: '据付手順と作業管理のフロー', patentIdx: null, claim: null, sim: null, action: 'none', note: '関連特許なし（現状）' },
+        { label: 'E 安全制御', desc: '過負荷・過変位時の自動停止', patentIdx: 1, claim: '2', sim: 42, action: 'reference', note: '安全停止の一般要件に近い' }
+      ]
+    },
+    {
+      title: '水中点検ロボットのFTO予備調査（デモ）',
+      description: '港湾構造物の水中部材を対象にした点検ロボット（デモ）',
+      status: 'completed',
+      components: [
+        { label: 'A 推進機構', desc: '水中スラスタによる移動制御', patentIdx: 3, claim: '1', sim: 82, action: 'must_review', note: '推進制御が他社 Claim1 と近接。要専門確認' },
+        { label: 'B 撮像系', desc: 'ROV搭載カメラと照明', patentIdx: null, claim: null, sim: null, action: 'none', note: '関連特許なし（現状）' },
+        { label: 'C 損傷検出', desc: 'AIによるひび割れ判定', patentIdx: 0, claim: '2', sim: 55, action: 'reference', note: '画像解析の一般手法に近い' }
+      ]
+    }
+  ] as const;
+  for (const f of ftoCaseDefs) {
+    const caseId = uuid();
+    await sql(
+      `INSERT INTO fto_cases (id, title, description, status, created_by, is_sample) VALUES ($1,$2,$3,$4,$5,true)`,
+      [caseId, f.title, f.description, f.status, U('takahashi.minoru@demo.ctiip.example')]
+    );
+    let seq = 1;
+    for (const c of f.components) {
+      await sql(
+        `INSERT INTO fto_components
+           (id, fto_case_id, seq, label, description, related_patent_id, claim_no, ai_similarity, action_level, note, is_sample)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true)`,
+        [uuid(), caseId, seq, c.label, c.desc,
+         c.patentIdx == null ? null : patentIds[c.patentIdx]!,
+         c.claim, c.sim, c.action, c.note]
+      );
+      seq += 1;
+    }
+  }
+
   // NETIS
   const netisId = uuid();
   await sql(

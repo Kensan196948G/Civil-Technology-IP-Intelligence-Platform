@@ -334,3 +334,30 @@ CREATE TABLE IF NOT EXISTS patent_citations (
 CREATE INDEX IF NOT EXISTS idx_patent_citations_source ON patent_citations (source_patent_id);
 CREATE INDEX IF NOT EXISTS idx_patent_citations_cited_patent ON patent_citations (cited_patent_id);
 CREATE INDEX IF NOT EXISTS idx_patent_citations_kind ON patent_citations (kind);
+
+-- M28 FTO / Clearance Intelligence（第一拡張群・実装順位1）
+CREATE TABLE IF NOT EXISTS fto_cases (
+  id uuid PRIMARY KEY,
+  title text NOT NULL,
+  description text,
+  status text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','in_review','completed','closed')),
+  created_by uuid NOT NULL REFERENCES users(id),
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS fto_components (
+  id uuid PRIMARY KEY,
+  fto_case_id uuid NOT NULL REFERENCES fto_cases(id) ON DELETE CASCADE,
+  seq integer NOT NULL,
+  label text NOT NULL,
+  description text,
+  related_patent_id uuid REFERENCES patents(id),
+  claim_no text,
+  ai_similarity integer CHECK (ai_similarity >= 0 AND ai_similarity <= 100),
+  action_level text NOT NULL DEFAULT 'none' CHECK (action_level IN ('must_review','confirm','reference','none')),
+  note text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_fto_cases_status ON fto_cases (status);
+CREATE INDEX IF NOT EXISTS idx_fto_components_case ON fto_components (fto_case_id, seq);

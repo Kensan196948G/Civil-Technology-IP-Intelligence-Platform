@@ -288,6 +288,33 @@ export const pocExperiments = pgTable('poc_experiments', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
+// M28 FTO / Clearance Intelligence（第一拡張群・実装順位1）
+// FTO 予備調査：対象の技術構成要素ごとに他社 Claim と照合する。FR-M28-001〜006。
+export const ftoCases = pgTable('fto_cases', {
+  id: uuid('id').primaryKey(),
+  title: text('title').notNull(),
+  description: text('description'),                       // 対象技術・工法の概要
+  status: text('status').notNull().default('draft'),      // draft / in_review / completed / closed
+  createdBy: uuid('created_by').notNull().references(() => users.id),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const ftoComponents = pgTable('fto_components', {
+  id: uuid('id').primaryKey(),
+  ftoCaseId: uuid('fto_case_id').notNull().references(() => ftoCases.id, { onDelete: 'cascade' }),
+  seq: integer('seq').notNull(),                          // 構成要素の並び（A,B,C…）
+  label: text('label').notNull(),                         // 構成の識別子（A：制御装置 等）
+  description: text('description'),                       // 構成の説明
+  relatedPatentId: uuid('related_patent_id').references(() => patents.id),
+  claimNo: text('claim_no'),                              // 照合した請求項
+  aiSimilarity: integer('ai_similarity'),                 // AI類似度（0-100。侵害判断ではない）
+  actionLevel: text('action_level').notNull().default('none'), // must_review / confirm / reference / none
+  note: text('note'),                                     // 専門確認コメント等
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
 export const watches = pgTable('watches', {
   id: uuid('id').primaryKey(),
   kind: text('kind').notNull(), // patent / competitor / technology / ipc / researcher / paper / netis
