@@ -238,6 +238,27 @@ async function main() {
     }
   }
 
+  // 特許庁審査経過（M27。出願→審査請求→拒絶理由→補正→意見書→登録）
+  const prosecutionDefs: Array<[number, string, string, string]> = [
+    [0, '2023-11-01', 'application', '特許出願（デモ）'],
+    [0, '2024-02-10', 'exam_request', '審査請求（デモ）'],
+    [0, '2024-06-20', 'rejection', '拒絶理由通知: 請求項1-3が引用文献1（北浜重工デモ特許）に対して進歩性なし（デモ）'],
+    [0, '2024-08-05', 'amendment', '補正: 請求項1に「港湾構造物」「GPSにより位置を取得し」「油圧アクチュエータによって」の限定を追加（デモ）'],
+    [0, '2024-08-05', 'opinion', '意見書: 補正後の構成と引用文献との技術的相違を主張（デモ）'],
+    [0, '2025-01-15', 'registration', '特許登録（デモ）'],
+    [1, '2024-03-12', 'application', '特許出願（デモ）'],
+    [1, '2024-05-30', 'exam_request', '審査請求（デモ）'],
+    [1, '2024-10-02', 'rejection', '拒絶理由通知: 新規性なし（デモ）'],
+    [1, '2024-12-18', 'amendment', '補正: 請求項を限定（デモ）']
+  ];
+  for (const [pidx, date, kind, desc] of prosecutionDefs) {
+    await sql(
+      `INSERT INTO prosecution_events (id, patent_id, occurred_on, kind, description, is_sample)
+       VALUES ($1,$2,$3,$4,$5,true)`,
+      [uuid(), patentIds[pidx]!, date, kind, desc]
+    );
+  }
+
   // NETIS
   const netisId = uuid();
   await sql(

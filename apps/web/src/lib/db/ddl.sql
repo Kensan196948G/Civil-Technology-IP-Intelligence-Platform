@@ -361,3 +361,16 @@ CREATE TABLE IF NOT EXISTS fto_components (
 );
 CREATE INDEX IF NOT EXISTS idx_fto_cases_status ON fto_cases (status);
 CREATE INDEX IF NOT EXISTS idx_fto_components_case ON fto_components (fto_case_id, seq);
+
+-- M27 Patent Prosecution / Dossier Intelligence（第一拡張群・実装順位2）
+CREATE TABLE IF NOT EXISTS prosecution_events (
+  id uuid PRIMARY KEY,
+  patent_id uuid NOT NULL REFERENCES patents(id),
+  occurred_on date NOT NULL,
+  kind text NOT NULL CHECK (kind IN ('application','exam_request','rejection','amendment','opinion','registration','other')),
+  description text NOT NULL,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_prosecution_patent_date ON prosecution_events (patent_id, occurred_on DESC);
+CREATE INDEX IF NOT EXISTS idx_prosecution_kind ON prosecution_events (kind);
