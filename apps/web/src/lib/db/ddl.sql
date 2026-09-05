@@ -536,3 +536,28 @@ CREATE TABLE IF NOT EXISTS innovation_opportunities (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_innovation_opportunities_score ON innovation_opportunities (opportunity_score DESC);
+
+-- M49 AI Governance & Evaluation（第一拡張群・実装順位10）
+-- AI実行の品質評価メタ（Prompt版/Skill版/検索クエリ/Coverage/Confidence/Hallucination/Human Review）。
+-- Provenance（ai_runs/ai_citations＝根拠の保持）とは別に、ガバナンス用の評価を記録する。
+-- FR-M49-001〜005。
+CREATE TABLE IF NOT EXISTS ai_evaluations (
+  id uuid PRIMARY KEY,
+  ai_run_id uuid NOT NULL UNIQUE REFERENCES ai_runs(id) ON DELETE CASCADE,
+  prompt_version text,
+  skill_version text,
+  search_query text,
+  referenced_docs integer NOT NULL DEFAULT 0,
+  citation_coverage numeric(5,2) NOT NULL,
+  confidence numeric(4,2),
+  hallucination_checked boolean NOT NULL DEFAULT false,
+  hallucination_flagged boolean NOT NULL DEFAULT false,
+  human_reviewed boolean NOT NULL DEFAULT false,
+  reviewed_by uuid REFERENCES users(id),
+  reviewed_at timestamptz,
+  note text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_ai_evaluations_run ON ai_evaluations (ai_run_id);
+CREATE INDEX IF NOT EXISTS idx_ai_evaluations_coverage ON ai_evaluations (citation_coverage DESC);

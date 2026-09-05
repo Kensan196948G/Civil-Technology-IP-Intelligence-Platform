@@ -525,3 +525,27 @@ export const innovationOpportunities = pgTable('innovation_opportunities', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M49 AI Governance & Evaluation（第一拡張群・実装順位10）
+// AI 実行の品質を評価するための記録: Model・Prompt版・Skill版・検索クエリ・参照ドキュメント数
+// （ai_runs/ai_citations は Provenance＝根拠の保持、こちらは評価メタ＝ガバナンス）。
+// FR-M49-001（実行メタの記録）/002（Coverage/Confidence/Hallucination/Human Review）
+// /003（モデル比較）/004（再現性）/005（ダッシュボード）。
+export const aiEvaluations = pgTable('ai_evaluations', {
+  id: uuid('id').primaryKey(),
+  aiRunId: uuid('ai_run_id').notNull().unique().references(() => aiRuns.id, { onDelete: 'cascade' }),
+  promptVersion: text('prompt_version'),
+  skillVersion: text('skill_version'),
+  searchQuery: text('search_query'),
+  referencedDocs: integer('referenced_docs').notNull().default(0),
+  citationCoverage: numeric('citation_coverage', { precision: 5, scale: 2 }).notNull(), // 0-100%
+  confidence: numeric('confidence', { precision: 4, scale: 2 }),                        // 0-1
+  hallucinationChecked: boolean('hallucination_checked').notNull().default(false),
+  hallucinationFlagged: boolean('hallucination_flagged').notNull().default(false),
+  humanReviewed: boolean('human_reviewed').notNull().default(false),
+  reviewedBy: uuid('reviewed_by').references(() => users.id),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  note: text('note'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});

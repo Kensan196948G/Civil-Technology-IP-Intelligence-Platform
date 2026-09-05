@@ -70,7 +70,8 @@ async function main() {
       'patent_families','patent_family_members',
       'standards','technology_standards',
       'safety_reviews',
-      'innovation_opportunities'
+      'innovation_opportunities',
+      'ai_evaluations'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -664,6 +665,48 @@ async function main() {
     );
   }
 
+  // ---- M49 AI Governance & Evaluation（第一拡張群・実装順位10）----
+  // AI実行（ai_runs）ごとの評価メタ。既存のデモ実行 3 件に評価を付与する。
+  // FR-M49-001（実行メタ）/002（Coverage/Confidence/Hallucination/Human Review）。
+  const aiEvalDefs: Array<{
+    runId: string;
+    promptVersion: string; skillVersion: string; searchQuery: string | null;
+    referencedDocs: number; coverage: number; confidence: number;
+    hallucinationChecked: boolean; hallucinationFlagged: boolean;
+    humanReviewed: boolean; note: string;
+  }> = [
+    {
+      runId, promptVersion: 'prompt-v3', skillVersion: 'skill-examiner-v1',
+      searchQuery: 'ケーソン 据付 動揺補償 特許', referencedDocs: 4, coverage: 100, confidence: 0.82,
+      hallucinationChecked: true, hallucinationFlagged: false, humanReviewed: true,
+      note: '引用4件すべて本文に存在（デモ）'
+    },
+    {
+      runId: claimCompareRunId, promptVersion: 'prompt-v2', skillVersion: 'skill-claim-v1',
+      searchQuery: '吊具 姿勢計測 偏差 演算', referencedDocs: 2, coverage: 100, confidence: 0.74,
+      hallucinationChecked: true, hallucinationFlagged: true, humanReviewed: false,
+      note: '要約の一部に原文にない表現を検出→要確認（デモ）'
+    },
+    {
+      runId: fieldScoreRunId, promptVersion: 'prompt-v3', skillVersion: 'skill-field-v2',
+      searchQuery: 'GNSS ケーソン 据付 適用条件', referencedDocs: 3, coverage: 100, confidence: 0.9,
+      hallucinationChecked: true, hallucinationFlagged: false, humanReviewed: false,
+      note: '根拠はすべて引用に一致（デモ）'
+    }
+  ];
+  for (const e of aiEvalDefs) {
+    await sql(
+      `INSERT INTO ai_evaluations
+         (id, ai_run_id, prompt_version, skill_version, search_query, referenced_docs,
+          citation_coverage, confidence, hallucination_checked, hallucination_flagged,
+          human_reviewed, note, is_sample)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,true)`,
+      [uuid(), e.runId, e.promptVersion, e.skillVersion, e.searchQuery, e.referencedDocs,
+       e.coverage, e.confidence, e.hallucinationChecked, e.hallucinationFlagged,
+       e.humanReviewed, e.note]
+    );
+  }
+
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
   // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
@@ -911,6 +954,7 @@ async function main() {
     console.log(`   M34規格: 台帳${standardDefs.length}件 / 技術⇔規格関連${techStdDefs.length}件`);
     console.log(`   M38安全ゲート: レビュー${safetyReviewDefs.length}件`);
     console.log(`   M45機会スコア: テーマ候補${opportunityDefs.length}件`);
+    console.log(`   M49 AI評価: 実行${aiEvalDefs.length}件に評価メタ付与`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;
