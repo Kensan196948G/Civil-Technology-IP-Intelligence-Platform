@@ -578,3 +578,20 @@ CREATE TABLE IF NOT EXISTS ontology_terms (
 );
 CREATE INDEX IF NOT EXISTS idx_ontology_terms_parent ON ontology_terms (parent_id);
 CREATE INDEX IF NOT EXISTS idx_ontology_terms_kind ON ontology_terms (kind);
+
+-- M35 Technology Readiness Intelligence（第二拡張群）
+-- 技術の成熟度（TRL）・実証状況・判定根拠を管理。M03-004 の高度化。
+CREATE TABLE IF NOT EXISTS trl_assessments (
+  id uuid PRIMARY KEY,
+  technology_id uuid NOT NULL REFERENCES technologies(id) ON DELETE CASCADE,
+  trl integer NOT NULL CHECK (trl >= 1 AND trl <= 9),
+  level_label text NOT NULL,
+  evidence jsonb NOT NULL DEFAULT '[]',
+  next_step text,
+  assessed_on date NOT NULL,
+  assessed_by uuid REFERENCES users(id),
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_trl_assessments_tech ON trl_assessments (technology_id);
+CREATE INDEX IF NOT EXISTS idx_trl_assessments_trl ON trl_assessments (trl);
