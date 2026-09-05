@@ -595,3 +595,22 @@ CREATE TABLE IF NOT EXISTS trl_assessments (
 );
 CREATE INDEX IF NOT EXISTS idx_trl_assessments_tech ON trl_assessments (technology_id);
 CREATE INDEX IF NOT EXISTS idx_trl_assessments_trl ON trl_assessments (trl);
+
+-- M37 Technology Business Case Intelligence（第二拡張群）
+-- 技術導入の費用対効果。M32 IP Value とセットで経営判断を支援。
+CREATE TABLE IF NOT EXISTS business_cases (
+  id uuid PRIMARY KEY,
+  technology_id uuid NOT NULL REFERENCES technologies(id) ON DELETE CASCADE,
+  capex_yen integer,
+  annual_savings_yen integer,
+  labor_hours_saved_per_year integer,
+  roi_pct numeric(5,2),
+  tco5y_yen integer,
+  payback_years numeric(4,1),
+  baseline_method text,
+  basis jsonb NOT NULL DEFAULT '{}',
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_business_cases_tech ON business_cases (technology_id);
+CREATE INDEX IF NOT EXISTS idx_business_cases_roi ON business_cases (roi_pct DESC);

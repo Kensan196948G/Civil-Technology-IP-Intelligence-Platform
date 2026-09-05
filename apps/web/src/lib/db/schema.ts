@@ -580,3 +580,21 @@ export const trlAssessments = pgTable('trl_assessments', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M37 Technology Business Case Intelligence（第二拡張群）
+// 技術導入の費用対効果（導入費・削減工数・ROI・TCO・Payback）を管理し、
+// M32 IP Value とセットで経営判断を支援する。
+export const businessCases = pgTable('business_cases', {
+  id: uuid('id').primaryKey(),
+  technologyId: uuid('technology_id').notNull().references(() => technologies.id, { onDelete: 'cascade' }),
+  capexYen: integer('capex_yen'),                  // 導入費
+  annualSavingsYen: integer('annual_savings_yen'), // 年間削減額（工数・燃料等）
+  laborHoursSavedPerYear: integer('labor_hours_saved_per_year'),
+  roiPct: numeric('roi_pct', { precision: 5, scale: 2 }),
+  tco5yYen: integer('tco5y_yen'),                  // 5年TCO
+  paybackYears: numeric('payback_years', { precision: 4, scale: 1 }),
+  baselineMethod: text('baseline_method'),         // Before（従来工法）
+  basis: jsonb('basis').notNull().default({}),     // 計算根拠
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
