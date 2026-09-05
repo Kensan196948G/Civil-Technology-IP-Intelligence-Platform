@@ -598,3 +598,21 @@ export const businessCases = pgTable('business_cases', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M39 GX / Environmental Intelligence（第二拡張群）
+// 従来工法と新技術を比較した CO2・燃料・資材・廃棄物・省人化の定量化。
+// GX（グリーントランスフォーメーション）推進の判断材料。
+export const gxComparisons = pgTable('gx_comparisons', {
+  id: uuid('id').primaryKey(),
+  technologyId: uuid('technology_id').notNull().references(() => technologies.id, { onDelete: 'cascade' }),
+  baselineMethod: text('baseline_method').notNull(),   // 従来工法（Before）
+  co2ReductionPct: numeric('co2_reduction_pct', { precision: 5, scale: 2 }),
+  co2ReductionTonPerYear: numeric('co2_reduction_ton_per_year', { precision: 8, scale: 2 }),
+  fuelSavingsPct: numeric('fuel_savings_pct', { precision: 5, scale: 2 }),
+  materialSavingsPct: numeric('material_savings_pct', { precision: 5, scale: 2 }),
+  wasteReductionPct: numeric('waste_reduction_pct', { precision: 5, scale: 2 }),
+  laborReductionPct: numeric('labor_reduction_pct', { precision: 5, scale: 2 }),
+  basis: jsonb('basis').notNull().default({}),   // 計算根拠（LCA手法・出典）
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});

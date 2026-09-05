@@ -614,3 +614,22 @@ CREATE TABLE IF NOT EXISTS business_cases (
 );
 CREATE INDEX IF NOT EXISTS idx_business_cases_tech ON business_cases (technology_id);
 CREATE INDEX IF NOT EXISTS idx_business_cases_roi ON business_cases (roi_pct DESC);
+
+-- M39 GX / Environmental Intelligence（第二拡張群）
+-- 従来工法と新技術の CO2・燃料・資材・廃棄物・省人化の定量化比較。
+CREATE TABLE IF NOT EXISTS gx_comparisons (
+  id uuid PRIMARY KEY,
+  technology_id uuid NOT NULL REFERENCES technologies(id) ON DELETE CASCADE,
+  baseline_method text NOT NULL,
+  co2_reduction_pct numeric(5,2),
+  co2_reduction_ton_per_year numeric(8,2),
+  fuel_savings_pct numeric(5,2),
+  material_savings_pct numeric(5,2),
+  waste_reduction_pct numeric(5,2),
+  labor_reduction_pct numeric(5,2),
+  basis jsonb NOT NULL DEFAULT '{}',
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_gx_comparisons_tech ON gx_comparisons (technology_id);
+CREATE INDEX IF NOT EXISTS idx_gx_comparisons_co2 ON gx_comparisons (co2_reduction_ton_per_year DESC);

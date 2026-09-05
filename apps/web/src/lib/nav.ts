@@ -248,6 +248,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '安全・品質ゲート（M38）', href: '/safety' },
       { label: '品質評価', href: '/field/axis/quality' },
       { label: 'CO₂・環境評価', href: '/field/axis/environment' },
+      { label: 'GX・環境負荷比較（M39）', href: '/rnd/gx' },
       { label: '生産性・省人化評価', href: '/field/axis/productivity' },
       { label: '導入難易度評価', href: '/field/axis/difficulty' }
     ]
