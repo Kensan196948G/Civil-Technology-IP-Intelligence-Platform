@@ -76,7 +76,8 @@ async function main() {
       'trl_assessments',
       'business_cases',
       'gx_comparisons',
-      'bim_cim_links'
+      'bim_cim_links',
+      'competitive_signals'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -846,6 +847,25 @@ async function main() {
     );
   }
 
+  // ---- M43 Competitive Signal Intelligence（第二拡張群）----
+  // 特許以外の競合兆候を時系列で検知。
+  const signalDefs: Array<{ competitor: string; kind: string; title: string; strength: string; source: string }> = [
+    { competitor: '北浜重工デモ株式会社', kind: 'joint_research', title: '国立海洋土木大学デモ校と自動施工の共同研究開始（デモ）', strength: 'high', source: '大学プレスリリース（デモ）' },
+    { competitor: 'Northport Marine Robotics Demo Inc.', kind: 'product_launch', title: '無人杭打ちシステムの実証実験を公開（デモ）', strength: 'high', source: '業界ニュース（デモ）' },
+    { competitor: '旭洋テクノデモ工業株式会社', kind: 'paper', title: '動揺補償制御の論文を学会発表（デモ）', strength: 'medium', source: '学会論文集（デモ）' },
+    { competitor: '第一土木デモ建設株式会社', kind: 'hiring', title: 'ICT施工エンジニアの採用を拡大（デモ）', strength: 'low', source: '採用情報（デモ）' },
+    { competitor: 'Alpenbau Tunneltechnik Demo GmbH', kind: 'funding', title: 'トンネル自動化の研究資金を獲得（デモ）', strength: 'medium', source: '海外ニュース（デモ）' }
+  ] as const;
+  for (const s of signalDefs) {
+    const competitorRow = await sql(`select id from competitors where name = $1`, [s.competitor]);
+    await sql(
+      `INSERT INTO competitive_signals
+         (id, competitor_id, competitor_name, kind, title, summary, strength, detected_on, source, is_sample)
+       VALUES ($1,$2,$3,$4,$5,NULL,$6, now(),$7,true)`,
+      [uuid(), competitorRow[0]?.id ?? null, s.competitor, s.kind, s.title, s.strength, s.source]
+    );
+  }
+
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
   // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
@@ -1098,6 +1118,7 @@ async function main() {
     console.log(`   M37 Business Case: ${bcDefs.length}件`);
     console.log(`   M39 GX: 比較${gxDefs.length}件`);
     console.log(`   M40 BIM/CIM: リンク${bimDefs.length}件`);
+    console.log(`   M43 Signals: ${signalDefs.length}件`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;

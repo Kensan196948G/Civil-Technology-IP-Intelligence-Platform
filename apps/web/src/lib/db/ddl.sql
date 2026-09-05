@@ -649,3 +649,22 @@ CREATE TABLE IF NOT EXISTS bim_cim_links (
 );
 CREATE INDEX IF NOT EXISTS idx_bim_cim_links_subject ON bim_cim_links (subject_type, subject_id);
 CREATE INDEX IF NOT EXISTS idx_bim_cim_links_ifc ON bim_cim_links (ifc_entity);
+
+-- M43 Competitive Signal Intelligence（第二拡張群）
+-- 特許以外の競合兆候を時系列で検知（M10/M19 の強化）。
+CREATE TABLE IF NOT EXISTS competitive_signals (
+  id uuid PRIMARY KEY,
+  competitor_id uuid REFERENCES competitors(id),
+  competitor_name text NOT NULL,
+  kind text NOT NULL CHECK (kind IN ('paper','news','hiring','joint_research','product_launch','award','funding')),
+  title text NOT NULL,
+  summary text,
+  strength text NOT NULL DEFAULT 'medium' CHECK (strength IN ('low','medium','high')),
+  detected_on date NOT NULL,
+  source text NOT NULL,
+  source_url text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_competitive_signals_detected ON competitive_signals (detected_on DESC);
+CREATE INDEX IF NOT EXISTS idx_competitive_signals_kind ON competitive_signals (kind);
