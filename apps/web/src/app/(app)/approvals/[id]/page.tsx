@@ -6,7 +6,11 @@ import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { decideAction, completeHumanCheck } from '../actions';
 import { stamp } from '@/lib/labels';
+import { canViewRow } from '@/lib/authz/row-visibility';
 
+// #11 C3/C4 行レベル制御（詳細・404秘匿）: ワークフロー案件は発明 workflow で C3 になる。
+// R ロール以外（engineer/viewer）は自分が起案した案件以外を 404 として存在を見せない。
+// 正: docs/10-requirements/05-rbac-matrix.md §4 / docs/30-design/01-detailed-design.md §3.1
 
 export default async function ApprovalDetail({ params }: { params: { id: string } }) {
   const db = getDb(getDatabaseUrl());
@@ -18,10 +22,13 @@ export default async function ApprovalDetail({ params }: { params: { id: string 
   if (!user) redirect('/login');
   const [w] = await db.select().from(s.workflowInstances).where(eq(s.workflowInstances.id, params.id)).limit(1);
   if (!w) notFound();
-  const [author] = await db.select().from(s.users).where(eq(s.users.id, w.authorId)).limit(1);
-  const history = await db.select().from(s.approvals).where(eq(s.approvals.instanceId, w.id)).orderBy(desc(s.approvals.decidedAt));
   const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
   if (!me) redirect('/login');
+  // #11: C3/C4 案件で権限が無い場合は存在自体を出さず 404（403 にしない）
+  const isOwner = me.id === w.authorId;
+  if (!canViewRow(user.role, w.classification as 'C1' | 'C2' | 'C3' | 'C4', isOwner)) notFound();
+  const [author] = await db.select().from(s.users).where(eq(s.users.id, w.authorId)).limit(1);
+  const history = await db.select().from(s.approvals).where(eq(s.approvals.instanceId, w.id)).orderBy(desc(s.approvals.decidedAt));
 
   const isSelf = me.id === w.authorId;
   const humanBlocked = w.humanCheckRequired && !w.humanCheckCompletedAt;

@@ -1,10 +1,16 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { desc, inArray, sql } from 'drizzle-orm';
+import { desc, eq, inArray, and, or, sql } from 'drizzle-orm';
 import { Notice, Tag } from '@/components/ui';
 import { DetailChip, DetailTr } from '@/components/detail/DetailOpener';
 import { CLASSIFICATION, WORKFLOW_STATUS, ymd } from '@/lib/labels';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { redirect } from 'next/navigation';
+import { visibleWhere } from '@/lib/authz/row-visibility';
+
+// #11 C3/C4行レベル制御: 発明（既定 C3）は参照(R)ロールまたは起案者本人のみ可視。
+// 詳細: docs/90-project/... → docs/10-requirements/05-rbac-matrix.md §4 / docs/30-design/01-detailed-design.md §3.1
 
 
 // 設計案（design-B-copilot）の「発明・出願」。
@@ -14,8 +20,18 @@ type WfRow = { subject_id: string; status: string; due_on: string | null };
 type ExamRow = { target_id: string; runs: number; citations: number };
 
 export default async function InventionsPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
+
   const db = getDb(getDatabaseUrl());
-  const inventions = await db.select().from(s.inventions).orderBy(desc(s.inventions.createdAt));
+  const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
+  const inventions = await db.select().from(s.inventions)
+    .where(
+      visibleWhere(s.inventions.classification, s.inventions.submittedBy, {
+        role: user.role, viewerUserId: me?.id
+      })
+    )
+    .orderBy(desc(s.inventions.createdAt));
 
   const userIds = [...new Set(inventions.map(i => i.submittedBy))];
   const users = userIds.length ? await db.select().from(s.users).where(inArray(s.users.id, userIds)) : [];

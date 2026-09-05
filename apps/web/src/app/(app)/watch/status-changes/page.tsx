@@ -1,9 +1,13 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { desc, inArray } from 'drizzle-orm';
+import { desc, eq, and, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { redirect } from 'next/navigation';
+import { visibleWhere } from '@/lib/authz/row-visibility';
 
+// #11 C3/C4 行レベル制御: 発明 workflow（C3）は R ロールまたは起案者本人のみ一覧に出す。
 
 const STATUS_LABEL: Record<string, string> = {
   draft: '起票', researching: '調査中', ai_reviewed: 'AI事前確認済み',
@@ -21,13 +25,19 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 export default async function WatchStatusChangesPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
   const db = getDb(getDatabaseUrl());
+  const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
   // CodeRabbit指摘: statusとcreatedAtだけでは「いつ遷移したか」を判定できず、
   // 遷移イベントの履歴も保持していない。状態遷移の監視ではなく、終端状態
   // （登録・拒絶・失効）に達した案件の一覧に対象を限定して過大表示を防ぐ
   // （遷移履歴モデルの追加は本番設計のバックログ）。
   const rows = await db.select().from(s.workflowInstances)
-    .where(inArray(s.workflowInstances.status, ['approved', 'rejected', 'archived']))
+    .where(and(
+      inArray(s.workflowInstances.status, ['approved', 'rejected', 'archived']),
+      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id })
+    ))
     .orderBy(desc(s.workflowInstances.createdAt));
 
   return (

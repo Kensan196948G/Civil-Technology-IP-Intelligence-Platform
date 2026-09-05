@@ -337,6 +337,12 @@ MVPは「主要ユースケースを実際に操作できること」を優先�
 | Field Applicability Score は事前計算値 | 規則＋AI推定によるオンライン算出（[検出設計 §3.4](docs/30-design/01-detailed-design.md)） |
 | 監査ログ（`audit_logs`）は主要操作のみ記録 | 全操作・拒否操作を含む完全な監査（[NFR-L-001](docs/10-requirements/03-non-functional-requirements.md)） |
 | RBAC は画面上の表示のみ（行レベル制御なし） | プロジェクト単位の行レベル制御・C3/C4の404秘匿（[詳細設計 §3.1](docs/30-design/01-detailed-design.md)） |
+
+> **📌 追記（#11 対応・2026-09-05）**: 上記「行レベル制御なし」は解消済み。`lib/authz/row-visibility.ts` を新設し、
+> 発明（既定 C3）・発明 workflow（C3）を表示する一覧・詳細・件数・検索の各クエリへ**ロール×分類の可視条件（WHERE句）**を適用した
+> （存在・件数にも出さない 404 秘匿。README §14 ルール1/2 準拠）。プロジェクト参加・個別付与（grant）のモデルは
+> 未導入のため、MVP では「RBAC §3 の参照(R)ロール ＋ 起案者本人（owner 特例）」で近似する。C4 は grant 導入まで全ロール不可視。
+> 実データ上 C3 を持つのは `inventions` と発明 `workflow_instances` の2テーブル（シード確認済み）。
 | データ取り込みなし（シード投入のみ） | JPO/WIPO/NETIS等の自動取り込み（[データフロー](docs/20-architecture/03-data-flow.md)） |
 | 自社ホストの Next.js（Node）＋Cloudflare Tunnel（2026-08-29〜） | Cloudflare Workers + Workflows + Queues 構成（[ADR-0001](docs/20-architecture/adr/ADR-0001-cloudflare-neon-github.md)。DB は [ADR-0007](docs/20-architecture/adr/ADR-0007-local-postgresql.md)） |
 
@@ -366,6 +372,11 @@ MVPは「主要ユースケースを実データで最後まで動かせるこ�
 | DB が単一ホストにある | ホスト障害＝サービス停止。バックアップ（日次 `pg_dump`）と可用性方針を本番設計で再定義 | [DB構成](docs/40-infrastructure/02-neon-setup.md) |
 | 特許明細書が LLM のトークン上限を超える | 章単位に分割して処理し結果を統合 | [AIエージェント構成](docs/20-architecture/04-ai-agent-architecture.md) |
 | ネットワーク往復のレイテンシ | N+1 を作らない。ローカル接続のため旧「リージョン固定」の制約は消滅 | 同上 |
+| 本番ビルドでの `notFound()` が 200 を返す問題（Next.js 14.2.35） | `crypto.subtle` を await した後に詳細ページで `notFound()` を呼ぶと、HTTP ステータスが 200 のまま not-found 画面を描画する既知事象（`require-role.ts` に記録済み）。**機密コンテンツ自体は描画されない**ため行レベル秘匿は有効だが、厳密な 404 応答は `#10`（Next.js 15 移行）で解消予定 | `require-role.ts` 冒頭コメント |
+
+> **行レベル制御（#11）と HTTP ステータス**: C3/C4 の秘匿は「一覧・件数・検索では WHERE 句で除外し存在自体を返さない」ことで担保している（こちらは完全に有効）。
+> 詳細ページ（URL 直叩き）では not-found 画面を返し機密内容を出さない。HTTP ステータスの 200/404 差は上記の既知のフレームワーク事象によるもので、
+> レスポンス本文に機密は一切含まれない。404 化は #10（Next.js 15）で全体修正する。
 
 ## 🔧 18. 運用
 

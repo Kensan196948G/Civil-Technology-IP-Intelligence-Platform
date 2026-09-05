@@ -1,11 +1,17 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
-import { sql } from 'drizzle-orm';
+import * as s from '@/lib/db/schema';
+import { eq, sql } from 'drizzle-orm';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Meter, Panel, Tag } from '@/components/ui';
 import { DetailRow, DetailTr } from '@/components/detail/DetailOpener';
 import { CLASSIFICATION, WATCH_KIND, WORKFLOW_KIND, WORKFLOW_STATUS, ymd } from '@/lib/labels';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { isC3ReaderRole } from '@/lib/authz/row-visibility';
 
+// #11 C3/C4 行レベル制御: ダッシュボードの案件数・一覧にも権限外の C3 を含めない
+// （件数から機密を推測させない。README §14 ルール1）。R ロール以外は自分の起案案件のみ。
 
 // 設計案（design-B-copilot）の「ダッシュボード」。
 // KPIカード → 該当画面、案件行・ウォッチ行 → 詳細ドロワー。数値はすべて実DB。
@@ -20,6 +26,20 @@ type WatchRow = { id: string; kind: string; label: string; created_at: string };
 async function loadDashboard() {
   const db = getDb(getDatabaseUrl());
 
+  // #11: 現在の利用者に応じて可視範囲を決める（未ログインなら空表示へ）
+  const user = await getCurrentUser();
+  if (!user) return { redirectLogin: true as const };
+  const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
+
+  const isC3Reader = isC3ReaderRole(user.role);
+  // workflow 案件の可視条件（C3 は Rロール or 起案者本人）
+  const wfScope = isC3Reader
+    ? sql`(wi.classification IN ('C1','C2','C3'))`
+    : me
+      ? sql`(wi.classification IN ('C1','C2') OR (wi.classification = 'C3' AND wi.author_id = ${me.id}))`
+      : sql`(wi.classification IN ('C1','C2'))`;
+  const wfPending = sql`wi.status not in ('approved','rejected','archived')`;
+
   const [counts, pending, watches] = await Promise.all([
     db.execute(sql`
       select
@@ -27,11 +47,11 @@ async function loadDashboard() {
         (select count(*) from investigations where status = 'open') as open_investigations,
         (select count(*) from field_applications) as candidates,
         (select count(*) from field_applications where score >= 80) as candidates_high,
-        (select count(*) from workflow_instances
-           where status not in ('approved','rejected','archived')) as pending_approvals,
-        (select count(*) from workflow_instances
-           where status not in ('approved','rejected','archived')
-             and due_on is not null and due_on < current_date) as overdue_approvals,
+        (select count(*) from workflow_instances wi where ${wfPending} and ${wfScope}) as pending_approvals,
+        (select count(*) from workflow_instances wi
+           where ${wfPending}
+             and due_on is not null and due_on < current_date
+             and ${wfScope}) as overdue_approvals,
         (select count(*) from watches) as watches,
         (select count(*) from ai_runs) as ai_runs,
         (select count(*) from ai_runs r
@@ -46,7 +66,7 @@ async function loadDashboard() {
       select wi.id::text as id, wi.kind, wi.title, wi.status, wi.classification,
              wi.due_on::text as due_on, u.display_name as author
       from workflow_instances wi join users u on u.id = wi.author_id
-      where wi.status not in ('approved','rejected','archived')
+      where ${wfPending} and ${wfScope}
       order by wi.due_on nulls last, wi.created_at desc
       limit 4
     `),
@@ -109,6 +129,7 @@ function Kpi({
 
 export default async function DashboardPage() {
   const d = await loadDashboard();
+  if ('redirectLogin' in d) redirect('/login');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

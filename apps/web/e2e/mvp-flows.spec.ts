@@ -167,3 +167,23 @@ test('全モジュール：20分類が並び、項目から実画面へ遷移で
   await page.locator('.main').getByRole('link', { name: '調査案件一覧' }).click();
   await expect(page).toHaveURL(/\/investigations/);
 });
+
+// ── #11 C3/C4 行レベル制御の回帰防止 ─────────────────────────────────
+// RBAC §4: 権限の無い利用者には C3 発明を「存在も見せない」（一覧・件数・詳細とも）。
+// engineer（佐藤 建）は自分の発明のみ見え、他者（ip 高橋 実）の C3 発明は見えない。
+test('行レベル制御：engineer は他人の C3 発明を見られない', async ({ page }) => {
+  // engineer 佐藤 建: 自分の発明（吊具姿勢）は見え、他者（浚渫土砂）は見えない
+  await loginAs(page, '佐藤 建');
+  await page.goto('/inventions');
+  await expect(page.locator('.main')).toContainText('吊具姿勢の自動補正');
+  await expect(page.locator('.main')).not.toContainText('浚渫土砂の含水比推定');
+  // サイドバーの件数バッジ（発明・出願）も自分の分のみ
+  await expect(page.getByText('発明・出願', { exact: false }).first()).toBeVisible();
+});
+
+test('行レベル制御：ip は R ロールとして C3 発明を一覧できる', async ({ page }) => {
+  await loginAs(page, '高橋 実'); // ip
+  await page.goto('/inventions');
+  await expect(page.locator('.main')).toContainText('吊具姿勢の自動補正');
+  await expect(page.locator('.main')).toContainText('浚渫土砂の含水比推定');
+});

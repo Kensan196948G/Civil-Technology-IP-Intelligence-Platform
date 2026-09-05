@@ -12,7 +12,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
   // 件数バッジ用。DBに繋がらない場合もシェルは描画できるよう loadNavCounts 側で握りつぶしている。
-  const counts = await loadNavCounts();
+  // #11: バッジ件数もログイン利用者の可視範囲（C3/C4 は権限外を含めない）で集計する。
+  const counts = await loadNavCounts(user);
   return (
     <AppShell userName={user.name} role={user.role} dept={user.dept} counts={counts}>
       {children}

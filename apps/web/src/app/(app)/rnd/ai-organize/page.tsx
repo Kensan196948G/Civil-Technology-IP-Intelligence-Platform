@@ -1,25 +1,41 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { desc, eq, inArray } from 'drizzle-orm';
+import { desc, eq, and, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
 import { stamp } from '@/lib/labels';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { redirect } from 'next/navigation';
+import { visibleWhere } from '@/lib/authz/row-visibility';
 
+// #11 C3/C4 行レベル制御: AI実行履歴のうち、対象の発明（C3）が閲覧できない行は表示しない
+// （実行履歴から C3 発明の存在を推測させない。README §14 ルール1）。
 
 export default async function RndAiOrganizePage() {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
   const db = getDb(getDatabaseUrl());
+  const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
   const runs = await db.select().from(s.aiRuns).where(eq(s.aiRuns.kind, 'examine')).orderBy(desc(s.aiRuns.createdAt));
 
+  // 対象発明を可視範囲で引く。不可視発明（他人の C3）への run は一覧から除外する。
   const inventionIds = [...new Set(runs.filter(r => r.targetType === 'invention' && r.targetId).map(r => r.targetId!))];
-  const inventions = inventionIds.length ? await db.select().from(s.inventions).where(inArray(s.inventions.id, inventionIds)) : [];
+  const inventions = inventionIds.length
+    ? await db.select().from(s.inventions).where(and(
+        inArray(s.inventions.id, inventionIds),
+        visibleWhere(s.inventions.classification, s.inventions.submittedBy, { role: user.role, viewerUserId: me?.id })
+      ))
+    : [];
+  const visibleInventionIds = new Set(inventions.map(i => i.id));
+  const visibleRuns = runs.filter(r => r.targetType !== 'invention' || (r.targetId && visibleInventionIds.has(r.targetId)));
   const inventionById = new Map(inventions.map(i => [i.id, i]));
 
-  const runIds = runs.map(r => r.id);
+  const runIds = visibleRuns.map(r => r.id);
   const citations = runIds.length ? await db.select().from(s.aiCitations).where(inArray(s.aiCitations.aiRunId, runIds)) : [];
   const citationCountByRun = new Map<string, number>();
   for (const c of citations) citationCountByRun.set(c.aiRunId, (citationCountByRun.get(c.aiRunId) ?? 0) + 1);
 
-  const rows = runs.map(run => ({
+  const rows = visibleRuns.map(run => ({
     id: run.id,
     inventionTitle: run.targetId ? inventionById.get(run.targetId)?.title : undefined,
     inventionId: run.targetId ?? undefined,

@@ -1,9 +1,13 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { asc, desc, inArray } from 'drizzle-orm';
+import { asc, desc, eq, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { redirect } from 'next/navigation';
+import { visibleWhere } from '@/lib/authz/row-visibility';
 
+// #11 C3/C4 行レベル制御: 発明 workflow（C3）は R ロールまたは起案者本人のみ対象にする。
 
 type RiskSummary = { novelty?: string; inventive?: string; description?: string; note?: string };
 
@@ -17,13 +21,18 @@ const CLAIM_GROUND: Record<string, { ground: string; basis: string }> = {
 };
 
 export default async function RejectionGroundsPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
   const db = getDb(getDatabaseUrl());
+  const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
 
   // (1) ワークフローのAIリスクサマリーから、案件単位の想定拒絶理由を抽出
   // CodeRabbit指摘: note の有無だけで「新規性・進歩性」の拒絶理由に一律分類すると、
   // description（記載要件）のみがリスク要因の案件も同じ分類で表示されてしまう。
   // novelty/inventive の評価値から該当する拒絶理由だけを生成する。
-  const workflows = await db.select().from(s.workflowInstances).orderBy(desc(s.workflowInstances.createdAt));
+  const workflows = await db.select().from(s.workflowInstances)
+    .where(visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id }))
+    .orderBy(desc(s.workflowInstances.createdAt));
   const workflowGrounds: GroundRow[] = workflows
     .filter(w => (w.aiRiskSummary as RiskSummary | null)?.note)
     .map(w => {

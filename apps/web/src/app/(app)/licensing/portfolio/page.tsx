@@ -1,9 +1,13 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { eq, desc, inArray } from 'drizzle-orm';
+import { eq, and, desc, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { redirect } from 'next/navigation';
+import { visibleWhere } from '@/lib/authz/row-visibility';
 
+// #11 C3/C4 行レベル制御: 発明 workflow（C3）は R ロールまたは起案者本人のみ一覧に出す。
 
 const STATUS_LABEL: Record<string, string> = {
   draft: '起案', researching: '調査中', ai_reviewed: 'AI一次レビュー済み',
@@ -18,9 +22,15 @@ const STATUS_COLOR: Record<string, string> = {
 // 発明届→審査ワークフロー（workflow_instances.kind='invention'）を
 // 自社IP資産ポートフォリオの実データとして用いる（起案〜登録・放棄までの進捗を保持）。
 export default async function PortfolioPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
   const db = getDb(getDatabaseUrl());
+  const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
   const rows = await db.select().from(s.workflowInstances)
-    .where(eq(s.workflowInstances.kind, 'invention'))
+    .where(and(
+      eq(s.workflowInstances.kind, 'invention'),
+      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id })
+    ))
     .orderBy(desc(s.workflowInstances.createdAt));
 
   const authorIds = [...new Set(rows.map(r => r.authorId))];
