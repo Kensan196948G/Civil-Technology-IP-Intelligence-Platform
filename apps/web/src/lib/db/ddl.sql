@@ -521,3 +521,18 @@ CREATE TABLE IF NOT EXISTS safety_reviews (
 );
 CREATE INDEX IF NOT EXISTS idx_safety_reviews_tech ON safety_reviews (technology_id);
 CREATE INDEX IF NOT EXISTS idx_safety_reviews_gate ON safety_reviews (gate_status);
+
+-- M45 Innovation Opportunity Intelligence（第一拡張群・実装順位9）
+-- 研究テーマ候補の機会スコアリング。FR-M45-001（入力要素管理）/002（ランキング提示）/003（決定は人）。
+CREATE TABLE IF NOT EXISTS innovation_opportunities (
+  id uuid PRIMARY KEY,
+  title text NOT NULL,
+  description text,
+  factors jsonb NOT NULL DEFAULT '{}',
+  basis jsonb NOT NULL DEFAULT '{}',
+  opportunity_score numeric(5,2) NOT NULL,
+  status text NOT NULL DEFAULT 'candidate' CHECK (status IN ('candidate','shortlisted','decided','rejected')),
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_innovation_opportunities_score ON innovation_opportunities (opportunity_score DESC);
