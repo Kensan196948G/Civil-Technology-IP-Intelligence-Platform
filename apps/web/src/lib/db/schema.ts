@@ -490,3 +490,22 @@ export const technologyStandards = pgTable('technology_standards', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M38 Safety & Quality Intelligence（第一拡張群・実装順位8）
+// 新技術導入前の安全・品質リスク候補を、類似事故・不具合事例・安全基準等から集めて提示し、
+// M22 承認ワークフローの安全ゲートへつなぐ。FR-M38-001〜004。
+export const safetyReviews = pgTable('safety_reviews', {
+  id: uuid('id').primaryKey(),
+  technologyId: uuid('technology_id').notNull().references(() => technologies.id, { onDelete: 'cascade' }),
+  // リスク候補（JSON: 種別・内容・根拠の出典を必ず添付。FR-M38-003）
+  risks: jsonb('risks').notNull().default([]),
+  // 参照した類似事故・不具合事例・安全基準（JSON で出典を保存）
+  sources: jsonb('sources').notNull().default([]),
+  // 安全ゲート結果（承認ワークフロー連携用。FR-M38-002）
+  gateStatus: text('gate_status').notNull().default('pending'), // pending / in_review / cleared / blocked
+  gateReviewedBy: uuid('gate_reviewed_by').references(() => users.id),
+  gateReviewedAt: timestamp('gate_reviewed_at', { withTimezone: true }),
+  gateComment: text('gate_comment'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});

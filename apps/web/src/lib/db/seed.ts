@@ -68,7 +68,8 @@ async function main() {
       'ip_entities','entity_aliases',
       'kg_edges','claim_versions','ip_value_scores',
       'patent_families','patent_family_members',
-      'standards','technology_standards'
+      'standards','technology_standards',
+      'safety_reviews'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -561,6 +562,46 @@ async function main() {
     );
   }
 
+  // ---- M38 Safety & Quality Intelligence（第一拡張群・実装順位8）----
+  // 新技術導入前の安全ゲート。リスク候補と出典を保持し、M22 承認フローの安全ゲートへ連携する。
+  // FR-M38-001（リスク収集）/003（出典必須）/004（最終判断は安全・品質担当者）。
+  const safetyReviewDefs: Array<{
+    techKey: string; gate: string; comment: string;
+    risks: Array<{ type: string; detail: string; source: string; level: string }>;
+    sources: string[];
+  }> = [
+    {
+      techKey: 'techId2',
+      gate: 'in_review',
+      comment: '安全ゲート審査中（デモ）。海上作業の高所作業・波浪条件を要確認',
+      risks: [
+        { type: '高所作業', detail: 'ケーソン上の作業員の転落リスク。手すり・命綱の設置可否', source: '土木工事安全施工技術基準（デモ・M34規格）', level: 'high' },
+        { type: '波浪・気象', detail: '有義波高2.0m超での作業中断基準の適用', source: '類似工事の事故・中断事例（デモ）', level: 'medium' },
+        { type: '機械・設備', detail: '計測機器の電源・通信断による誤表示リスク', source: 'NETIS事後評価・論文（デモ）', level: 'medium' }
+      ],
+      sources: ['土木工事安全施工技術基準（M34規格）', '類似海上工事の不具合事例（デモ）', 'NETIS 登録情報（デモ）']
+    },
+    {
+      techKey: 'techId',
+      gate: 'cleared',
+      comment: '安全ゲート通過（デモ）。陸上作業のため追加リスクは低い',
+      risks: [
+        { type: '機械・設備', detail: '据付管理システムの誤操作リスク。操作手順書で対応', source: '社内運用実績（デモ）', level: 'low' }
+      ],
+      sources: ['社内運用実績（デモ）']
+    }
+  ] as const;
+  const safetyTechKey: Record<string, string> = { techId2, techId };
+  for (const r of safetyReviewDefs) {
+    await sql(
+      `INSERT INTO safety_reviews
+         (id, technology_id, risks, sources, gate_status, gate_reviewed_by, gate_reviewed_at, gate_comment, is_sample)
+       VALUES ($1,$2,$3::jsonb,$4::jsonb,$5,$6, now(), $7,true)`,
+      [uuid(), safetyTechKey[r.techKey]!, JSON.stringify(r.risks), JSON.stringify(r.sources), r.gate,
+       r.gate === 'cleared' ? U('tanaka.makoto@demo.ctiip.example') : null, r.comment]
+    );
+  }
+
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
   // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
@@ -806,6 +847,7 @@ async function main() {
     console.log(`   研究者${researcherDefs.length} / 競合${competitorDefs.length} / 調査案件${investigationDefs.length} / ウォッチ${watchDefs.length} / ライセンス${licenseDefs.length} / レポート${reportDefs.length} / FeatureFlags${featureFlagDefs.length} / 設定${settingDefs.length}`);
     console.log(`   第一拡張群: KGエッジ${kgEdgeDefs.length} / Claim版${claimVersionDefs.flatMap(c => c.versions).length} / IP価値スコア${ipValueDefs.length} / 特許ファミリー1件（メンバー${familyMemberDefs.length}）`);
     console.log(`   M34規格: 台帳${standardDefs.length}件 / 技術⇔規格関連${techStdDefs.length}件`);
+    console.log(`   M38安全ゲート: レビュー${safetyReviewDefs.length}件`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;
