@@ -66,7 +66,8 @@ async function main() {
       // 第一拡張群（M26-M36・M33/M30/M32）
       'patent_citations','prosecution_events','fto_cases','fto_components','poc_experiments',
       'ip_entities','entity_aliases',
-      'kg_edges','claim_versions','ip_value_scores'
+      'kg_edges','claim_versions','ip_value_scores',
+      'patent_families','patent_family_members'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -121,6 +122,13 @@ async function main() {
     ]},
     { title: '一种用于桥梁健康监测的传感器融合方法（演示）', applicant: '华东桥梁科技演示有限公司', country: 'CN', pubNo: 'CN117123456A', ipc: ['G01M 5/00'], wt: ['bridge'], claims: [
       { no: 1, indep: true, text: '一种桥梁健康监测方法，包括布置于桥梁关键部位的振动传感器阵列，以及将多传感器数据融合以评估结构疲劳状态的处理单元。' }
+    ]},
+    // M31: 特許0（ケーソン据付装置・JP）を親とする同一発明の多国出願（PCT→米国移行）
+    { title: 'ケーソン据付装置（PCT国際出願・デモ）', applicant: '北浜重工デモ株式会社', country: 'WO', pubNo: 'WO2024/500001A1', ipc: ['E02B 3/06'], wt: ['port'], claims: [
+      { no: 1, indep: true, text: 'ケーソンを吊り下げる吊具と、当該吊具の姿勢を計測する計測手段と、前記計測手段の出力に基づいて据付目標位置との偏差を算出する演算手段と、を備える、ケーソン据付装置（PCT出願・デモ）。' }
+    ]},
+    { title: 'CAISSON PLACEMENT APPARATUS (US national phase)', applicant: 'KITAHAMA JUKO DEMO CO., LTD.', country: 'US', pubNo: 'US2025/500001A1', ipc: ['E02B 3/06'], wt: ['port'], claims: [
+      { no: 1, indep: true, text: 'A caisson placement apparatus comprising a lifting tool for suspending a caisson, a measuring means for measuring an attitude of the lifting tool, and a computing means for computing a deviation from a target placement position based on an output of the measuring means (US national phase, demo).' }
     ]}
   ];
   const patentIds: string[] = [];
@@ -497,6 +505,26 @@ async function main() {
     await sql(`INSERT INTO researchers (id, name, affiliation, field) VALUES ($1,$2,$3,$4)`, [id, name, affiliation, field]);
   }
 
+  // ---- M31 Advanced Patent Family Intelligence（第一拡張群・実装順位6）----
+  // 同一発明の多国出願をファミリーとして保持する（JP優先権出願 → PCT → 各国移行）。
+  // 特許0（ケーソン据付装置・JP）を親とし、特許6（PCT）・特許7（US移行）が同一ファミリー。
+  // デモのため国別の残存期間は特許の application_date から導出する（FR-M31-001/002）。
+  const familyId = uuid();
+  await sql(`INSERT INTO patent_families (id, name, note, is_sample) VALUES ($1,$2,$3,true)`,
+    [familyId, 'ケーソン据付装置 特許ファミリー（デモ）', 'JP優先権出願を親とする同一発明の国際出願ファミリー（FR-M31 デモ）']);
+  const familyMemberDefs: Array<[number, string, string]> = [
+    [0, 'priority', '優先権出願（JP・親出願）'],
+    [6, 'pct', 'PCT国際出願（WO）'],
+    [7, 'national_phase', '米国移行（US national phase）']
+  ];
+  for (const [pidx, kind, note] of familyMemberDefs) {
+    await sql(
+      `INSERT INTO patent_family_members (id, family_id, patent_id, member_kind, note, is_sample)
+       VALUES ($1,$2,$3,$4,$5,true)`,
+      [uuid(), familyId, patentIds[pidx]!, kind, note]
+    );
+  }
+
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
   // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
@@ -740,7 +768,7 @@ async function main() {
     console.log(`   NETIS 2 / 自社技術 2 / Claim比較 1件（要件${rowDefs.length}） / 現場適用スコア ${score}`);
     console.log(`   ワークフロー案件 3件（発明2・現場導入1） / AI実行3（根拠付き）`);
     console.log(`   研究者${researcherDefs.length} / 競合${competitorDefs.length} / 調査案件${investigationDefs.length} / ウォッチ${watchDefs.length} / ライセンス${licenseDefs.length} / レポート${reportDefs.length} / FeatureFlags${featureFlagDefs.length} / 設定${settingDefs.length}`);
-    console.log(`   第一拡張群: KGエッジ${kgEdgeDefs.length} / Claim版${claimVersionDefs.flatMap(c => c.versions).length} / IP価値スコア${ipValueDefs.length}`);
+    console.log(`   第一拡張群: KGエッジ${kgEdgeDefs.length} / Claim版${claimVersionDefs.flatMap(c => c.versions).length} / IP価値スコア${ipValueDefs.length} / 特許ファミリー1件（メンバー${familyMemberDefs.length}）`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;

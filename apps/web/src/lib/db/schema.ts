@@ -440,3 +440,24 @@ export const ipValueScores = pgTable('ip_value_scores', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M31 Advanced Patent Family Intelligence（第一拡張群・実装順位6）
+// 同一発明の各国出願（優先権→PCT→各国移行、分割・継続）をファミリーとして構造化し、
+// 各国の権利状態・残存期間・Claim差を比較する。FR-M31-001〜004。
+export const patentFamilies = pgTable('patent_families', {
+  id: uuid('id').primaryKey(),
+  name: text('name').notNull(),                 // ファミリー名（例: ケーソン据付技術ファミリー）
+  note: text('note'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const patentFamilyMembers = pgTable('patent_family_members', {
+  id: uuid('id').primaryKey(),
+  familyId: uuid('family_id').notNull().references(() => patentFamilies.id, { onDelete: 'cascade' }),
+  patentId: uuid('patent_id').notNull().references(() => patents.id, { onDelete: 'cascade' }),
+  memberKind: text('member_kind').notNull(), // priority（優先権出願）/ pct（PCT出願）/ national_phase（各国移行）/ divisional（分割）/ continuation（継続）
+  note: text('note'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});

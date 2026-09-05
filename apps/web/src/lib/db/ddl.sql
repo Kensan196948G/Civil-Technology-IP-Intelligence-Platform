@@ -450,3 +450,25 @@ CREATE TABLE IF NOT EXISTS ip_value_scores (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_ip_value_scores_strategic ON ip_value_scores (strategic_score DESC);
+
+-- M31 Advanced Patent Family Intelligence（第一拡張群・実装順位6）
+-- 同一発明の各国出願をファミリーとして保持し、優先権→PCT→各国移行・分割・継続の関係を管理する。
+-- FR-M31-001（ツリー）/002（国別権利状態・残存期間）/003（Claim差・戦略）。
+CREATE TABLE IF NOT EXISTS patent_families (
+  id uuid PRIMARY KEY,
+  name text NOT NULL,
+  note text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS patent_family_members (
+  id uuid PRIMARY KEY,
+  family_id uuid NOT NULL REFERENCES patent_families(id) ON DELETE CASCADE,
+  patent_id uuid NOT NULL REFERENCES patents(id) ON DELETE CASCADE,
+  member_kind text NOT NULL CHECK (member_kind IN ('priority','pct','national_phase','divisional','continuation')),
+  note text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_patent_family_members_family ON patent_family_members (family_id);
+CREATE INDEX IF NOT EXISTS idx_patent_family_members_patent ON patent_family_members (patent_id);
