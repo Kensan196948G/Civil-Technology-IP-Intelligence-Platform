@@ -74,7 +74,8 @@ async function main() {
       'ai_evaluations',
       'ontology_terms',
       'trl_assessments',
-      'business_cases'
+      'business_cases',
+      'gx_comparisons'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -797,6 +798,36 @@ async function main() {
     );
   }
 
+  // ---- M39 GX / Environmental Intelligence（第二拡張群）----
+  // 従来工法と新技術の環境負荷比較（CO2・燃料・資材・廃棄物・省人化）。
+  const gxDefs = [
+    {
+      techKey: 'techId2',
+      baseline: '潜水士の目視誘導による従来据付',
+      co2Pct: 18.0, co2Ton: 3.2, fuelPct: 15.0, materialPct: null, wastePct: null, laborPct: 30.0,
+      basis: { co2: '起重機船燃料削減から換算（デモ・LCA簡易手法）', fuel: '作業サイクル短縮による燃料削減（デモ）',
+               labor: '潜水士の水際作業30%削減（デモ）' }
+    },
+    {
+      techKey: 'techId',
+      baseline: '手計測・目視による据付管理',
+      co2Pct: 8.0, co2Ton: 1.4, fuelPct: 6.0, materialPct: null, wastePct: null, laborPct: 12.0,
+      basis: { co2: '重機運転時間削減から換算（デモ）', fuel: '計測時間短縮による燃料削減（デモ）',
+               labor: '計測作業の効率化（デモ）' }
+    }
+  ] as const;
+  const gxTechKey: Record<string, string> = { techId, techId2 };
+  for (const g of gxDefs) {
+    await sql(
+      `INSERT INTO gx_comparisons
+         (id, technology_id, baseline_method, co2_reduction_pct, co2_reduction_ton_per_year,
+          fuel_savings_pct, material_savings_pct, waste_reduction_pct, labor_reduction_pct, basis, is_sample)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,true)`,
+      [uuid(), gxTechKey[g.techKey]!, g.baseline, g.co2Pct, g.co2Ton, g.fuelPct,
+       g.materialPct, g.wastePct, g.laborPct, JSON.stringify(g.basis)]
+    );
+  }
+
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
   // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
@@ -1047,6 +1078,7 @@ async function main() {
     console.log(`   M49 AI評価: 実行${aiEvalDefs.length}件に評価メタ付与`);
     console.log(`   M35 TRL: 評価${trlDefs.length}件`);
     console.log(`   M37 Business Case: ${bcDefs.length}件`);
+    console.log(`   M39 GX: 比較${gxDefs.length}件`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;
