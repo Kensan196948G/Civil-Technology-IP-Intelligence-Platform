@@ -549,3 +549,18 @@ export const aiEvaluations = pgTable('ai_evaluations', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M50 Technology Ontology / Taxonomy Management（第二拡張群）
+// 工種・工法・構造物・材料・機械・IPC/CPC・NETIS分類を1つの階層ツリーで管理し、
+// 全モジュールの検索精度を底上げする。parent_id で階層を表現する。
+export const ontologyTerms = pgTable('ontology_terms', {
+  id: uuid('id').primaryKey(),
+  kind: text('kind').notNull(),            // work_type / work_method / structure / material / machine / ipc / netis_category
+  code: text('code'),                      // 規格コード・分類番号（IPC/CPC/NETIS区分 等）
+  name: text('name').notNull(),
+  parentId: uuid('parent_id'),             // 自己参照（DDL で制約定義）
+  depth: integer('depth').notNull().default(0), // ルート=0
+  note: text('note'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});

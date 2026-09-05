@@ -71,7 +71,8 @@ async function main() {
       'standards','technology_standards',
       'safety_reviews',
       'innovation_opportunities',
-      'ai_evaluations'
+      'ai_evaluations',
+      'ontology_terms'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -706,6 +707,46 @@ async function main() {
        e.humanReviewed, e.note]
     );
   }
+
+  // ---- M50 Technology Ontology / Taxonomy Management（第二拡張群）----
+  // 工種・工法・構造物・材料・機械・分類コードを階層ツリーで管理する。
+  // 例: 港湾 → 防波堤 → ケーソン → 据付（正本書の階層例をデモ投入）。
+  const ontologyDefs: Array<{ kind: string; code: string | null; name: string; parent: string | null; note?: string }> = [
+    { kind: 'work_type', code: null, name: '港湾・海洋', parent: null },
+    { kind: 'work_type', code: null, name: '河川', parent: null },
+    { kind: 'work_type', code: null, name: '道路', parent: null },
+    { kind: 'structure', code: null, name: '防波堤', parent: '港湾・海洋' },
+    { kind: 'structure', code: null, name: '岸壁', parent: '港湾・海洋' },
+    { kind: 'structure', code: null, name: 'ケーソン', parent: '防波堤' },
+    { kind: 'work_method', code: null, name: 'ケーソン製作', parent: 'ケーソン' },
+    { kind: 'work_method', code: null, name: 'ケーソン曳航', parent: 'ケーソン' },
+    { kind: 'work_method', code: null, name: 'ケーソン据付', parent: 'ケーソン' },
+    { kind: 'work_method', code: null, name: '動揺補償制御', parent: 'ケーソン据付' },
+    { kind: 'machine', code: null, name: '起重機船', parent: 'ケーソン据付' },
+    { kind: 'material', code: null, name: 'レディーミクストコンクリート', parent: 'ケーソン製作' },
+    { kind: 'ipc', code: 'E02B 3/06', name: '外郭施設（防波堤・岸壁）', parent: '港湾・海洋', note: 'IPC/CPC との対応' },
+    { kind: 'ipc', code: 'E02D 27/18', name: '水中構造物の沈設', parent: 'ケーソン据付', note: 'IPC/CPC との対応' },
+    { kind: 'netis_category', code: '港湾・海洋', name: 'NETIS分類: 港湾・海洋', parent: '港湾・海洋' }
+  ];
+  const ontologyIdByName: Record<string, string> = {};
+  for (const t of ontologyDefs) {
+    const id = uuid(); ontologyIdByName[t.name] = id;
+    await sql(
+      `INSERT INTO ontology_terms (id, kind, code, name, parent_id, depth, note, is_sample)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,true)`,
+      [id, t.kind, t.code, t.name, t.parent ? ontologyIdByName[t.parent]! : null,
+       t.parent ? 1 : 0, t.note ?? null]
+    );
+  }
+  // 階層の深さをルートから再計算（再帰CTEで2階層以上に対応）
+  await sql(`
+    WITH RECURSIVE tree AS (
+      SELECT id, 0 AS d FROM ontology_terms WHERE parent_id IS NULL
+      UNION ALL
+      SELECT c.id, t.d + 1 FROM ontology_terms c JOIN tree t ON c.parent_id = t.id
+    )
+    UPDATE ontology_terms o SET depth = tree.d FROM tree WHERE o.id = tree.id
+  `);
 
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。

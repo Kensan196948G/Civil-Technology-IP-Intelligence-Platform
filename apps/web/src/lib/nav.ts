@@ -441,6 +441,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '技術マスタ', href: '/data/masters/tech' },
       { label: 'IPC / CPCマスタ', href: '/data/masters/ipc' },
       { label: '土木工種マスタ', href: '/data/masters/work-type' },
+      { label: '技術オントロジー（M50）', href: '/ontology' },
       { label: '企業マスタ', href: '/data/masters/company' },
       { label: '発明者マスタ', href: '/data/masters/researcher' },
       { label: 'データクレンジング', href: '/data/cleansing' },
