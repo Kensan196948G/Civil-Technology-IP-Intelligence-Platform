@@ -78,7 +78,8 @@ async function main() {
       'gx_comparisons',
       'bim_cim_links',
       'competitive_signals',
-      'transfer_cases'
+      'transfer_cases',
+      'research_partners'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -883,6 +884,23 @@ async function main() {
     );
   }
 
+  // ---- M41 Research Partner Intelligence（第二拡張群）----
+  // 大学・研究機関・企業・Startup のネットワーク管理。
+  const partnerDefs = [
+    { kind: 'university', name: '国立海洋土木大学デモ校', field: '港湾・海洋工学', status: 'joint_research', contact: '大野 修（デモ）' },
+    { kind: 'university', name: 'Pacific Coastal Engineering Demo Univ.', field: 'Autonomous Construction', status: 'exploring', contact: 'Chen Wei（デモ）' },
+    { kind: 'company', name: '北浜重工デモ株式会社', field: '港湾施工', status: 'contract', contact: null },
+    { kind: 'startup', name: 'Marine Robotics Demo Startup（デモ）', field: '水中ロボティクス', status: 'exploring', contact: null },
+    { kind: 'research_institute', name: '港湾空港技術研究センター（デモ）', field: '港湾構造', status: 'nda', contact: null }
+  ] as const;
+  for (const p of partnerDefs) {
+    await sql(
+      `INSERT INTO research_partners (id, kind, name, field, collaboration_status, contact_person, is_sample)
+       VALUES ($1,$2,$3,$4,$5,$6,true)`,
+      [uuid(), p.kind, p.name, p.field, p.status, p.contact]
+    );
+  }
+
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
   // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
@@ -1137,6 +1155,7 @@ async function main() {
     console.log(`   M40 BIM/CIM: リンク${bimDefs.length}件`);
     console.log(`   M43 Signals: ${signalDefs.length}件`);
     console.log(`   M44 Transfer: ${transferDefs.length}件`);
+    console.log(`   M41 Partners: ${partnerDefs.length}件`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;

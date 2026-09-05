@@ -686,3 +686,19 @@ CREATE TABLE IF NOT EXISTS transfer_cases (
 );
 CREATE INDEX IF NOT EXISTS idx_transfer_cases_status ON transfer_cases (status);
 CREATE INDEX IF NOT EXISTS idx_transfer_cases_mode ON transfer_cases (mode);
+
+-- M41 Research Partner Intelligence（第二拡張群）
+-- 大学・研究機関・企業・Startup・研究者のネットワーク管理。
+CREATE TABLE IF NOT EXISTS research_partners (
+  id uuid PRIMARY KEY,
+  kind text NOT NULL CHECK (kind IN ('university','research_institute','company','startup')),
+  name text NOT NULL,
+  field text,
+  collaboration_status text NOT NULL DEFAULT 'none' CHECK (collaboration_status IN ('none','exploring','joint_research','nda','contract')),
+  contact_person text,
+  note text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_research_partners_kind ON research_partners (kind);
+CREATE INDEX IF NOT EXISTS idx_research_partners_status ON research_partners (collaboration_status);
