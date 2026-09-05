@@ -73,7 +73,8 @@ async function main() {
       'innovation_opportunities',
       'ai_evaluations',
       'ontology_terms',
-      'trl_assessments'
+      'trl_assessments',
+      'business_cases'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -766,6 +767,36 @@ async function main() {
     );
   }
 
+  // ---- M37 Technology Business Case Intelligence（第二拡張群）----
+  // 技術導入の費用対効果（導入費・年間削減額・ROI・TCO・Payback）。
+  const bcDefs = [
+    {
+      techKey: 'techId2', capex: 12000000, savings: 4800000, hours: 960,
+      baseline: '潜水士の目視誘導による従来据付（波高2.0m超で中断）',
+      basis: { capex: 'システム導入・計測器・教育費用（デモ）', savings: '工程短縮と再作業削減の年間換算（デモ）',
+               roi: 'Payback = capex / annualSavings で算出（デモ）' }
+    },
+    {
+      techKey: 'techId', capex: 3000000, savings: 2600000, hours: 520,
+      baseline: '手計測・目視による据付管理',
+      basis: { capex: '管理システム改修費用（デモ）', savings: '労務削減の年間換算（デモ）',
+               roi: 'Payback = capex / annualSavings で算出（デモ）' }
+    }
+  ] as const;
+  const bcTechKey: Record<string, string> = { techId, techId2 };
+  for (const b of bcDefs) {
+    const roi = Math.round(((b.savings - b.capex / 5) / b.capex) * 100 * 100) / 100; // 5年償却ベース
+    const payback = Math.round((b.capex / b.savings) * 10) / 10;
+    await sql(
+      `INSERT INTO business_cases
+         (id, technology_id, capex_yen, annual_savings_yen, labor_hours_saved_per_year,
+          roi_pct, tco5y_yen, payback_years, baseline_method, basis, is_sample)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,true)`,
+      [uuid(), bcTechKey[b.techKey]!, b.capex, b.savings, b.hours,
+       roi, b.capex + b.savings, payback, b.baseline, JSON.stringify(b.basis)]
+    );
+  }
+
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
   // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
@@ -1015,6 +1046,7 @@ async function main() {
     console.log(`   M45機会スコア: テーマ候補${opportunityDefs.length}件`);
     console.log(`   M49 AI評価: 実行${aiEvalDefs.length}件に評価メタ付与`);
     console.log(`   M35 TRL: 評価${trlDefs.length}件`);
+    console.log(`   M37 Business Case: ${bcDefs.length}件`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;

@@ -293,6 +293,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '周辺発明候補', href: '/rnd/adjacent-candidates' },
       { label: '技術ロードマップ', href: '/rnd/roadmap' },
       { label: '技術成熟度（M35 TRL）', href: '/rnd/trl' },
+      { label: 'Business Case（M37）', href: '/rnd/business-case' },
       { label: '出願候補', href: '/rnd/filing-candidates' }
     ]
   },
