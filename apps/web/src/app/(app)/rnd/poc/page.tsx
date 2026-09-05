@@ -3,6 +3,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { FilterChips, Notice } from '@/components/ui';
 
 // M36 PoC / Experiment Management — 仮説→実証→結果→採用/中止の管理（第一拡張群・実装順位7）。
 // 要件: docs/90-project/06-first-wave-fr-drafts.md（FR-M36-001〜005）
@@ -25,12 +26,18 @@ function kpiSummary(kpis: unknown): string {
     .join(' / ');
 }
 
-export default async function RndPocPage() {
+export default async function RndPocPage({ searchParams }: { searchParams: Promise<{ result?: string }> }) {
+  // Next.js 15: searchParams は Promise
+  const sp = await searchParams;
+  const resultFilter = sp.result ?? '';
   const db = getDb(getDatabaseUrl());
-  const experiments = await db
+  const experimentsAll = await db
     .select()
     .from(s.pocExperiments)
     .orderBy(desc(s.pocExperiments.createdAt));
+  const experiments = resultFilter
+    ? experimentsAll.filter(p => p.result === resultFilter)
+    : experimentsAll;
 
   const rows = experiments.map(p => ({
     id: p.id,
@@ -44,6 +51,23 @@ export default async function RndPocPage() {
   }));
 
   return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+  {resultFilter && (
+    <div className="notice notice-blue" style={{ fontSize: 12 }}>
+      結果「{RESULT_META[resultFilter]?.label ?? resultFilter}」でフィルタ中。失敗・中止を含む全PoCの知見を検索・再利用できます（FR-M36-005）。
+      <a href="/rnd/poc" style={{ marginLeft: 8, color: 'var(--blue)' }}>フィルタ解除</a>
+    </div>
+  )}
+  {!resultFilter && (
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      {Object.entries(RESULT_META).map(([key, meta]) => (
+        <a key={key} href={`/rnd/poc?result=${key}`} className="chip" style={{ fontSize: 11 }}>
+          {meta.label} ({experimentsAll.filter(p => p.result === key).length})
+        </a>
+      ))}
+    </div>
+  )}
+
     <ListView
       title="PoC実験管理"
       moduleCode="M36 / POC MANAGEMENT"
@@ -73,6 +97,7 @@ export default async function RndPocPage() {
         ) },
         { key: 'date', mono: true, render: row => <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>{row.createdAt}</span> }
       ]}
-    />
+      />
+    </div>
   );
 }
