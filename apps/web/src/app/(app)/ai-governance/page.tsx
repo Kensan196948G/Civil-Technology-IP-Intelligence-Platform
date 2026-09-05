@@ -106,6 +106,48 @@ export default async function AiGovernancePage() {
         </div>
       </div>
 
+      {/* FR-M49-003: モデル比較 */}
+      {rows.length > 0 && (() => {
+        const byModel = new Map<string, { count: number; coverageSum: number; flaggedN: number }>();
+        for (const r of rows) {
+          const m = byModel.get(r.model) ?? { count: 0, coverageSum: 0, flaggedN: 0 };
+          m.count += 1; m.coverageSum += r.coverage; if (r.hallucinationFlagged) m.flaggedN += 1;
+          byModel.set(r.model, m);
+        }
+        return (
+          <div className="card" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontWeight: 700, fontSize: 13.5 }}>モデル比較（FR-M49-003）</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8 }}>
+              {[...byModel.entries()].map(([model, m]) => (
+                <div key={model} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <span className="mono" style={{ fontSize: 11.5, fontWeight: 600 }}>{model}</span>
+                  <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>実行 {m.count} 件 ｜ 平均 Coverage {Math.round(m.coverageSum / m.count)}%</span>
+                  <span style={{ fontSize: 11, color: m.flaggedN > 0 ? 'var(--brick)' : 'var(--green)' }}>
+                    Hallucination 疑い {m.flaggedN} 件
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* FR-M49-004: 再現性評価 */}
+      {rows.length > 0 && (() => {
+        const sameModelRuns = new Map<string, number>();
+        for (const r of rows) sameModelRuns.set(r.model, (sameModelRuns.get(r.model) ?? 0) + 1);
+        const reproducible = [...sameModelRuns.entries()].filter(([, n]) => n >= 2).length;
+        return (
+          <div className="card" style={{ padding: '14px 16px' }}>
+            <span style={{ fontWeight: 700, fontSize: 13.5 }}>再現性評価（FR-M49-004）</span>
+            <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 4 }}>
+              同一モデルでの複数実行: {reproducible} モデル ｜
+              同一モデルの実行結果を比較し、同一入力に対する出力の再現性を評価できます。
+            </div>
+          </div>
+        );
+      })()}
+
       {rows.length === 0 && (
         <div className="card" style={{ padding: '14px 16px', fontSize: 13, color: 'var(--ink-2)' }}>
           AI 評価メタ（ai_evaluations）がまだ登録されていません。

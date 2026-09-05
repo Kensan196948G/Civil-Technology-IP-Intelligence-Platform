@@ -40,7 +40,7 @@ export default async function ClaimEvolutionPage() {
         <span className="badge" style={{ color: 'var(--amber)', border: '1px solid var(--amber)' }}>第一拡張群</span>
       </div>
       <div className="notice notice-amber" style={{ fontSize: 12 }}>
-        ここに表示するのは「補正前後の Claim の差分と、審査で追加・限定された技術要素の候補」です。法的評価（進歩性の有無・侵害判断など）は行いません。権利解釈は法務・弁理士へ（FR-M30-005・M27 と同境界）。
+        ここに表示するのは「補正前後の Claim の差分と、審査で追加・限定された技術要素の候補」です。法的評価（進歩性の有無・侵害判断など）は行いません。権利解釈は法務・弁理士へ（FR-M30-005・M27 と同境界）。ファミリー内・国別の Claim 差は /patents/families/tree で確認できます（FR-M30-004・M31 連携）。
       </div>
 
       {targetPatents.length === 0 && (

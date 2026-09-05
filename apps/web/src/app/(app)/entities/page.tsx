@@ -58,7 +58,7 @@ export default async function EntitiesPage() {
     <ListView
       title="出願人・権利者 名寄せ（Entity）"
       moduleCode="M29 / IP ENTITY"
-      description="表記ゆれ（株式会社ABC／ABC CONSTRUCTION CO.,LTD. 等）を正規エンティティに束ね、企業グループ（親子）を管理します。特許の出願人名がエイリアスに一致した件数を表示（名寄せの事故＝「競合A社は20件→グループ計120件」の防止が狙い）。"
+      description="表記ゆれ（株式会社ABC／ABC CONSTRUCTION CO.,LTD. 等）を正規エンティティに束ね、企業グループ（親子）を管理します。特許の出願人名がエイリアスに一致した件数を表示（名寄せの事故＝「競合A社は20件→グループ計120件」の防止が狙い）。権利移転（譲渡・承継）の追跡は出願人変更情報との連携で実装予定（FR-M29-004）。"
       badge="第一拡張群"
       rows={rows}
       emptyMessage="IPエンティティの登録がまだありません。"
