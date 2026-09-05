@@ -7,9 +7,12 @@ import Link from 'next/link';
 type CodeRow = { code: string; patent_n: number };
 type PatentRow = { id: string; title: string; applicant_name: string; country: string; ipc_codes: string[] };
 
-export default async function IpcSearchPage({ searchParams }: { searchParams: { q?: string } }) {
+export default async function IpcSearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> })
+{
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
   const db = getDb(getDatabaseUrl());
-  const q = (searchParams.q ?? '').trim();
+  const q = (sp.q ?? '').trim();
   const like = `${q}%`;
 
   const codesResult = await db.execute(sql`

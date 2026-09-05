@@ -38,8 +38,11 @@ function statusesFor(filter: string): string[] {
   return ACTIVE_STATUSES;
 }
 
-export default async function ApprovalsPage({ searchParams }: { searchParams: { filter?: string } }) {
-  const filter = searchParams.filter ?? 'mine';
+export default async function ApprovalsPage({ searchParams }: { searchParams: Promise<{ filter?: string }> })
+{
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
+  const filter = sp.filter ?? 'mine';
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 

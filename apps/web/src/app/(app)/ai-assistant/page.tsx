@@ -49,8 +49,11 @@ async function loadSidePanels() {
   };
 }
 
-export default async function CopilotHomePage({ searchParams }: { searchParams: { c?: string } }) {
-  const { index, convo } = getConversation(searchParams.c);
+export default async function CopilotHomePage({ searchParams }: { searchParams: Promise<{ c?: string }> })
+{
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
+  const { index, convo } = getConversation(sp.c);
   const { jobs, runs, citationsByRun } = await loadSidePanels();
 
   const candidateDetail = (c: (typeof convo.candidates)[number]): DetailSpec => ({

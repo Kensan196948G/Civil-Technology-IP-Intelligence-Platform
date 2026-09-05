@@ -40,8 +40,10 @@ const keyOf = (kind: Kind, id: string): Key => `${kind}:${id}`;
 export default async function TechnologyGraphPage({
   searchParams
 }: {
-  searchParams: { center?: string };
+  searchParams: Promise<{ center?: string }>;
 }) {
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
   const db = getDb(getDatabaseUrl());
   const edgesRaw = await db.select().from(s.kgEdges);
   if (edgesRaw.length === 0) {
@@ -129,8 +131,8 @@ export default async function TechnologyGraphPage({
   }
 
   // 中心ノード（?center=kind:id で指定。未指定なら最初の技術ノード、無ければ最初のノード）
-  const centerKey = searchParams.center && nodes.has(searchParams.center)
-    ? searchParams.center
+  const centerKey = sp.center && nodes.has(sp.center)
+    ? sp.center
     : [...nodes.keys()].find(k => k.startsWith('technology:')) ?? [...nodes.keys()][0]!;
   const centerNode = nodes.get(centerKey);
 

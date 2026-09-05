@@ -21,8 +21,11 @@ async function ragSearch(q: string) {
   return r.rows as any[];
 }
 
-export default async function RagPage({ searchParams }: { searchParams: { q?: string } }) {
-  const q = searchParams.q ?? '';
+export default async function RagPage({ searchParams }: { searchParams: Promise<{ q?: string }> })
+{
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
+  const q = sp.q ?? '';
   const results = await ragSearch(q);
 
   return (

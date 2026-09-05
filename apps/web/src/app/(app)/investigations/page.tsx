@@ -19,8 +19,11 @@ const STATUS: Record<string, { label: string; tone: 'purple' | 'green' | 'amber'
   closed: { label: '完了', tone: 'green' }
 };
 
-export default async function InvestigationsPage({ searchParams }: { searchParams: { filter?: string } }) {
-  const filter: Filter = FILTERS.includes(searchParams.filter as Filter) ? (searchParams.filter as Filter) : 'active';
+export default async function InvestigationsPage({ searchParams }: { searchParams: Promise<{ filter?: string }> })
+{
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
+  const filter: Filter = FILTERS.includes(sp.filter as Filter) ? (sp.filter as Filter) : 'active';
 
   const db = getDb(getDatabaseUrl());
   const all = await db.select().from(s.investigations).orderBy(desc(s.investigations.createdAt));

@@ -9,16 +9,19 @@ import { updateRowKind } from '../actions';
 const KIND_LABEL: Record<string, string> = { match: '一致', similar: '類似', differ: '相違' };
 const KIND_COLOR: Record<string, string> = { match: 'var(--green)', similar: 'var(--amber)', differ: 'var(--brick)' };
 
-export default async function ClaimChartPage({ params }: { params: { id: string } }) {
+export default async function ClaimChartPage({ params }: { params: Promise<{ id: string }> })
+{
+  // Next.js 15: params は Promise になったため await する
+  const p = await params;
   const db = getDb(getDatabaseUrl());
-  const [analysis] = await db.select().from(s.claimAnalyses).where(eq(s.claimAnalyses.id, params.id)).limit(1);
+  const [analysis] = await db.select().from(s.claimAnalyses).where(eq(s.claimAnalyses.id, p.id)).limit(1);
   if (!analysis) notFound();
   const [patent] = await db.select().from(s.patents).where(eq(s.patents.id, analysis.patentId)).limit(1);
   const [tech] = await db.select().from(s.technologies).where(eq(s.technologies.id, analysis.technologyId)).limit(1);
   const rows = await db.execute(sql`
     select r.*, e.label as element_label, e.text as element_text
     from claim_chart_rows r join claim_elements e on e.id = r.element_id
-    where r.analysis_id = ${params.id} order by r.seq
+    where r.analysis_id = ${p.id} order by r.seq
   `);
   const rowList = rows.rows as any[];
   const matchN = rowList.filter(r => r.kind === 'match').length;
@@ -62,7 +65,7 @@ export default async function ClaimChartPage({ params }: { params: { id: string 
                     {(['match', 'similar', 'differ'] as const).map(k => (
                       <form key={k} action={updateRowKind}>
                         <input type="hidden" name="rowId" value={r.id} />
-                        <input type="hidden" name="analysisId" value={params.id} />
+                        <input type="hidden" name="analysisId" value={p.id} />
                         <input type="hidden" name="kind" value={k} />
                         <button type="submit" className="badge" style={{
                           border: `1px solid ${r.kind === k ? KIND_COLOR[k] : 'var(--line)'}`,

@@ -21,9 +21,12 @@ function scoreColor(score: number) {
   return 'var(--brick-dot)';
 }
 
-export default async function FieldScorePage({ params }: { params: { id: string } }) {
+export default async function FieldScorePage({ params }: { params: Promise<{ id: string }> })
+{
+  // Next.js 15: params は Promise になったため await する
+  const p = await params;
   const db = getDb(getDatabaseUrl());
-  const [fa] = await db.select().from(s.fieldApplications).where(eq(s.fieldApplications.id, params.id)).limit(1);
+  const [fa] = await db.select().from(s.fieldApplications).where(eq(s.fieldApplications.id, p.id)).limit(1);
   if (!fa) notFound();
   const [issue] = await db.select().from(s.siteIssues).where(eq(s.siteIssues.id, fa.siteIssueId)).limit(1);
   const [site] = issue ? await db.select().from(s.sites).where(eq(s.sites.id, issue.siteId)).limit(1) : [null];

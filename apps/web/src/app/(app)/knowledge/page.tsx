@@ -7,9 +7,12 @@ import { ListView } from '@/components/ListView';
 
 const KIND_LABEL: Record<string, string> = { tech: '技術ナレッジ', patent: '特許ナレッジ', paper: '論文ナレッジ', netis: 'NETISナレッジ' };
 
-export default async function KnowledgePage({ searchParams }: { searchParams: { kind?: string } }) {
+export default async function KnowledgePage({ searchParams }: { searchParams: Promise<{ kind?: string }> })
+{
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
   const db = getDb(getDatabaseUrl());
-  const kind = searchParams.kind ?? 'tech';
+  const kind = sp.kind ?? 'tech';
 
   type Row = { id: string; title: string; sub: string; href: string };
   const rows: Row[] = kind === 'patent'

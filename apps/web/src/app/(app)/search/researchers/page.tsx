@@ -4,9 +4,12 @@ import * as s from '@/lib/db/schema';
 import { asc, or, ilike } from 'drizzle-orm';
 
 
-export default async function ResearcherSearchPage({ searchParams }: { searchParams: { q?: string } }) {
+export default async function ResearcherSearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> })
+{
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
   const db = getDb(getDatabaseUrl());
-  const q = (searchParams.q ?? '').trim();
+  const q = (sp.q ?? '').trim();
   const like = `%${q}%`;
 
   const rows = q

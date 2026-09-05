@@ -7,11 +7,14 @@ import { notFound } from 'next/navigation';
 import { stamp } from '@/lib/labels';
 
 
-export default async function SiteIssuePage({ params }: { params: { id: string } }) {
+export default async function SiteIssuePage({ params }: { params: Promise<{ id: string }> })
+{
+  // Next.js 15: params は Promise になったため await する
+  const p = await params;
   const db = getDb(getDatabaseUrl());
-  const [site] = await db.select().from(s.sites).where(eq(s.sites.id, params.id)).limit(1);
+  const [site] = await db.select().from(s.sites).where(eq(s.sites.id, p.id)).limit(1);
   if (!site) notFound();
-  const issues = await db.select().from(s.siteIssues).where(eq(s.siteIssues.siteId, params.id)).orderBy(desc(s.siteIssues.createdAt));
+  const issues = await db.select().from(s.siteIssues).where(eq(s.siteIssues.siteId, p.id)).orderBy(desc(s.siteIssues.createdAt));
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>

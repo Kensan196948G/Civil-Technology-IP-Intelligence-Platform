@@ -12,7 +12,10 @@ import { canViewRow } from '@/lib/authz/row-visibility';
 // R ロール以外（engineer/viewer）は自分が起案した案件以外を 404 として存在を見せない。
 // 正: docs/10-requirements/05-rbac-matrix.md §4 / docs/30-design/01-detailed-design.md §3.1
 
-export default async function ApprovalDetail({ params }: { params: { id: string } }) {
+export default async function ApprovalDetail({ params }: { params: Promise<{ id: string }> })
+{
+  // Next.js 15: params は Promise になったため await する
+  const p = await params;
   const db = getDb(getDatabaseUrl());
   // CodeRabbit指摘: !アサーションだけでは実行時にセッションが失効した場合に
   // TypeErrorで500になり、UIのisSelf判定もundefinedを暗黙にfalse扱いしてしまう
@@ -20,7 +23,7 @@ export default async function ApprovalDetail({ params }: { params: { id: string 
   //  UIとサーバーの判定がずれるのはユーザー体験として好ましくない）。
   const user = await getCurrentUser();
   if (!user) redirect('/login');
-  const [w] = await db.select().from(s.workflowInstances).where(eq(s.workflowInstances.id, params.id)).limit(1);
+  const [w] = await db.select().from(s.workflowInstances).where(eq(s.workflowInstances.id, p.id)).limit(1);
   if (!w) notFound();
   const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
   if (!me) redirect('/login');

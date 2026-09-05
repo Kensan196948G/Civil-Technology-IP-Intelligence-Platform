@@ -5,9 +5,12 @@ import { eq } from 'drizzle-orm';
 import { redirect, notFound } from 'next/navigation';
 
 
-export default async function ByPatent({ params }: { params: { patentId: string } }) {
+export default async function ByPatent({ params }: { params: Promise<{ patentId: string }> })
+{
+  // Next.js 15: params は Promise になったため await する
+  const p = await params;
   const db = getDb(getDatabaseUrl());
-  const [a] = await db.select().from(s.claimAnalyses).where(eq(s.claimAnalyses.patentId, params.patentId)).limit(1);
+  const [a] = await db.select().from(s.claimAnalyses).where(eq(s.claimAnalyses.patentId, p.patentId)).limit(1);
   if (!a) notFound();
   redirect(`/claims/${a.id}`);
 }
