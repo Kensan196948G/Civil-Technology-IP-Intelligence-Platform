@@ -67,7 +67,8 @@ async function main() {
       'patent_citations','prosecution_events','fto_cases','fto_components','poc_experiments',
       'ip_entities','entity_aliases',
       'kg_edges','claim_versions','ip_value_scores',
-      'patent_families','patent_family_members'
+      'patent_families','patent_family_members',
+      'standards','technology_standards'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -525,6 +526,41 @@ async function main() {
     );
   }
 
+  // ---- M34 Standards & Specification Intelligence（第一拡張群・実装順位6）----
+  // 規格台帳（JIS/ISO/国交省要領・設計施工基準/発注仕様/安全基準）と技術⇔規格の関連。
+  // FR-M34-001（台帳・版管理）/003（関連付け・適用可否メモ）/004（収集元・版の記録）。
+  const standardDefs = [
+    { kind: 'jis', code: 'JIS A 5308', title: 'レディーミクストコンクリート', summary: '生コンクリートの品質・試験方法・検査を定めるJIS（デモデータ）。', version: '2023', issuedOn: '2023-03-25', source: 'JIS ハンドブック（デモ）', sourceUrl: null },
+    { kind: 'iso', code: 'ISO 9001', title: '品質マネジメントシステム－要求事項', summary: '品質マネジメントの国際規格（デモデータ）。', version: '2015', issuedOn: '2015-09-15', source: 'ISO 公式（デモ）', sourceUrl: null },
+    { kind: 'mlit_manual', code: '港湾の施設の技術上の基準', title: '港湾施設の設計・施工に関する技術基準', summary: '港湾構造物（ケーソン・岸壁等）の設計施工基準（デモデータ）。', version: '2023', issuedOn: '2023-04-01', source: '国交省 港湾局（デモ）', sourceUrl: null },
+    { kind: 'mlit_manual', code: 'NETIS 評価制度 要領', title: '新技術情報提供システム（NETIS）評価・活用要領', summary: 'NETIS 登録技術の評価・活用に関する要領（デモデータ）。', version: 'Rev.11', issuedOn: '2022-10-01', source: '国交省（デモ）', sourceUrl: null },
+    { kind: 'spec', code: '◯◯港 岸壁改良工事 特記仕様書', title: '発注仕様書（仮称・デモ）', summary: '発注者から提示される特記仕様書（デモデータ）。', version: 'Rev.2', issuedOn: '2024-06-01', source: '発注者（デモ）', sourceUrl: null },
+    { kind: 'safety', code: '土木工事安全施工技術基準', title: '土木工事の安全施工技術基準', summary: '土木工事の安全確保に関する技術基準（デモデータ）。', version: '2023', issuedOn: '2023-04-01', source: '国交省（デモ）', sourceUrl: null }
+  ] as const;
+  const standardIdByCode: Record<string, string> = {};
+  for (const st of standardDefs) {
+    const sid = uuid(); standardIdByCode[st.code] = sid;
+    await sql(
+      `INSERT INTO standards (id, kind, code, title, summary, version, issued_on, source, source_url, retrieved_at, is_sample)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, now(), true)`,
+      [sid, st.kind, st.code, st.title, st.summary, st.version, st.issuedOn, st.source, st.sourceUrl]
+    );
+  }
+  // 技術⇔規格の関連（適用可否と判断メモ。適用可否の最終判断は人）
+  const techStdDefs: Array<[string, string, string, string]> = [
+    [techId, 'JIS A 5308', 'conditional', 'ケーソン中詰めコンクリートの配合検討に適用（デモ）'],
+    [techId, '港湾の施設の技術上の基準', 'applicable', '据付精度の基準適合を確認済み（デモ）'],
+    [techId2, 'NETIS 評価制度 要領', 'applicable', 'NETIS 登録技術として評価対象（デモ）'],
+    [techId2, '土木工事安全施工技術基準', 'conditional', '安全ゲート（M38）で要確認（デモ）']
+  ];
+  for (const [tech, code, applicability, memo] of techStdDefs) {
+    await sql(
+      `INSERT INTO technology_standards (id, technology_id, standard_id, applicability, memo, is_sample)
+       VALUES ($1,$2,$3,$4,$5,true)`,
+      [uuid(), tech, standardIdByCode[code]!, applicability, memo]
+    );
+  }
+
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
   // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
@@ -769,6 +805,7 @@ async function main() {
     console.log(`   ワークフロー案件 3件（発明2・現場導入1） / AI実行3（根拠付き）`);
     console.log(`   研究者${researcherDefs.length} / 競合${competitorDefs.length} / 調査案件${investigationDefs.length} / ウォッチ${watchDefs.length} / ライセンス${licenseDefs.length} / レポート${reportDefs.length} / FeatureFlags${featureFlagDefs.length} / 設定${settingDefs.length}`);
     console.log(`   第一拡張群: KGエッジ${kgEdgeDefs.length} / Claim版${claimVersionDefs.flatMap(c => c.versions).length} / IP価値スコア${ipValueDefs.length} / 特許ファミリー1件（メンバー${familyMemberDefs.length}）`);
+    console.log(`   M34規格: 台帳${standardDefs.length}件 / 技術⇔規格関連${techStdDefs.length}件`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;

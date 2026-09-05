@@ -156,6 +156,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '先行特許', href: '/investigations/prior-patents' },
       { label: '先行論文', href: '/investigations/prior-papers' },
       { label: 'NETIS・公開技術', href: '/netis' },
+      { label: '規格・基準（M34）', href: '/standards' },
       { label: '類似技術調査', href: '/investigations/similar-tech' },
       { label: '構成要件別調査', href: '/investigations/by-element' },
       { label: 'FTO予備調査', href: '/fto' },

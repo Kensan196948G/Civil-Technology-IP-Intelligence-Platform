@@ -461,3 +461,32 @@ export const patentFamilyMembers = pgTable('patent_family_members', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M34 Standards & Specification Intelligence（第一拡張群・実装順位6）
+// JIS・ISO・国交省要領・設計/施工基準・発注仕様・安全基準の台帳と版管理、技術との関連付け。
+// FR-M34-001（台帳・版管理）/003（技術⇔規格の関連）/004（収集元・版の記録）。
+export const standards = pgTable('standards', {
+  id: uuid('id').primaryKey(),
+  kind: text('kind').notNull(),           // jis / iso / mlit_manual（国交省要領・基準）/ spec（発注仕様）/ safety（安全基準）
+  code: text('code').notNull(),           // 規格番号（例: JIS A 5308 / ISO 9001）
+  title: text('title').notNull(),
+  summary: text('summary'),
+  version: text('version'),               // 版（例: 2023 / Rev.5）
+  issuedOn: date('issued_on'),            // 制定・発効日
+  source: text('source').notNull(),       // 収集元（JIS ハンドブック等）
+  sourceUrl: text('source_url'),
+  retrievedAt: timestamp('retrieved_at', { withTimezone: true }).notNull(),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// 技術⇔規格の関連（適用可否の判断メモを添えられる）
+export const technologyStandards = pgTable('technology_standards', {
+  id: uuid('id').primaryKey(),
+  technologyId: uuid('technology_id').notNull().references(() => technologies.id, { onDelete: 'cascade' }),
+  standardId: uuid('standard_id').notNull().references(() => standards.id, { onDelete: 'cascade' }),
+  applicability: text('applicability').notNull(), // applicable / conditional / not_applicable / under_review
+  memo: text('memo'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
