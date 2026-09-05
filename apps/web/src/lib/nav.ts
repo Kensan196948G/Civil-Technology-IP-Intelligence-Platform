@@ -252,6 +252,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: 'BIM/CIM関連付け（M40）', href: '/rnd/bim-cim-intel' },
       { label: '競合シグナル（M43）', href: '/landscape/signals' },
       { label: '技術トランスファー（M44）', href: '/licensing/transfer' },
+      { label: '研究パートナー（M41）', href: '/research/partners' },
       { label: '生産性・省人化評価', href: '/field/axis/productivity' },
       { label: '導入難易度評価', href: '/field/axis/difficulty' }
     ]

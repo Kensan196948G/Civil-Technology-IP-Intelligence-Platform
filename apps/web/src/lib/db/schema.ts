@@ -666,3 +666,18 @@ export const transferCases = pgTable('transfer_cases', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M41 Research Partner Intelligence（第二拡張群）
+// 大学・研究機関・企業・Startup・研究者のネットワークを管理し、
+// 共同研究の候補発掘と連携状況の俯瞰を提供する。
+export const researchPartners = pgTable('research_partners', {
+  id: uuid('id').primaryKey(),
+  kind: text('kind').notNull(),          // university / research_institute / company / startup
+  name: text('name').notNull(),
+  field: text('field'),                  // 専門分野
+  collaborationStatus: text('collaboration_status').notNull().default('none'), // none / exploring / joint_research / nda / contract
+  contactPerson: text('contact_person'),
+  note: text('note'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
