@@ -472,3 +472,34 @@ CREATE TABLE IF NOT EXISTS patent_family_members (
 );
 CREATE INDEX IF NOT EXISTS idx_patent_family_members_family ON patent_family_members (family_id);
 CREATE INDEX IF NOT EXISTS idx_patent_family_members_patent ON patent_family_members (patent_id);
+
+-- M34 Standards & Specification Intelligence（第一拡張群・実装順位6）
+-- 規格台帳（JIS/ISO/国交省要領・設計施工基準/発注仕様/安全基準）と技術⇔規格の関連。FR-M34-001/003/004。
+CREATE TABLE IF NOT EXISTS standards (
+  id uuid PRIMARY KEY,
+  kind text NOT NULL CHECK (kind IN ('jis','iso','mlit_manual','spec','safety')),
+  code text NOT NULL,
+  title text NOT NULL,
+  summary text,
+  version text,
+  issued_on date,
+  source text NOT NULL,
+  source_url text,
+  retrieved_at timestamptz NOT NULL,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_standards_kind ON standards (kind);
+CREATE INDEX IF NOT EXISTS idx_standards_code ON standards (code);
+
+CREATE TABLE IF NOT EXISTS technology_standards (
+  id uuid PRIMARY KEY,
+  technology_id uuid NOT NULL REFERENCES technologies(id) ON DELETE CASCADE,
+  standard_id uuid NOT NULL REFERENCES standards(id) ON DELETE CASCADE,
+  applicability text NOT NULL CHECK (applicability IN ('applicable','conditional','not_applicable','under_review')),
+  memo text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_technology_standards_tech ON technology_standards (technology_id);
+CREATE INDEX IF NOT EXISTS idx_technology_standards_std ON technology_standards (standard_id);
