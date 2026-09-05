@@ -249,6 +249,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '品質評価', href: '/field/axis/quality' },
       { label: 'CO₂・環境評価', href: '/field/axis/environment' },
       { label: 'GX・環境負荷比較（M39）', href: '/rnd/gx' },
+      { label: 'BIM/CIM関連付け（M40）', href: '/rnd/bim-cim-intel' },
       { label: '生産性・省人化評価', href: '/field/axis/productivity' },
       { label: '導入難易度評価', href: '/field/axis/difficulty' }
     ]

@@ -616,3 +616,19 @@ export const gxComparisons = pgTable('gx_comparisons', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M40 BIM/CIM Technology Intelligence（第二拡張群）
+// IFC/BIM/CIM オブジェクトと工法・特許・NETIS・技術の関連付け。
+// 施工計画・4Dシミュレーションでの技術適用を支援。
+export const bimCimLinks = pgTable('bim_cim_links', {
+  id: uuid('id').primaryKey(),
+  // 対象（ポリモーフィック: technology / patent / netis / site）
+  subjectType: text('subject_type').notNull(), // technology / patent / netis / site
+  subjectId: uuid('subject_id').notNull(),
+  ifcEntity: text('ifc_entity').notNull(),     // IFCエンティティ（例: IfcWall, IfcSlab）
+  elementName: text('element_name'),           // 要素名（例: 防波堤ケーソン・A1）
+  modelName: text('model_name'),               // モデル名
+  note: text('note'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});

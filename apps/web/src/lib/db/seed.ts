@@ -75,7 +75,8 @@ async function main() {
       'ontology_terms',
       'trl_assessments',
       'business_cases',
-      'gx_comparisons'
+      'gx_comparisons',
+      'bim_cim_links'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -828,6 +829,23 @@ async function main() {
     );
   }
 
+  // ---- M40 BIM/CIM Technology Intelligence（第二拡張群）----
+  // IFC/BIM/CIM オブジェクトと技術・NETIS・現場の関連付け。
+  const bimDefs: Array<[string, string, string, string | null, string | null, string | null]> = [
+    ['technology', techId2, 'IfcCaisson', '防波堤ケーソン・A1', '◯◯港 防波堤BIMモデル（デモ）', 'GNSS据付支援の適用対象'],
+    ['technology', techId, 'IfcCaisson', '防波堤ケーソン・A1', '◯◯港 防波堤BIMモデル（デモ）', '据付管理の適用対象'],
+    ['netis', netisId, 'IfcSite', '港湾敷地', '◯◯港 防波堤BIMモデル（デモ）', 'NETIS技術の適用現場'],
+    ['site', siteId, 'IfcSite', '◯◯港 岸壁改良工事', '◯◯港 施工計画CIM（デモ）', '4Dシミュレーション対象'],
+    ['patent', patentIds[0]!, 'IfcCaisson', '防波堤ケーソン・A1', '◯◯港 防波堤BIMモデル（デモ）', '特許の適用構造物']
+  ] as const;
+  for (const [sType, sId, ifcEntity, elementName, modelName, note] of bimDefs) {
+    await sql(
+      `INSERT INTO bim_cim_links (id, subject_type, subject_id, ifc_entity, element_name, model_name, note, is_sample)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,true)`,
+      [uuid(), sType, sId, ifcEntity, elementName, modelName, note]
+    );
+  }
+
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
   // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
@@ -1079,6 +1097,7 @@ async function main() {
     console.log(`   M35 TRL: 評価${trlDefs.length}件`);
     console.log(`   M37 Business Case: ${bcDefs.length}件`);
     console.log(`   M39 GX: 比較${gxDefs.length}件`);
+    console.log(`   M40 BIM/CIM: リンク${bimDefs.length}件`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;
