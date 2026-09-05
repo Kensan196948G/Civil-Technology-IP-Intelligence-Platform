@@ -373,6 +373,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: 'Legal Agent', href: '/ai-assistant/agents/legal' },
       { label: 'Report Agent', href: '/ai-assistant/agents/report' },
       { label: 'Agent実行履歴', href: '/ai-runs' },
+      { label: 'AI Governance（M49）', href: '/ai-governance' },
       { label: '自律調査ジョブ', href: '/ai-assistant/jobs' }
     ]
   },
