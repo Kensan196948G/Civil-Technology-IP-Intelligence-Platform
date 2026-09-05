@@ -3,16 +3,27 @@ import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { desc, eq, and, isNotNull, inArray } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { redirect } from 'next/navigation';
+import { visibleWhere } from '@/lib/authz/row-visibility';
 
+// #11 C3/C4 行レベル制御: 発明 workflow（C3）は R ロールまたは起案者本人のみ一覧に出す。
 
 type RiskSummary = { novelty?: string; inventive?: string; description?: string; overlap?: string; note?: string };
 
 const RISK_LABEL: Record<string, string> = { low: '低', medium: '中', high: '高' };
 
 export default async function RndEvaluationPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
   const db = getDb(getDatabaseUrl());
+  const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
   const workflows = await db.select().from(s.workflowInstances).where(
-    and(eq(s.workflowInstances.kind, 'invention'), isNotNull(s.workflowInstances.aiRiskSummary))
+    and(
+      eq(s.workflowInstances.kind, 'invention'),
+      isNotNull(s.workflowInstances.aiRiskSummary),
+      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id })
+    )
   ).orderBy(desc(s.workflowInstances.createdAt));
 
   const inventionIds = [...new Set(workflows.filter(w => w.subjectType === 'invention').map(w => w.subjectId))];

@@ -1,11 +1,16 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { desc, inArray } from 'drizzle-orm';
+import { desc, and, eq, inArray } from 'drizzle-orm';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { resolveCitationLabels } from '@/lib/citations';
 import { stamp } from '@/lib/labels';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { visibleWhere } from '@/lib/authz/row-visibility';
 
+// #11 C3/C4 行レベル制御: 実行履歴のうち、対象発明（C3）を閲覧できない行は表示しない
+// （履歴から C3 発明の存在を推測させない）。発明以外のターゲットは C2 相当とみなす。
 
 type Run = typeof s.aiRuns.$inferSelect;
 
@@ -44,8 +49,27 @@ async function resolveTargets(db: ReturnType<typeof getDb>, runs: Run[]) {
 }
 
 export default async function AiRunsPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
   const db = getDb(getDatabaseUrl());
-  const runs = await db.select().from(s.aiRuns).orderBy(desc(s.aiRuns.createdAt));
+  const runsAll = await db.select().from(s.aiRuns).orderBy(desc(s.aiRuns.createdAt));
+
+  // #11: 対象発明を可視範囲で引き、不可視の C3 発明への実行履歴行を除外する
+  // （履歴から C3 発明の存在を推測させない。README §14 ルール1）。
+  const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
+  const inventionTargetIds = [...new Set(
+    runsAll.filter(r => r.targetType === 'invention' && r.targetId).map(r => r.targetId!)
+  )];
+  const visibleInventions = inventionTargetIds.length
+    ? await db.select().from(s.inventions).where(and(
+        inArray(s.inventions.id, inventionTargetIds),
+        visibleWhere(s.inventions.classification, s.inventions.submittedBy, { role: user.role, viewerUserId: me?.id })
+      ))
+    : [];
+  const visibleInventionIds = new Set(visibleInventions.map(i => i.id));
+  const runs = runsAll.filter(r =>
+    r.targetType !== 'invention' || (r.targetId && visibleInventionIds.has(r.targetId))
+  );
   const runIds = runs.map(r => r.id);
   const citations = runIds.length
     ? await db.select().from(s.aiCitations).where(inArray(s.aiCitations.aiRunId, runIds))

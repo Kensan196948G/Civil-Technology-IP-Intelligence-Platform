@@ -1,13 +1,22 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { desc, inArray } from 'drizzle-orm';
+import { desc, eq, inArray, or, sql } from 'drizzle-orm';
 import { ListView } from '@/components/ListView';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { redirect } from 'next/navigation';
+import { visibleWhere } from '@/lib/authz/row-visibility';
 
 
 export default async function RndIdeasPage() {
+  // #11 C3/C4 行レベル制御: 発明（C3）は R ロールまたは起案者本人のみ一覧に出す。
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
   const db = getDb(getDatabaseUrl());
-  const inventions = await db.select().from(s.inventions).orderBy(desc(s.inventions.createdAt));
+  const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
+  const inventions = await db.select().from(s.inventions)
+    .where(visibleWhere(s.inventions.classification, s.inventions.submittedBy, { role: user.role, viewerUserId: me?.id }))
+    .orderBy(desc(s.inventions.createdAt));
 
   const userIds = [...new Set(inventions.map(i => i.submittedBy))];
   const users = userIds.length ? await db.select().from(s.users).where(inArray(s.users.id, userIds)) : [];

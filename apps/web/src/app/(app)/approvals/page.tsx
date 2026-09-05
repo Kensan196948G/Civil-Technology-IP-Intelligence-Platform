@@ -5,6 +5,15 @@ import Link from 'next/link';
 import { FilterChips, Notice, Tag } from '@/components/ui';
 import { DetailChip } from '@/components/detail/DetailOpener';
 import { CLASSIFICATION, WORKFLOW_KIND, WORKFLOW_STATUS } from '@/lib/labels';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { eq } from 'drizzle-orm';
+import { redirect } from 'next/navigation';
+import * as s from '@/lib/db/schema';
+import { isC3ReaderRole } from '@/lib/authz/row-visibility';
+
+// #11 C3/C4 行レベル制御: ワークフロー案件（発明 workflow は C3）は参照(R)ロールまたは
+// 起案者本人のみ可視。engineer/viewer には他人の C3 案件を一覧・件数にも出さない。
+// 正: docs/10-requirements/05-rbac-matrix.md §4 / docs/30-design/01-detailed-design.md §3.1
 
 
 // 設計案（design-B-copilot）の「承認・レビュー」。
@@ -31,12 +40,26 @@ function statusesFor(filter: string): string[] {
 
 export default async function ApprovalsPage({ searchParams }: { searchParams: { filter?: string } }) {
   const filter = searchParams.filter ?? 'mine';
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
+
   const db = getDb(getDatabaseUrl());
+  const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
+  const c3Reader = isC3ReaderRole(user.role);
+
+  // #11: C3 案件（発明 workflow）は R ロールまたは起案者本人のみ。件数にも含めない（WHERE句で絞る）。
+  const rowScope = c3Reader
+    ? sql`wi.classification IN ('C1','C2','C3')`
+    : me
+      ? sql`(wi.classification IN ('C1','C2') OR (wi.classification = 'C3' AND wi.author_id = ${me.id}))`
+      : sql`wi.classification IN ('C1','C2')`;
+
   const result = await db.execute(sql`
     select wi.id::text as id, wi.kind, wi.title, wi.status, wi.classification,
            wi.due_on::text as due_on, u.display_name as author,
            wi.human_check_required, wi.human_check_completed_at::text as human_check_completed_at
     from workflow_instances wi join users u on u.id = wi.author_id
+    where ${rowScope}
     order by wi.due_on nulls last, wi.created_at desc
   `);
   const all = result.rows as Row[];

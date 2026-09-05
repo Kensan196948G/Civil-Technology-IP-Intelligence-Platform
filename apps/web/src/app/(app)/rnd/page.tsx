@@ -4,15 +4,28 @@ import * as s from '@/lib/db/schema';
 import { count, eq, and, notInArray } from 'drizzle-orm';
 import Link from 'next/link';
 import { InfoPage } from '@/components/InfoPage';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { redirect } from 'next/navigation';
+import { visibleWhere } from '@/lib/authz/row-visibility';
 
+// #11 C3/C4 行レベル制御: R&D 集計件数にも権限外の C3（発明・発明 workflow）を含めない。
 
 async function loadCounts() {
+  const user = await getCurrentUser();
+  if (!user) return null;
   const db = getDb(getDatabaseUrl());
-  const [ideas] = await db.select({ n: count() }).from(s.inventions);
+  const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
+  const viewer = { role: user.role, viewerUserId: me?.id };
+  const [ideas] = await db.select({ n: count() }).from(s.inventions)
+    .where(visibleWhere(s.inventions.classification, s.inventions.submittedBy, viewer));
   const [themes] = await db.select({ n: count() }).from(s.technologies);
   const [openChallenges] = await db.select({ n: count() }).from(s.siteIssues).where(eq(s.siteIssues.status, 'open'));
   const [pipeline] = await db.select({ n: count() }).from(s.workflowInstances).where(
-    and(eq(s.workflowInstances.kind, 'invention'), notInArray(s.workflowInstances.status, ['approved', 'rejected', 'archived']))
+    and(
+      eq(s.workflowInstances.kind, 'invention'),
+      notInArray(s.workflowInstances.status, ['approved', 'rejected', 'archived']),
+      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, viewer)
+    )
   );
   const [aiOrganized] = await db.select({ n: count() }).from(s.aiRuns).where(eq(s.aiRuns.kind, 'examine'));
   const [openInvestigations] = await db.select({ n: count() }).from(s.investigations).where(eq(s.investigations.status, 'open'));
@@ -43,6 +56,7 @@ const LINKS: { label: string; href: string; sub: string }[] = [
 
 export default async function RndDashboardPage() {
   const c = await loadCounts();
+  if (!c) redirect('/login');
   const cards = [
     { label: '研究テーマ', n: c.themes, href: '/rnd/themes' },
     { label: '未解決の技術課題', n: c.openChallenges, href: '/rnd/challenges' },

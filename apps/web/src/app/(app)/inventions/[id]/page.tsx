@@ -1,16 +1,29 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
-import { notFound } from 'next/navigation';
+import { eq, and, inArray, or } from 'drizzle-orm';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { resolveCitationLabels } from '@/lib/citations';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { canViewRow } from '@/lib/authz/row-visibility';
 
+// #11 C3/C4 行レベル制御（詳細・404秘匿）: 発明は既定 C3。
+// 参照(R)ロール以外（engineer/viewer）は、自分が起案した発明以外を 404 として存在を見せない。
+// 正: docs/10-requirements/05-rbac-matrix.md §4 / docs/30-design/01-detailed-design.md §3.1
 
 export default async function InventionDetailPage({ params }: { params: { id: string } }) {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
+
   const db = getDb(getDatabaseUrl());
   const [invention] = await db.select().from(s.inventions).where(eq(s.inventions.id, params.id)).limit(1);
   if (!invention) notFound();
+
+  const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
+  const isOwner = !!me && invention.submittedBy === me.id;
+  // C3/C4 で権限が無い場合は、存在自体を出さず 404（403 にしない）
+  if (!canViewRow(user.role, invention.classification as 'C1' | 'C2' | 'C3' | 'C4', isOwner)) notFound();
 
   const [submitter] = await db.select().from(s.users).where(eq(s.users.id, invention.submittedBy)).limit(1);
   const [site] = invention.siteId
