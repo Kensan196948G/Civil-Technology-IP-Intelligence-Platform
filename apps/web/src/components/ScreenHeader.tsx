@@ -13,7 +13,7 @@ export function ScreenHeader() {
   const { title, subtitle } = resolveScreenTitle(pathname);
 
   return (
-    <header className="topbar">
+    <header className="topbar" role="banner">
       <div>
         <h1 className="topbar-title">{title}</h1>
         <div className="topbar-sub">{subtitle}</div>
