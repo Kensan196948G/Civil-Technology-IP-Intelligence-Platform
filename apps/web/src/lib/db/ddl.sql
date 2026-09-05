@@ -503,3 +503,21 @@ CREATE TABLE IF NOT EXISTS technology_standards (
 );
 CREATE INDEX IF NOT EXISTS idx_technology_standards_tech ON technology_standards (technology_id);
 CREATE INDEX IF NOT EXISTS idx_technology_standards_std ON technology_standards (standard_id);
+
+-- M38 Safety & Quality Intelligence（第一拡張群・実装順位8）
+-- 新技術導入前の安全ゲート。リスク候補とその出典を保持し、承認ワークフローへ連携する。
+-- FR-M38-001（リスク収集）/002（M22安全ゲート）/003（根拠の出典必須）/004（最終判断は安全・品質担当者）。
+CREATE TABLE IF NOT EXISTS safety_reviews (
+  id uuid PRIMARY KEY,
+  technology_id uuid NOT NULL REFERENCES technologies(id) ON DELETE CASCADE,
+  risks jsonb NOT NULL DEFAULT '[]',
+  sources jsonb NOT NULL DEFAULT '[]',
+  gate_status text NOT NULL DEFAULT 'pending' CHECK (gate_status IN ('pending','in_review','cleared','blocked')),
+  gate_reviewed_by uuid REFERENCES users(id),
+  gate_reviewed_at timestamptz,
+  gate_comment text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_safety_reviews_tech ON safety_reviews (technology_id);
+CREATE INDEX IF NOT EXISTS idx_safety_reviews_gate ON safety_reviews (gate_status);

@@ -245,6 +245,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '地盤・地形適合性', href: '/field/axis/ground' },
       { label: '気象・海象適合性', href: '/field/axis/weather' },
       { label: '安全性評価', href: '/field/axis/safety' },
+      { label: '安全・品質ゲート（M38）', href: '/safety' },
       { label: '品質評価', href: '/field/axis/quality' },
       { label: 'CO₂・環境評価', href: '/field/axis/environment' },
       { label: '生産性・省人化評価', href: '/field/axis/productivity' },
