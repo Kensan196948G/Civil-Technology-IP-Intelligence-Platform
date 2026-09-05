@@ -277,6 +277,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: 'R&Dダッシュボード', href: '/rnd' },
       { label: '研究テーマ', href: '/rnd/themes' },
+      { label: '研究テーマ候補（M45）', href: '/opportunities' },
       { label: '技術課題', href: '/rnd/challenges' },
       { label: '技術ニーズ', href: '/rnd/needs' },
       { label: 'PoC実験', href: '/rnd/poc' },

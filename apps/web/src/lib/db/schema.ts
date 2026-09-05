@@ -509,3 +509,19 @@ export const safetyReviews = pgTable('safety_reviews', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M45 Innovation Opportunity Intelligence（第一拡張群・実装順位9）
+// 研究テーマ候補を、White Space・現場ニーズ・競合強度・論文増加率・NETIS・市場性・
+// Safety・GX・難易度の入力要素からスコアリングしランキング提示する。FR-M45-001〜004。
+export const innovationOpportunities = pgTable('innovation_opportunities', {
+  id: uuid('id').primaryKey(),
+  title: text('title').notNull(),                 // 研究テーマ候補
+  description: text('description'),
+  // 入力要素（0-100。根拠は basis に記録）
+  factors: jsonb('factors').notNull().default({}),
+  basis: jsonb('basis').notNull().default({}),    // 要素ごとの根拠
+  opportunityScore: numeric('opportunity_score', { precision: 5, scale: 2 }).notNull(),
+  status: text('status').notNull().default('candidate'), // candidate / shortlisted / decided / rejected
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});

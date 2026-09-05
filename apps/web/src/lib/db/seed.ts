@@ -69,7 +69,8 @@ async function main() {
       'kg_edges','claim_versions','ip_value_scores',
       'patent_families','patent_family_members',
       'standards','technology_standards',
-      'safety_reviews'
+      'safety_reviews',
+      'innovation_opportunities'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -602,6 +603,67 @@ async function main() {
     );
   }
 
+  // ---- M45 Innovation Opportunity Intelligence（第一拡張群・実装順位9）----
+  // 研究テーマ候補の機会スコア（White Space・現場ニーズ・競合強度・論文増加率・NETIS・
+  // 市場性・Safety・GX・難易度を0-100で入力し加重平均）。FR-M45-001/002。
+  // テーマの最終決定は経営・技術委員会が行う（画面側で明示・FR-M45-003）。
+  const OPP_WEIGHTS: Record<string, number> = {
+    white_space: 0.15, need: 0.15, competition: 0.1, paper_growth: 0.1, netis: 0.05,
+    market: 0.1, safety: 0.1, gx: 0.1, difficulty: 0.15
+  };
+  const opportunityDefs = [
+    {
+      title: '港湾施工の自動化・遠隔化技術（デモ候補）',
+      description: 'ケーソン据付等の港湾施工を自動化・遠隔化する研究テーマ（デモ）。',
+      factors: { white_space: 82, need: 88, competition: 60, paper_growth: 75, netis: 40, market: 90, safety: 85, gx: 70, difficulty: 55 },
+      basis: {
+        white_space: '特許・論文の空白領域が大きい（デモ）', need: '現場課題（波高による中断）が顕在（デモ）',
+        competition: '競合出願は増加中だが集中はしていない（デモ）', paper_growth: '論文増加率は中〜高（デモ）',
+        netis: 'NETIS 関連登録はまだ少ない（デモ）', market: '港湾維持更新需要が大きい（デモ）',
+        safety: '水際作業削減で安全向上が見込める（デモ）', gx: '重機運転時間削減で CO2 低減（デモ）',
+        difficulty: '実証に港湾フィールドが必要（デモ）'
+      },
+      status: 'shortlisted'
+    },
+    {
+      title: '水中点検の AI 損傷検出（デモ候補）',
+      description: 'ROV 動画からの AI 損傷検出による点検効率化テーマ（デモ）。',
+      factors: { white_space: 68, need: 80, competition: 72, paper_growth: 88, netis: 55, market: 78, safety: 75, gx: 45, difficulty: 45 },
+      basis: {
+        white_space: '水中AI点検の特許空白は中程度（デモ）', need: '点検員不足が顕在（デモ）',
+        competition: '競合が複数参入しつつある（デモ）', paper_growth: '論文増加率が高い（デモ）',
+        netis: 'NETIS 登録は一部あり（デモ）', market: 'インフラ老朽化で市場成長（デモ）',
+        safety: '潜水作業の削減で安全向上（デモ）', gx: '効果は限定的（デモ）',
+        difficulty: '水中環境の撮像条件が課題（デモ）'
+      },
+      status: 'candidate'
+    },
+    {
+      title: 'コンクリート養生の AI 温度制御（デモ候補）',
+      description: '給熱養生を AI 制御し品質安定と燃料削減を両立するテーマ（デモ）。',
+      factors: { white_space: 45, need: 60, competition: 40, paper_growth: 50, netis: 30, market: 55, safety: 40, gx: 88, difficulty: 35 },
+      basis: {
+        white_space: '既存特許が一定程度存在（デモ）', need: '品質ばらつきは課題だが緊急性は中（デモ）',
+        competition: '競合は少ない（デモ）', paper_growth: '論文は横ばい（デモ）',
+        netis: '関連 NETIS は少ない（デモ）', market: '市場は安定（デモ）',
+        safety: 'リスクは低い（デモ）', gx: '燃料削減で GX 効果が高い（デモ）',
+        difficulty: '比較的着手しやすい（デモ）'
+      },
+      status: 'candidate'
+    }
+  ] as const;
+  for (const o of opportunityDefs) {
+    const factors = o.factors as Record<string, number>;
+    const score = Math.round(
+      Object.entries(OPP_WEIGHTS).reduce((sum, [k, w]) => sum + w * (factors[k] ?? 0), 0) * 100
+    ) / 100;
+    await sql(
+      `INSERT INTO innovation_opportunities (id, title, description, factors, basis, opportunity_score, status, is_sample)
+       VALUES ($1,$2,$3,$4::jsonb,$5::jsonb,$6,$7,true)`,
+      [uuid(), o.title, o.description, JSON.stringify(factors), JSON.stringify(o.basis), score, o.status]
+    );
+  }
+
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
   // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
@@ -848,6 +910,7 @@ async function main() {
     console.log(`   第一拡張群: KGエッジ${kgEdgeDefs.length} / Claim版${claimVersionDefs.flatMap(c => c.versions).length} / IP価値スコア${ipValueDefs.length} / 特許ファミリー1件（メンバー${familyMemberDefs.length}）`);
     console.log(`   M34規格: 台帳${standardDefs.length}件 / 技術⇔規格関連${techStdDefs.length}件`);
     console.log(`   M38安全ゲート: レビュー${safetyReviewDefs.length}件`);
+    console.log(`   M45機会スコア: テーマ候補${opportunityDefs.length}件`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;
