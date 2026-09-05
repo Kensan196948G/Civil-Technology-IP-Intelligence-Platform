@@ -21,10 +21,11 @@ export function AppShell({
 
   return (
     <DetailProvider>
+      <a href="#main-content" style={{ position: 'absolute', left: '-9999px', top: 0 }} onFocus={e => { e.currentTarget.style.left = '0'; e.currentTarget.style.zIndex = '9999'; e.currentTarget.style.background = 'var(--paper)'; e.currentTarget.style.padding = '8px'; }} onBlur={e => { e.currentTarget.style.left = '-9999px'; }}>本文へスキップ</a>
       <div className="shell">
         <Sidebar counts={counts} userName={userName} roleLabel={ROLE_LABEL[role]} dept={dept} />
         <div className="shell-main">
-          <header className="topbar">
+          <header className="topbar" role="banner">
             <div style={{ minWidth: 0 }}>
               <div className="topbar-title">{meta.title}</div>
               <div className="topbar-sub" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '70vw' }}>
@@ -37,7 +38,7 @@ export function AppShell({
               MVP環境・ダミーデータ
             </div>
           </header>
-          <div className="main">{children}</div>
+          <main id="main-content" className="main">{children}</main>
         </div>
       </div>
     </DetailProvider>
