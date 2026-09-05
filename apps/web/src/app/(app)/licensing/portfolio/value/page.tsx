@@ -40,10 +40,12 @@ export default async function IpValuePage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
         <h1 style={{ fontSize: 22 }}>IP価値評価（Strategic Score）</h1>
         <span className="mono" style={{ fontSize: 10, letterSpacing: '.16em', color: 'var(--ink-2)' }}>M32 / IP VALUE</span>
         <span className="badge" style={{ color: 'var(--amber)', border: '1px solid var(--amber)' }}>第一拡張群</span>
+        {/* FR-M32-004: M17 ポートフォリオへの遷移 */}
+        <a href="/licensing/portfolio" style={{ fontSize: 12, color: 'var(--blue)', marginLeft: 'auto' }}>ポートフォリオ全体を見る →</a>
       </div>
       <Notice tone="amber" style={{ fontSize: 12 }}>
         スコアは「維持・ライセンス・追加出願・共同研究・売却・放棄」の検討候補を並べる材料です。ここでは決定を行いません（FR-M32-003）。各要素の数値と根拠（basis）を確認し、最終判断は知財委員会・経営が行います。

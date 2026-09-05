@@ -290,6 +290,16 @@ export default async function DashboardPage() {
         </div>
       </Panel>
 
+      {/* FR-M45-004: 研究テーマ候補（M45）への導線 */}
+      <Link href="/opportunities" className="panel" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, color: 'var(--ink)', textDecoration: 'none' }}>
+        <span style={{ fontSize: 18 }}>💡</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+          <span style={{ fontWeight: 600, fontSize: 13.5 }}>研究テーマ候補（Innovation Opportunity）</span>
+          <span style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>White Space・現場ニーズ等からスコアリングした研究テーマ候補のランキング</span>
+        </div>
+        <span style={{ fontSize: 12, color: 'var(--blue)' }}>開く →</span>
+      </Link>
+
       {/* 機密区分の凡例。C3/C4は権限がなければ存在自体を見せない運用であることを常に示す。 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5, color: 'var(--ink-3)', flexWrap: 'wrap' }}>
         <span>機密区分</span>
