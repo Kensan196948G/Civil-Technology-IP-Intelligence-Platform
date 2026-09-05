@@ -11,9 +11,12 @@ import { REPORT_KIND, ymd } from '@/lib/labels';
 // 設計案（design-B-copilot）の「レポート」。
 // 種類の絞り込みチップ（nav.ts の ?kind= と同じ）＋出力履歴の表。行から詳細ドロワー。
 
-export default async function ReportsPage({ searchParams }: { searchParams: { kind?: string } }) {
+export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ kind?: string }> })
+{
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
   const db = getDb(getDatabaseUrl());
-  const kind = searchParams.kind;
+  const kind = sp.kind;
   const all = await db.select().from(s.reports).orderBy(desc(s.reports.createdAt));
   const rows = kind ? all.filter(r => r.kind === kind) : all;
 

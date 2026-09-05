@@ -6,9 +6,12 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
 
-export default async function NetisDetailPage({ params }: { params: { id: string } }) {
+export default async function NetisDetailPage({ params }: { params: Promise<{ id: string }> })
+{
+  // Next.js 15: params は Promise になったため await する
+  const p = await params;
   const db = getDb(getDatabaseUrl());
-  const [n] = await db.select().from(s.netisTechnologies).where(eq(s.netisTechnologies.id, params.id)).limit(1);
+  const [n] = await db.select().from(s.netisTechnologies).where(eq(s.netisTechnologies.id, p.id)).limit(1);
   if (!n) notFound();
 
   const applications = await db.select().from(s.fieldApplications).where(

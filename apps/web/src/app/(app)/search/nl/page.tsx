@@ -34,8 +34,11 @@ const KIND_HREF: Record<string, (id: string) => string | null> = {
   patent: id => `/patents/${id}`, netis: id => `/netis/${id}`, tech: () => null, paper: () => null
 };
 
-export default async function NlSearchPage({ searchParams }: { searchParams: { q?: string } }) {
-  const q = (searchParams.q ?? '').trim();
+export default async function NlSearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> })
+{
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
+  const q = (sp.q ?? '').trim();
   const results = await nlSearch(q);
 
   return (

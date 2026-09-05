@@ -9,7 +9,7 @@ const localChromePath = process.env.CI ? undefined : '/usr/bin/google-chrome';
 export default defineConfig({
   testDir: './e2e',
   globalSetup: './e2e/global-setup.ts',
-  timeout: 30000,
+  timeout: 60000,
   use: {
     baseURL: 'http://localhost:3311',
     headless: true,

@@ -6,9 +6,12 @@ import { sql } from 'drizzle-orm';
 
 type ApplicantRow = { name: string; patent_n: number; countries: string[]; latest_publication: string | null };
 
-export default async function ApplicantSearchPage({ searchParams }: { searchParams: { q?: string } }) {
+export default async function ApplicantSearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> })
+{
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
   const db = getDb(getDatabaseUrl());
-  const q = (searchParams.q ?? '').trim();
+  const q = (sp.q ?? '').trim();
   const like = `%${q}%`;
 
   const result = await db.execute(sql`

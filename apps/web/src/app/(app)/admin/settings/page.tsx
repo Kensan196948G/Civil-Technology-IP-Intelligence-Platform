@@ -17,9 +17,12 @@ const GROUP_META: Record<string, { label: string; prefix: string }> = {
   master: { label: 'マスタ設定', prefix: 'master.' }
 };
 
-export default async function AdminSettingsPage({ searchParams }: { searchParams: { group?: string } }) {
+export default async function AdminSettingsPage({ searchParams }: { searchParams: Promise<{ group?: string }> })
+{
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
   const db = getDb(getDatabaseUrl());
-  const groupKey = searchParams.group && GROUP_META[searchParams.group] ? searchParams.group : 'ai-model';
+  const groupKey = sp.group && GROUP_META[sp.group] ? sp.group : 'ai-model';
   const meta = GROUP_META[groupKey]!;
 
   const all = await db.select().from(s.settings).orderBy(asc(s.settings.key));

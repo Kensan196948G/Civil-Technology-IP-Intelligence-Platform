@@ -6,9 +6,12 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
 
-export default async function PatentDetailPage({ params }: { params: { id: string } }) {
+export default async function PatentDetailPage({ params }: { params: Promise<{ id: string }> })
+{
+  // Next.js 15: params は Promise になったため await する
+  const p = await params;
   const db = getDb(getDatabaseUrl());
-  const [patent] = await db.select().from(s.patents).where(eq(s.patents.id, params.id)).limit(1);
+  const [patent] = await db.select().from(s.patents).where(eq(s.patents.id, p.id)).limit(1);
   if (!patent) notFound();
 
   const claims = await db.select().from(s.patentClaims).where(eq(s.patentClaims.patentId, patent.id)).orderBy(asc(s.patentClaims.claimNo));

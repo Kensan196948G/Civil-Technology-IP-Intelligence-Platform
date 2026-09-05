@@ -7,7 +7,8 @@ export type CurrentUser = { email: string; name: string; role: DemoRole; dept: s
 // 署名検証（HMAC）を行う。Cookieの値を直接メールアドレスとして信用しない
 // （CodeRabbit指摘: 署名なしCookieはブラウザから自由に書き換え可能なため）。
 export async function getCurrentUser(): Promise<CurrentUser | null> {
-  const raw = cookies().get(COOKIE_NAME)?.value;
+  // Next.js 15: cookies() は Promise を返すようになったため await する
+  const raw = (await cookies()).get(COOKIE_NAME)?.value;
   if (!raw) return null;
   const email = await verifySignedValue(raw);
   if (!email) return null; // 署名不一致＝改ざんまたは不正な値

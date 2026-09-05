@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifySignedValue } from '@/lib/auth/sign';
+import { verifySignedValueWeb } from '@/lib/auth/sign-web';
 import { DEMO_USERS, COOKIE_NAME, type DemoRole } from '@/lib/auth/demo';
 
 // Deep Debug Round2 再調査（重要）: 当初 /admin/* のRBACは (app)/admin/layout.tsx から
@@ -22,7 +22,7 @@ const ADMIN_ALLOWED_ROLES: DemoRole[] = ['executive', 'sysadmin'];
 export async function middleware(req: NextRequest) {
   if (req.nextUrl.pathname.startsWith('/admin')) {
     const raw = req.cookies.get(COOKIE_NAME)?.value;
-    const email = raw ? await verifySignedValue(raw) : null;
+    const email = raw ? await verifySignedValueWeb(raw) : null;
     const user = email ? DEMO_USERS.find(u => u.email === email) : null;
 
     if (!user) {

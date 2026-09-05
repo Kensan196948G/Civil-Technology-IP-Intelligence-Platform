@@ -10,7 +10,8 @@ export async function loginAsAction(formData: FormData) {
   const user = DEMO_USERS.find(u => u.email === email);
   if (!user) throw new Error('不正な選択です');
   const signed = await signValue(email);
-  cookies().set(COOKIE_NAME, signed, {
+  // Next.js 15: cookies() は Promise を返すようになったため await する
+  (await cookies()).set(COOKIE_NAME, signed, {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',

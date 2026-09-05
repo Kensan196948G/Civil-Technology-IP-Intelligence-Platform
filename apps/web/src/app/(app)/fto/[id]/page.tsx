@@ -23,15 +23,18 @@ const ACTION_META: Record<string, { label: string; color: string }> = {
   none: { label: '—', color: 'var(--ink-3)' }
 };
 
-export default async function FtoDetailPage({ params }: { params: { id: string } }) {
+export default async function FtoDetailPage({ params }: { params: Promise<{ id: string }> })
+{
+  // Next.js 15: params は Promise になったため await する
+  const p = await params;
   const db = getDb(getDatabaseUrl());
-  const [ftoCase] = await db.select().from(s.ftoCases).where(eq(s.ftoCases.id, params.id)).limit(1);
+  const [ftoCase] = await db.select().from(s.ftoCases).where(eq(s.ftoCases.id, p.id)).limit(1);
   if (!ftoCase) notFound();
 
   const components = await db
     .select()
     .from(s.ftoComponents)
-    .where(eq(s.ftoComponents.ftoCaseId, params.id))
+    .where(eq(s.ftoComponents.ftoCaseId, p.id))
     .orderBy(asc(s.ftoComponents.seq));
 
   const patentIds = [...new Set(components.filter(c => c.relatedPatentId).map(c => c.relatedPatentId as string))];

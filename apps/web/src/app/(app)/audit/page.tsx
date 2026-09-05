@@ -13,9 +13,12 @@ import { AUDIT_ACTION, stamp } from '@/lib/labels';
 
 const ACTION_CHIPS = ['login', 'ai_run', 'search', 'view', 'export', 'update', 'role_change', 'security_event'] as const;
 
-export default async function AuditPage({ searchParams }: { searchParams: { action?: string } }) {
+export default async function AuditPage({ searchParams }: { searchParams: Promise<{ action?: string }> })
+{
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
   const db = getDb(getDatabaseUrl());
-  const action = searchParams.action;
+  const action = sp.action;
   const base = db.select().from(s.auditLogs);
   const rows = await (action ? base.where(eq(s.auditLogs.action, action)) : base)
     .orderBy(desc(s.auditLogs.occurredAt))

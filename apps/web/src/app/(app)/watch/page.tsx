@@ -13,9 +13,12 @@ import { WATCH_KIND, ymd } from '@/lib/labels';
 
 const KIND_ORDER = ['patent', 'competitor', 'technology', 'ipc', 'researcher', 'paper', 'netis'] as const;
 
-export default async function WatchPage({ searchParams }: { searchParams: { kind?: string } }) {
+export default async function WatchPage({ searchParams }: { searchParams: Promise<{ kind?: string }> })
+{
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
   const db = getDb(getDatabaseUrl());
-  const kind = searchParams.kind;
+  const kind = sp.kind;
   const all = await db.select().from(s.watches).orderBy(desc(s.watches.createdAt));
   const rows = kind ? all.filter(w => w.kind === kind) : all;
 

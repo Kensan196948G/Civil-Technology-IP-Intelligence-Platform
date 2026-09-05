@@ -83,9 +83,12 @@ function buildQueryExpression(q: string): string {
   return terms.map(t => `(${t})`).join(' AND ');
 }
 
-export default async function SearchPage({ searchParams }: { searchParams: { q?: string; tab?: string } }) {
-  const q = searchParams.q ?? '';
-  const tab: Tab = isTab(searchParams.tab) ? searchParams.tab : 'patent';
+export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string; tab?: string }> })
+{
+  // Next.js 15: searchParams は Promise になったため await する
+  const sp = await searchParams;
+  const q = sp.q ?? '';
+  const tab: Tab = isTab(sp.tab) ? sp.tab : 'patent';
   const [shown, counts] = await Promise.all([runSearchByTab(q, tab), countAllTabs(q)]);
   const expression = buildQueryExpression(q);
 
