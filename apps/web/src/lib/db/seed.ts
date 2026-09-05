@@ -77,7 +77,8 @@ async function main() {
       'business_cases',
       'gx_comparisons',
       'bim_cim_links',
-      'competitive_signals'
+      'competitive_signals',
+      'transfer_cases'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -866,6 +867,22 @@ async function main() {
     );
   }
 
+  // ---- M44 Technology Transfer Pipeline（第二拡張群）----
+  // 技術獲得・供与の案件（Buy/Build/Partner/License/Joint-R&D）。
+  const transferDefs = [
+    { title: '水中点検ROV技術の導入検討（デモ）', mode: 'buy', direction: 'inbound', counterpart: 'Northport Marine Robotics Demo Inc.', subject: 'ROV搭載点検技術一式', status: 'evaluating', note: 'FTO予備調査と並行して評価中' },
+    { title: '動揺補償技術の共同研究（デモ）', mode: 'joint_rd', direction: 'inbound', counterpart: '旭洋テクノデモ工業株式会社', subject: '起重機船動揺補償の改良開発', status: 'negotiating', note: '実証段階の技術で共同研究候補' },
+    { title: '当社GNSS据付支援の外部提供（デモ）', mode: 'license', direction: 'outbound', counterpart: '第一土木デモ建設株式会社', subject: 'GNSS併用ケーソン据付支援システム', status: 'scouting', note: 'ライセンスアウト候補' }
+  ] as const;
+  for (const t of transferDefs) {
+    await sql(
+      `INSERT INTO transfer_cases
+         (id, title, mode, direction, counterpart_name, subject_summary, status, note, is_sample)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true)`,
+      [uuid(), t.title, t.mode, t.direction, t.counterpart, t.subject, t.status, t.note]
+    );
+  }
+
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
   // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
@@ -1119,6 +1136,7 @@ async function main() {
     console.log(`   M39 GX: 比較${gxDefs.length}件`);
     console.log(`   M40 BIM/CIM: リンク${bimDefs.length}件`);
     console.log(`   M43 Signals: ${signalDefs.length}件`);
+    console.log(`   M44 Transfer: ${transferDefs.length}件`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;

@@ -650,3 +650,19 @@ export const competitiveSignals = pgTable('competitive_signals', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M44 Technology Transfer Pipeline（第二拡張群）
+// 技術獲得・供与の案件を Buy/Build/Partner/License/Joint-R&D モードで管理する。
+export const transferCases = pgTable('transfer_cases', {
+  id: uuid('id').primaryKey(),
+  title: text('title').notNull(),
+  mode: text('mode').notNull(),           // buy / build / partner / license / joint_rd
+  direction: text('direction').notNull(), // inbound / outbound
+  counterpartName: text('counterpart_name').notNull(),
+  subjectSummary: text('subject_summary'),
+  status: text('status').notNull().default('scouting'), // scouting / evaluating / negotiating / agreed / abandoned
+  terms: jsonb('terms').notNull().default({}),
+  note: text('note'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});

@@ -668,3 +668,21 @@ CREATE TABLE IF NOT EXISTS competitive_signals (
 );
 CREATE INDEX IF NOT EXISTS idx_competitive_signals_detected ON competitive_signals (detected_on DESC);
 CREATE INDEX IF NOT EXISTS idx_competitive_signals_kind ON competitive_signals (kind);
+
+-- M44 Technology Transfer Pipeline（第二拡張群）
+-- 技術獲得・供与の案件（Buy/Build/Partner/License/Joint-R&D）。
+CREATE TABLE IF NOT EXISTS transfer_cases (
+  id uuid PRIMARY KEY,
+  title text NOT NULL,
+  mode text NOT NULL CHECK (mode IN ('buy','build','partner','license','joint_rd')),
+  direction text NOT NULL CHECK (direction IN ('inbound','outbound')),
+  counterpart_name text NOT NULL,
+  subject_summary text,
+  status text NOT NULL DEFAULT 'scouting' CHECK (status IN ('scouting','evaluating','negotiating','agreed','abandoned')),
+  terms jsonb NOT NULL DEFAULT '{}',
+  note text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_transfer_cases_status ON transfer_cases (status);
+CREATE INDEX IF NOT EXISTS idx_transfer_cases_mode ON transfer_cases (mode);
