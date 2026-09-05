@@ -561,3 +561,20 @@ CREATE TABLE IF NOT EXISTS ai_evaluations (
 );
 CREATE INDEX IF NOT EXISTS idx_ai_evaluations_run ON ai_evaluations (ai_run_id);
 CREATE INDEX IF NOT EXISTS idx_ai_evaluations_coverage ON ai_evaluations (citation_coverage DESC);
+
+-- M50 Technology Ontology / Taxonomy Management（第二拡張群）
+-- 工種・工法・構造物・材料・機械・IPC/CPC・NETIS分類の体系管理（自己参照階層）。
+-- 全モジュールの検索・分類の基盤（M12 civil_classifications の発展形）。
+CREATE TABLE IF NOT EXISTS ontology_terms (
+  id uuid PRIMARY KEY,
+  kind text NOT NULL CHECK (kind IN ('work_type','work_method','structure','material','machine','ipc','netis_category')),
+  code text,
+  name text NOT NULL,
+  parent_id uuid REFERENCES ontology_terms(id) ON DELETE CASCADE,
+  depth integer NOT NULL DEFAULT 0,
+  note text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_ontology_terms_parent ON ontology_terms (parent_id);
+CREATE INDEX IF NOT EXISTS idx_ontology_terms_kind ON ontology_terms (kind);
