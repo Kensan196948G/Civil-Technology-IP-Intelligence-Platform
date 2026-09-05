@@ -633,3 +633,19 @@ CREATE TABLE IF NOT EXISTS gx_comparisons (
 );
 CREATE INDEX IF NOT EXISTS idx_gx_comparisons_tech ON gx_comparisons (technology_id);
 CREATE INDEX IF NOT EXISTS idx_gx_comparisons_co2 ON gx_comparisons (co2_reduction_ton_per_year DESC);
+
+-- M40 BIM/CIM Technology Intelligence（第二拡張群）
+-- IFC/BIM/CIM オブジェクトと技術・特許・NETIS・現場の関連付け。
+CREATE TABLE IF NOT EXISTS bim_cim_links (
+  id uuid PRIMARY KEY,
+  subject_type text NOT NULL CHECK (subject_type IN ('technology','patent','netis','site')),
+  subject_id uuid NOT NULL,
+  ifc_entity text NOT NULL,
+  element_name text,
+  model_name text,
+  note text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_bim_cim_links_subject ON bim_cim_links (subject_type, subject_id);
+CREATE INDEX IF NOT EXISTS idx_bim_cim_links_ifc ON bim_cim_links (ifc_entity);
