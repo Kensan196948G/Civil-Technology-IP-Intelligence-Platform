@@ -292,6 +292,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '改良発明候補', href: '/rnd/improvement-candidates' },
       { label: '周辺発明候補', href: '/rnd/adjacent-candidates' },
       { label: '技術ロードマップ', href: '/rnd/roadmap' },
+      { label: '技術成熟度（M35 TRL）', href: '/rnd/trl' },
       { label: '出願候補', href: '/rnd/filing-candidates' }
     ]
   },

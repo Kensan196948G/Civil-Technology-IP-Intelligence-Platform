@@ -72,7 +72,8 @@ async function main() {
       'safety_reviews',
       'innovation_opportunities',
       'ai_evaluations',
-      'ontology_terms'
+      'ontology_terms',
+      'trl_assessments'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -748,6 +749,23 @@ async function main() {
     UPDATE ontology_terms o SET depth = tree.d FROM tree WHERE o.id = tree.id
   `);
 
+  // ---- M35 Technology Readiness Intelligence（第二拡張群）----
+  // 技術の TRL（1-9）と判定根拠を管理。technologies.maturity を定量化。
+  const trlDefs: Array<{ techKey: string; trl: number; label: string; evidence: string[]; next: string }> = [
+    { techKey: 'techId', trl: 9, label: '実用実績あり', evidence: ['港湾工事での運用実績（デモ）', '現場適用性評価スコア 73.89（デモ）'], next: '運用改善の継続' },
+    { techKey: 'techId2', trl: 7, label: '実証段階', evidence: ['NETIS登録技術としての実証（デモ）', '現場適用性評価を実施（デモ）'], next: '複数現場での実績蓄積' }
+  ] as const;
+  const trlTechKey: Record<string, string> = { techId, techId2 };
+  for (const t of trlDefs) {
+    await sql(
+      `INSERT INTO trl_assessments
+         (id, technology_id, trl, level_label, evidence, next_step, assessed_on, assessed_by, is_sample)
+       VALUES ($1,$2,$3,$4,$5::jsonb,$6, now(),$7,true)`,
+      [uuid(), trlTechKey[t.techKey]!, t.trl, t.label, JSON.stringify(t.evidence), t.next,
+       U('tanaka.makoto@demo.ctiip.example')]
+    );
+  }
+
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
   // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
@@ -996,6 +1014,7 @@ async function main() {
     console.log(`   M38安全ゲート: レビュー${safetyReviewDefs.length}件`);
     console.log(`   M45機会スコア: テーマ候補${opportunityDefs.length}件`);
     console.log(`   M49 AI評価: 実行${aiEvalDefs.length}件に評価メタ付与`);
+    console.log(`   M35 TRL: 評価${trlDefs.length}件`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;

@@ -564,3 +564,19 @@ export const ontologyTerms = pgTable('ontology_terms', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M35 Technology Readiness Intelligence（第二拡張群）
+// 技術の成熟度（TRL 1-9相当）・実証状況・施工実績・導入難易度を管理し、
+// 現場導入の判断材料を提供する。technologies.maturity の高度化。
+export const trlAssessments = pgTable('trl_assessments', {
+  id: uuid('id').primaryKey(),
+  technologyId: uuid('technology_id').notNull().references(() => technologies.id, { onDelete: 'cascade' }),
+  trl: integer('trl').notNull(),               // 1-9（1:原理発見 〜 9:実用実績）
+  levelLabel: text('level_label').notNull(),   // 例: 実証段階 / 実用化段階
+  evidence: jsonb('evidence').notNull().default([]), // 判定根拠（PoC・施工実績・論文等の出典）
+  nextStep: text('next_step'),                 // 次段階への所要事項
+  assessedOn: date('assessed_on').notNull(),
+  assessedBy: uuid('assessed_by').references(() => users.id),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
