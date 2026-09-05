@@ -632,3 +632,21 @@ export const bimCimLinks = pgTable('bim_cim_links', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M43 Competitive Signal Intelligence（第二拡張群）
+// 特許以外の競合兆候（論文・ニュース・採用情報・技術発表・共同研究等）を
+// 時系列で検知し、M10 Competitor Intelligence / M19 Watch を強化する。
+export const competitiveSignals = pgTable('competitive_signals', {
+  id: uuid('id').primaryKey(),
+  competitorId: uuid('competitor_id').references(() => competitors.id),
+  competitorName: text('competitor_name').notNull(),
+  kind: text('kind').notNull(),          // paper / news / hiring / joint_research / product_launch / award / funding
+  title: text('title').notNull(),
+  summary: text('summary'),
+  strength: text('strength').notNull().default('medium'), // low / medium / high
+  detectedOn: date('detected_on').notNull(),
+  source: text('source').notNull(),
+  sourceUrl: text('source_url'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
