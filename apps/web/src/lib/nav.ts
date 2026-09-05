@@ -125,7 +125,8 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '技術比較', href: '/tech/compare' },
       { label: '類似技術', href: '/tech/similar' },
       { label: '技術評価', href: '/tech/evaluation' },
-      { label: '技術関連マップ', href: '/tech/map' }
+      { label: '技術関連マップ', href: '/tech/map' },
+      { label: 'ナレッジグラフ探索', href: '/technology-graph' }
     ]
   },
   {
@@ -178,7 +179,8 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '他社特許との比較', href: '/claims/vs-external' },
       { label: '複数特許比較', href: '/claims/multi-compare' },
       { label: '類似度分析', href: '/claims/similarity' },
-      { label: '差分・特徴抽出', href: '/claims/diff' }
+      { label: '差分・特徴抽出', href: '/claims/diff' },
+      { label: 'Claim進化（審査版比較）', href: '/claims/evolution' }
     ]
   },
   {
@@ -307,6 +309,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '失効・放棄', href: '/licensing/portfolio/lapsed' },
       { label: '活用状況', href: '/licensing/portfolio/usage' },
       { label: '維持優先度', href: '/licensing/portfolio/priority' },
+      { label: 'IP価値評価（Strategic Score）', href: '/licensing/portfolio/value' },
       { label: 'ライセンスアウト候補', href: '/licensing/outbound-candidates' }
     ]
   },
