@@ -79,7 +79,8 @@ async function main() {
       'bim_cim_links',
       'competitive_signals',
       'transfer_cases',
-      'research_partners'
+      'research_partners',
+      'patent_translations'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -901,6 +902,23 @@ async function main() {
     );
   }
 
+  // ---- M46 Multilingual Patent Intelligence（第二拡張群）----
+  // 特許の多言語翻訳管理（日英中韓ほか）。
+  const translationDefs = [
+    { patentIdx: 3, language: 'en', title: 'Method for autonomous marine pile driving alignment', provider: 'jpo_machine', quality: 'certified', claim1: 'A system comprising a pile guide frame, a positioning sensor array, and a control unit configured to align the pile axis with a target trajectory using real-time feedback.' },
+    { patentIdx: 4, language: 'de', title: 'Verfahren zur automatisierten Tunnelvortriebssteuerung', provider: 'deepseek', quality: 'reviewed', claim1: 'Ein Verfahren zur Steuerung einer Tunnelbohrmaschine, umfassend die Erfassung der Vortriebsrichtung mittels Lasermessung und die automatische Korrektur der Schneidkopfausrichtung.' },
+    { patentIdx: 5, language: 'zh', title: '一种用于桥梁健康监测的传感器融合方法（演示）', provider: 'deepseek', quality: 'reviewed', claim1: '一种桥梁健康监测方法，包括布置于桥梁关键部位的振动传感器阵列，以及将多传感器数据融合以评估结构疲劳状态的处理单元。' },
+    { patentIdx: 4, language: 'ja', title: 'トンネル掘進自動制御方法（機械翻訳・デモ）', provider: 'deepseek', quality: 'draft', claim1: 'レーザー測量により掘進方向を検出し、カッターヘッドの姿勢を自動補正するトンネル掘進機の制御方法（デモ機械翻訳）。' }
+  ] as const;
+  for (const t of translationDefs) {
+    await sql(
+      `INSERT INTO patent_translations
+         (id, patent_id, language, title, abstract, claim1_text, provider, quality_flag, is_sample)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true)`,
+      [uuid(), patentIds[t.patentIdx]!, t.language, t.title, null, t.claim1, t.provider, t.quality]
+    );
+  }
+
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
   // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
@@ -1156,6 +1174,7 @@ async function main() {
     console.log(`   M43 Signals: ${signalDefs.length}件`);
     console.log(`   M44 Transfer: ${transferDefs.length}件`);
     console.log(`   M41 Partners: ${partnerDefs.length}件`);
+    console.log(`   M46 翻訳: ${translationDefs.length}件`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;

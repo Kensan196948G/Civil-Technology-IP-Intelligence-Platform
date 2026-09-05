@@ -702,3 +702,20 @@ CREATE TABLE IF NOT EXISTS research_partners (
 );
 CREATE INDEX IF NOT EXISTS idx_research_partners_kind ON research_partners (kind);
 CREATE INDEX IF NOT EXISTS idx_research_partners_status ON research_partners (collaboration_status);
+
+-- M46 Multilingual Patent Intelligence（第二拡張群）
+-- 特許の多言語翻訳（日英中韓ほか）を管理し、Claim 対訳の土台を提供。
+CREATE TABLE IF NOT EXISTS patent_translations (
+  id uuid PRIMARY KEY,
+  patent_id uuid NOT NULL REFERENCES patents(id) ON DELETE CASCADE,
+  language text NOT NULL,
+  title text NOT NULL,
+  abstract text,
+  claim1_text text,
+  provider text NOT NULL,
+  quality_flag text NOT NULL DEFAULT 'draft' CHECK (quality_flag IN ('draft','reviewed','certified')),
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_patent_translations_patent ON patent_translations (patent_id);
+CREATE INDEX IF NOT EXISTS idx_patent_translations_lang ON patent_translations (language);

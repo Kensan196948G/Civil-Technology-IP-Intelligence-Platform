@@ -681,3 +681,18 @@ export const researchPartners = pgTable('research_partners', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M46 Multilingual Patent Intelligence（第二拡張群）
+// 特許の多言語翻訳（日英中韓）を管理し、Claim 対訳・専門用語辞書の土台を提供する。
+export const patentTranslations = pgTable('patent_translations', {
+  id: uuid('id').primaryKey(),
+  patentId: uuid('patent_id').notNull().references(() => patents.id, { onDelete: 'cascade' }),
+  language: text('language').notNull(),  // ja / en / zh / ko / de / fr
+  title: text('title').notNull(),
+  abstract: text('abstract'),
+  claim1Text: text('claim1_text'),
+  provider: text('provider').notNull(),  // deepseek / claude / human / jpo_machine
+  qualityFlag: text('quality_flag').notNull().default('draft'), // draft / reviewed / certified
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
