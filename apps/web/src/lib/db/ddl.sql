@@ -395,3 +395,58 @@ CREATE TABLE IF NOT EXISTS entity_aliases (
 );
 CREATE INDEX IF NOT EXISTS idx_entity_aliases_alias ON entity_aliases (alias);
 CREATE INDEX IF NOT EXISTS idx_ip_entities_parent ON ip_entities (parent_entity_id);
+
+-- M33 Technology Knowledge Graph（第一拡張群・実装順位5）
+-- 特許・論文・NETIS・技術・会社・研究者・現場を結ぶ汎用リンク（ポリモーフィック参照）。
+-- source/target は「種別文字列＋UUID」。種別ごとに実テーブルが分かれるため外部キーは張らない。
+-- 整合はアプリ層で担保し、表示名の解決は画面側で行う。FR-M33-001/002/004。
+CREATE TABLE IF NOT EXISTS kg_edges (
+  id uuid PRIMARY KEY,
+  source_kind text NOT NULL CHECK (source_kind IN ('patent','paper','netis','technology','company','researcher','site')),
+  source_id uuid NOT NULL,
+  relation text NOT NULL CHECK (relation IN ('related_to','cites','owns','registered_as','applied_at','studied_in','developed_by')),
+  target_kind text NOT NULL CHECK (target_kind IN ('patent','paper','netis','technology','company','researcher','site')),
+  target_id uuid NOT NULL,
+  note text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CHECK (source_kind <> target_kind OR source_id <> target_id)
+);
+CREATE INDEX IF NOT EXISTS idx_kg_edges_source ON kg_edges (source_kind, source_id);
+CREATE INDEX IF NOT EXISTS idx_kg_edges_target ON kg_edges (target_kind, target_id);
+CREATE INDEX IF NOT EXISTS idx_kg_edges_relation ON kg_edges (relation);
+
+-- M30 Claim Evolution Intelligence（第一拡張群・実装順位11）
+-- Claim の版スナップショット（出願時→補正後→登録時）。changed_elements は前版から追加・限定された要素。
+-- FR-M30-001（版の構造化保持）/002（差分）/003（限定要素抽出の素材）/005（法的評価は行わない）。
+CREATE TABLE IF NOT EXISTS claim_versions (
+  id uuid PRIMARY KEY,
+  patent_id uuid NOT NULL REFERENCES patents(id) ON DELETE CASCADE,
+  claim_no integer NOT NULL,
+  version_kind text NOT NULL CHECK (version_kind IN ('as_filed','after_amendment','as_registered')),
+  text text NOT NULL,
+  changed_elements jsonb NOT NULL DEFAULT '[]',
+  note text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (patent_id, claim_no, version_kind)
+);
+CREATE INDEX IF NOT EXISTS idx_claim_versions_patent ON claim_versions (patent_id, claim_no);
+
+-- M32 IP Value & Quality Intelligence（第一拡張群・実装順位12）
+-- 特許ごとの評価要素スコアと戦略スコア。FR-M32-001（要素管理）/002（統合スコア）/003（検討候補）。
+CREATE TABLE IF NOT EXISTS ip_value_scores (
+  id uuid PRIMARY KEY,
+  patent_id uuid NOT NULL UNIQUE REFERENCES patents(id) ON DELETE CASCADE,
+  evaluated_on date NOT NULL DEFAULT now(),
+  elements jsonb NOT NULL DEFAULT '{}',
+  weights jsonb NOT NULL DEFAULT '{}',
+  strategic_score numeric(5,2) NOT NULL,
+  basis jsonb NOT NULL DEFAULT '{}',
+  candidates jsonb NOT NULL DEFAULT '[]',
+  evaluated_by uuid REFERENCES users(id),
+  note text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_ip_value_scores_strategic ON ip_value_scores (strategic_score DESC);

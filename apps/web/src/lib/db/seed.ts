@@ -62,7 +62,11 @@ async function main() {
       'claim_chart_rows','claim_analyses','claim_elements','patent_claims','patents',
       'technologies','netis_technologies','papers',
       'researchers','competitors','investigations','watches','licenses','reports',
-      'feature_flags','settings','users','departments'
+      'feature_flags','settings','users','departments',
+      // 第一拡張群（M26-M36・M33/M30/M32）
+      'patent_citations','prosecution_events','fto_cases','fto_components','poc_experiments',
+      'ip_entities','entity_aliases',
+      'kg_edges','claim_versions','ip_value_scores'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -493,6 +497,135 @@ async function main() {
     await sql(`INSERT INTO researchers (id, name, affiliation, field) VALUES ($1,$2,$3,$4)`, [id, name, affiliation, field]);
   }
 
+  // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
+  // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
+  // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
+  const kgEdgeDefs: Array<{
+    sk: string; sid: string; rel: string; tk: string; tid: string; note: string
+  }> = [];
+  const kg = (sk: string, sid: string, rel: string, tk: string, tid: string, note: string) =>
+    kgEdgeDefs.push({ sk, sid, rel, tk, tid, note });
+  // 会社 → 特許（権利者・出願人との対応。M29名寄せと整合）
+  kg('company', entityIdByCanonical['北浜重工デモ株式会社']!, 'owns', 'patent', patentIds[0]!, '出願人名寄せの正規エンティティ（M29）');
+  kg('company', entityIdByCanonical['第一土木デモ建設株式会社']!, 'owns', 'patent', patentIds[1]!, '出願人名寄せの正規エンティティ（M29）');
+  kg('company', entityIdByCanonical['旭洋テクノデモ工業株式会社']!, 'owns', 'patent', patentIds[2]!, '出願人名寄せの正規エンティティ（M29）');
+  kg('company', entityIdByCanonical['Northport Marine Robotics Demo Inc.']!, 'owns', 'patent', patentIds[3]!, '出願人名寄せの正規エンティティ（M29）');
+  // NETIS 登録技術 ⇔ 技術台帳（デモ複製の対応）
+  kg('netis', netisId, 'registered_as', 'technology', techId2, 'NETIS登録技術のデモ複製が技術台帳に対応');
+  // 技術 → 現場（適用性評価の対象）
+  kg('technology', techId2, 'applied_at', 'site', siteId, '現場適用性評価の対象（M13）');
+  // 論文 → 技術（研究対象）
+  kg('paper', paperIds[0]!, 'studied_in', 'technology', techId2, '適用性評価の研究（デモ）');
+  // 技術 ⇔ 特許（構成比較の対象・関連）
+  kg('technology', techId, 'related_to', 'patent', patentIds[0]!, 'Claim構成比較（M06）の対象');
+  kg('technology', techId, 'related_to', 'technology', techId2, '自社の関連技術（据付系）');
+  // 技術 → 研究者（開発者）
+  kg('technology', techId, 'developed_by', 'researcher', researcherIds[0]!, '当社技術研究所の研究者（デモ）');
+  for (const e of kgEdgeDefs) {
+    await sql(
+      `INSERT INTO kg_edges (id, source_kind, source_id, relation, target_kind, target_id, note, is_sample)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,true)`,
+      [uuid(), e.sk, e.sid, e.rel, e.tk, e.tid, e.note]
+    );
+  }
+
+  // ---- M30 Claim Evolution Intelligence（第一拡張群・実装順位11）----
+  // Claim の版スナップショット（出願時→補正後→登録時）。changed_elements は前版から追加・限定された要素。
+  // FR-M30-001〜005。補正経緯の法的評価は行わない（表示注記は画面側）。
+  const claimVersionDefs: Array<{
+    patentIdx: number; claimNo: number;
+    versions: Array<{ kind: string; text: string; changed: string[]; note: string }>
+  }> = [
+    {
+      patentIdx: 0, claimNo: 1,
+      versions: [
+        { kind: 'as_filed', text: 'ケーソンを吊り下げる吊具と、当該吊具の姿勢を計測する計測手段と、前記計測手段の出力に基づいて据付目標位置との偏差を算出する演算手段と、前記偏差を打ち消す向きに前記吊具を移動させる動揺補償機構と、を備える据付装置。', changed: [], note: '出願時の請求項1（デモ再現）' },
+        { kind: 'after_amendment', text: '港湾構造物のケーソンを吊り下げる吊具と、GPSにより前記吊具の位置を取得する位置取得手段と、当該吊具の姿勢を計測する計測手段と、前記位置取得手段と前記計測手段の出力に基づいて据付目標位置との偏差を算出する演算手段と、前記偏差を打ち消す向きに油圧アクチュエータによって前記吊具を移動させる動揺補償機構と、を備える据付装置。', changed: ['港湾構造物（対象の限定）', 'GPSによる位置取得手段の追加', '油圧アクチュエータによる駆動の限定'], note: '拒絶理由対応の補正（デモ再現）' },
+        { kind: 'as_registered', text: '港湾構造物のケーソンを吊り下げる吊具と、GPSにより前記吊具の位置を取得する位置取得手段と、当該吊具の姿勢を計測する計測手段と、前記位置取得手段と前記計測手段の出力に基づいて据付目標位置との偏差を算出する演算手段と、前記偏差を打ち消す向きに油圧アクチュエータによって前記吊具を移動させる動揺補償機構と、を備えることを特徴とする据付装置。', changed: [], note: '登録時の請求項1（デモ再現）。審査で「港湾」「GPS」「油圧」に限定された可能性が高い（技術的示唆・法的評価は行わない）' }
+      ]
+    },
+    {
+      patentIdx: 1, claimNo: 1,
+      versions: [
+        { kind: 'as_filed', text: '水中に沈設される構造物について、音響測位と慣性計測を併用して位置を求める計測システム。', changed: [], note: '出願時の請求項1（デモ再現）' },
+        { kind: 'after_amendment', text: '港湾の水中に沈設されるケーソンについて、音響測位と慣性計測を併用し、前記慣性計測のドリフトを音響測位で補正して位置を求める計測システムであって、測位結果を表示する表示手段を備える。', changed: ['対象の限定（港湾のケーソン）', 'ドリフト補正の追加', '表示手段の追加'], note: '新規性指摘への対応補正（デモ再現）' }
+      ]
+    }
+  ];
+  for (const c of claimVersionDefs) {
+    for (const v of c.versions) {
+      await sql(
+        `INSERT INTO claim_versions (id, patent_id, claim_no, version_kind, text, changed_elements, note, is_sample)
+         VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7,true)`,
+        [uuid(), patentIds[c.patentIdx]!, c.claimNo, v.kind, v.text, JSON.stringify(v.changed), v.note]
+      );
+    }
+  }
+
+  // ---- M32 IP Value & Quality Intelligence（第一拡張群・実装順位12）----
+  // 7評価要素（技術力・権利強度・市場性・競合重要性・現場適用性・残存期間・コスト）を統合した
+  // Strategic Score。スコアは「検討候補の並び替え材料」であり、決定は行わない（FR-M32-002/003）。
+  const IP_VALUE_WEIGHTS: Record<string, number> = {
+    technology: 0.2, patent_strength: 0.2, market: 0.15, competitor_importance: 0.15,
+    field_applicability: 0.15, remaining_life: 0.1, cost: 0.05
+  };
+  const ipValueDefs = [
+    {
+      patentIdx: 0,
+      elements: { technology: 88, patent_strength: 73, market: 91, competitor_importance: 82, field_applicability: 95, remaining_life: 67, cost: 54 },
+      basis: {
+        technology: '当社据付技術の中心であり技術価値が高い（デモ）', patent_strength: '請求項1のみ。補正で限定され権利範囲は中程度（デモ）',
+        market: '港湾・海洋の自動化需要が高い（デモ）', competitor_importance: '競合も同分野に出願（デモ）',
+        field_applicability: '適用性評価スコア高（デモ）', remaining_life: '登録から約7年経過（デモ）', cost: '維持費用は中程度（デモ）'
+      },
+      candidates: [
+        { action: 'maintain', reason: '自社技術の中核。維持継続が妥当（デモ）' },
+        { action: 'additional_filing', reason: '補正で限定された「GPS・油圧」周辺に追加出願余地（デモ）' }
+      ],
+      note: '経営レビュー用の評価例（デモ）'
+    },
+    {
+      patentIdx: 2,
+      elements: { technology: 76, patent_strength: 65, market: 62, competitor_importance: 58, field_applicability: 70, remaining_life: 81, cost: 62 },
+      basis: {
+        technology: '動揺補償制御は自社施工の課題と関連（デモ）', patent_strength: '独立請求項1。限定度は中（デモ）',
+        market: '潜在需要はあるが実証が先（デモ）', competitor_importance: '旭洋等も関連出願（デモ）',
+        field_applicability: '現場実績は限定的（デモ）', remaining_life: '登録から約2年（デモ）', cost: '維持費用は標準（デモ）'
+      },
+      candidates: [
+        { action: 'joint_research', reason: '実証段階のため共同研究での価値検証が妥当（デモ）' },
+        { action: 'maintain', reason: '残存期間が長く、当面維持（デモ）' }
+      ],
+      note: 'ライセンス候補としての評価例（デモ）'
+    },
+    {
+      patentIdx: 4,
+      elements: { technology: 61, patent_strength: 55, market: 40, competitor_importance: 35, field_applicability: 48, remaining_life: 92, cost: 70 },
+      basis: {
+        technology: '海外特許。国内施工との直接対応は低い（デモ）', patent_strength: '原文（独語）のクレーム。英訳確認が必要（デモ）',
+        market: '国内市場では当面ニーズ小（デモ）', competitor_importance: '競合圧力は低い（デモ）',
+        field_applicability: '適用現場は特定されず（デモ）', remaining_life: '出願から間もない（デモ）', cost: '海外維持費用を要する（デモ）'
+      },
+      candidates: [
+        { action: 'consider_abandon', reason: '市場性・現場適用性が低く、海外維持費に見合わない可能性（デモ）' },
+        { action: 'sell', reason: '他社（トンネル事業者）への売却余地を検討（デモ）' }
+      ],
+      note: 'ポートフォリオ見直しの評価例（デモ）'
+    }
+  ] as const;
+  for (const d of ipValueDefs) {
+    const elements = d.elements as Record<string, number>;
+    const score = Math.round(
+      Object.entries(IP_VALUE_WEIGHTS).reduce((s, [k, w]) => s + w * (elements[k] ?? 0), 0) * 100
+    ) / 100;
+    await sql(
+      `INSERT INTO ip_value_scores (id, patent_id, evaluated_on, elements, weights, strategic_score, basis, candidates, evaluated_by, note, is_sample)
+       VALUES ($1,$2, now(), $3::jsonb, $4::jsonb, $5, $6::jsonb, $7::jsonb, $8, $9, true)`,
+      [uuid(), patentIds[d.patentIdx]!, JSON.stringify(elements), JSON.stringify(IP_VALUE_WEIGHTS), score,
+       JSON.stringify(d.basis), JSON.stringify(d.candidates), U('takahashi.minoru@demo.ctiip.example'), d.note]
+    );
+  }
+
   // 競合企業（M09 Competitor Intelligence）
   const competitorDefs = [
     ['北浜重工デモ株式会社', '総合建設'], ['第一土木デモ建設株式会社', '土木専門'],
@@ -607,6 +740,7 @@ async function main() {
     console.log(`   NETIS 2 / 自社技術 2 / Claim比較 1件（要件${rowDefs.length}） / 現場適用スコア ${score}`);
     console.log(`   ワークフロー案件 3件（発明2・現場導入1） / AI実行3（根拠付き）`);
     console.log(`   研究者${researcherDefs.length} / 競合${competitorDefs.length} / 調査案件${investigationDefs.length} / ウォッチ${watchDefs.length} / ライセンス${licenseDefs.length} / レポート${reportDefs.length} / FeatureFlags${featureFlagDefs.length} / 設定${settingDefs.length}`);
+    console.log(`   第一拡張群: KGエッジ${kgEdgeDefs.length} / Claim版${claimVersionDefs.flatMap(c => c.versions).length} / IP価値スコア${ipValueDefs.length}`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;

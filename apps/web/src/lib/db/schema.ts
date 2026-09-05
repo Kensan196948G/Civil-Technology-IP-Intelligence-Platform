@@ -392,3 +392,51 @@ export const settings = pgTable('settings', {
   description: text('description'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M33 Technology Knowledge Graph（第一拡張群・実装順位5）
+// 特許・論文・NETIS・技術・会社・研究者・現場を結ぶ汎用リンク。
+// 種別ごとにテーブルが分かれるため、source/target は種別文字列＋ID のポリモーフィック参照とする
+// （DDL では外部キーを張れないため、アプリ層で存在チェックする。FR-M33-001/002/004）。
+export const kgEdges = pgTable('kg_edges', {
+  id: uuid('id').primaryKey(),
+  sourceKind: text('source_kind').notNull(),  // patent / paper / netis / technology / company / researcher / site
+  sourceId: uuid('source_id').notNull(),
+  relation: text('relation').notNull(),       // related_to / cites / owns / registered_as / applied_at / studied_in / developed_by
+  targetKind: text('target_kind').notNull(),
+  targetId: uuid('target_id').notNull(),
+  note: text('note'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// M30 Claim Evolution Intelligence（第一拡張群・実装順位11）
+// Claim の版（出願時→拒絶理由対応後→登録時）を保持し、差分表示・限定要素の抽出に使う。FR-M30-001〜005。
+export const claimVersions = pgTable('claim_versions', {
+  id: uuid('id').primaryKey(),
+  patentId: uuid('patent_id').notNull().references(() => patents.id, { onDelete: 'cascade' }),
+  claimNo: integer('claim_no').notNull(),
+  versionKind: text('version_kind').notNull(), // as_filed（出願時）/ after_amendment（補正後）/ as_registered（登録時）
+  text: text('text').notNull(),
+  changedElements: jsonb('changed_elements').notNull().default([]), // 前版から追加・限定された要素（AI抽出・デモ）
+  note: text('note'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// M32 IP Value & Quality Intelligence（第一拡張群・実装順位12）
+// 特許ごとの評価要素スコア（技術力・権利強度・市場性・競合重要性・現場適用性・残存期間・コスト）と
+// Strategic Score、検討候補（維持/ライセンス/追加出願/共同研究/売却/放棄）。FR-M32-001〜004。
+export const ipValueScores = pgTable('ip_value_scores', {
+  id: uuid('id').primaryKey(),
+  patentId: uuid('patent_id').notNull().unique().references(() => patents.id, { onDelete: 'cascade' }),
+  evaluatedOn: date('evaluated_on').notNull().defaultNow(),
+  elements: jsonb('elements').notNull().default({}),       // {technology, patent_strength, market, competitor, field_applicability, remaining_life, cost}（各0-100）
+  weights: jsonb('weights').notNull().default({}),         // 要素ごとの重み（既定は画面側定数）
+  strategicScore: numeric('strategic_score', { precision: 5, scale: 2 }).notNull(),
+  basis: jsonb('basis').notNull().default({}),             // 要素ごとのスコア根拠
+  candidates: jsonb('candidates').notNull().default([]),   // 検討候補 {action, reason}
+  evaluatedBy: uuid('evaluated_by').references(() => users.id),
+  note: text('note'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
