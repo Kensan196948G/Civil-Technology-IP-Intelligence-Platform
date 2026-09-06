@@ -120,6 +120,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '建設機械・設備', href: '/tech/machinery' },
       { label: 'ICT施工', href: '/tech/ict' },
       { label: 'BIM / CIM', href: '/tech/bim-cim' },
+      { label: '技術文書インテリジェンス（M48）', href: '/tech/bim-cim/documents' },
       { label: 'AI・自動施工', href: '/tech/ai-construction' },
       { label: 'ロボティクス', href: '/tech/robotics' },
       { label: '技術比較', href: '/tech/compare' },

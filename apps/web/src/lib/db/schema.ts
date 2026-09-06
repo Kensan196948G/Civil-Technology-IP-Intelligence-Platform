@@ -817,3 +817,41 @@ export const drawingSimilarities = pgTable('drawing_similarities', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M48 Engineering Document Intelligence（第二拡張群）
+// PDF・CAD図・BIM・写真・スケッチ等の技術文書から技術要素を抽出し、関連特許とマッチングする。
+// 依存: M02（現場管理。sites を任意参照）/ M03（利用者。users を任意参照）/ M04（特許取得。patents を参照）/
+// M09（技術要素の抽出対象。既存の technologies は使わず、文書由来の要素を独立管理する）。
+// ⚠️ Vision AI・文書解析AIの実呼び出しは本スライスでは未実装（他の未接続AI機能と同じ扱い）。
+// データモデルと画面（デモデータの一覧・詳細表示）のみを先行実装する（ユーザー承認済み・未決事項は
+// docs/90-project/05-module-expansion-m26-m50.md 246-247行目「Vision AI基盤のコスト見積り後に採否判断」）。
+// 実ファイルは保存せず、他エンティティ（patents.source_url 等）と同様に外部参照URLのプレースホルダとする。
+export const engineeringDocuments = pgTable('engineering_documents', {
+  id: uuid('id').primaryKey(),
+  docType: text('doc_type').notNull(),   // pdf / cad / bim / photo / sketch
+  title: text('title').notNull(),
+  siteId: uuid('site_id').references(() => sites.id),
+  sourceUrl: text('source_url'),
+  uploadedBy: uuid('uploaded_by').references(() => users.id),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const extractedTechElements = pgTable('extracted_tech_elements', {
+  id: uuid('id').primaryKey(),
+  documentId: uuid('document_id').notNull().references(() => engineeringDocuments.id, { onDelete: 'cascade' }),
+  elementLabel: text('element_label').notNull(), // 抽出された技術要素名
+  description: text('description'),
+  confidence: numeric('confidence', { precision: 4, scale: 2 }), // 0-1
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const documentElementPatentMatches = pgTable('document_element_patent_matches', {
+  id: uuid('id').primaryKey(),
+  elementId: uuid('element_id').notNull().references(() => extractedTechElements.id, { onDelete: 'cascade' }),
+  patentId: uuid('patent_id').notNull().references(() => patents.id),
+  matchScore: numeric('match_score', { precision: 5, scale: 2 }).notNull(), // 0-100
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
