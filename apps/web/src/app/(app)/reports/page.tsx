@@ -1,10 +1,10 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { desc, inArray } from 'drizzle-orm';
+import { desc, eq, inArray } from 'drizzle-orm';
 import Link from 'next/link';
 import { Notice, Tag } from '@/components/ui';
-import { DetailChip, DetailTr } from '@/components/detail/DetailOpener';
+import { DetailChip, DetailTr, StopPropagation } from '@/components/detail/DetailOpener';
 import { REPORT_KIND, ymd } from '@/lib/labels';
 
 
@@ -17,7 +17,21 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const sp = await searchParams;
   const db = getDb(getDatabaseUrl());
   const kind = sp.kind;
-  const all = await db.select().from(s.reports).orderBy(desc(s.reports.createdAt));
+  // README §16: report_files.content（bytea, 重量列）は一覧取得では選択しない
+  // （ダウンロード時のみ別クエリで取得する）。生成済みファイルの有無だけを left join で判定する。
+  const all = await db.select({
+    id: s.reports.id,
+    kind: s.reports.kind,
+    title: s.reports.title,
+    format: s.reports.format,
+    status: s.reports.status,
+    createdBy: s.reports.createdBy,
+    createdAt: s.reports.createdAt,
+    hasFile: s.reportFiles.id
+  })
+    .from(s.reports)
+    .leftJoin(s.reportFiles, eq(s.reportFiles.reportId, s.reports.id))
+    .orderBy(desc(s.reports.createdAt));
   const rows = kind ? all.filter(r => r.kind === kind) : all;
 
   const creatorIds = [...new Set(rows.map(r => r.createdBy))];
@@ -72,12 +86,13 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         ) : (
           <table className="plain">
             <thead>
-              <tr><th>レポート名</th><th>種類</th><th>形式</th><th>作成者</th><th>作成日</th></tr>
+              <tr><th>レポート名</th><th>種類</th><th>形式</th><th>作成者</th><th>作成日</th><th>出力</th></tr>
             </thead>
             <tbody>
               {rows.map(r => {
                 const meta = REPORT_KIND[r.kind] ?? { label: r.kind, tone: 'gray' as const };
                 const author = creatorById.get(r.createdBy)?.displayName ?? '—';
+                const canDownload = r.status === 'success' && r.hasFile !== null;
                 return (
                   <DetailTr
                     key={r.id}
@@ -88,14 +103,19 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                       meta: [
                         { k: '種類', v: meta.label },
                         { k: '形式', v: r.format.toUpperCase() },
+                        { k: '状態', v: r.status === 'success' ? '生成成功' : '生成失敗' },
                         { k: '作成', v: `${author}（${ymd(r.createdAt)}）` }
                       ],
                       body: '本文中のすべてのAI生成箇所に出典が付きます。確定は人が行います。',
                       note: 'AIの出力をそのまま社外向け資料に貼ることは禁止されています。社外に出す資料は必ず技術部門の確認を経てください。',
-                      actions: [
-                        { label: '出力履歴を見る', href: '/reports', primary: true },
-                        { label: '元の調査案件を見る', href: '/investigations' }
-                      ]
+                      actions: canDownload
+                        ? [
+                            { label: 'ファイルをダウンロード', href: `/reports/${r.id}/download`, primary: true },
+                            { label: '元の調査案件を見る', href: '/investigations' }
+                          ]
+                        : [
+                            { label: '元の調査案件を見る', href: '/investigations' }
+                          ]
                     }}
                   >
                     <td style={{ fontWeight: 500 }}>{r.title}</td>
@@ -103,6 +123,17 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                     <td className="mono" style={{ fontSize: 11 }}>{r.format.toUpperCase()}</td>
                     <td style={{ color: 'var(--ink-2)' }}>{author}</td>
                     <td className="mono">{ymd(r.createdAt)}</td>
+                    <td>
+                      {canDownload ? (
+                        <StopPropagation>
+                          <a href={`/reports/${r.id}/download`} style={{ fontSize: 12 }}>ダウンロード</a>
+                        </StopPropagation>
+                      ) : (
+                        <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+                          {r.status === 'failed' ? '生成失敗' : '—'}
+                        </span>
+                      )}
+                    </td>
                   </DetailTr>
                 );
               })}

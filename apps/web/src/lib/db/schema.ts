@@ -2,8 +2,17 @@
 // ここでは6画面の実動作に必要な最小サブセットのみを実装する。
 import {
   pgTable, pgEnum, uuid, text, timestamp, integer, numeric, boolean, jsonb, date,
-  unique, type AnyPgColumn
+  unique, customType, type AnyPgColumn
 } from 'drizzle-orm/pg-core';
+
+// README §16 バックログ「Reporting出力（PDF/DOCX/XLSX）」対応。
+// drizzle-orm/pg-core に bytea のビルトイン型が無いため customType で定義する。
+// postgres.js は bytea を Node の Buffer として読み書きできる。
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return 'bytea';
+  }
+});
 
 export const classificationEnum = pgEnum('classification_t', ['C1', 'C2', 'C3', 'C4']);
 export const roleEnum = pgEnum('role_t', [
@@ -405,7 +414,26 @@ export const reports = pgTable('reports', {
   title: text('title').notNull(),
   createdBy: uuid('created_by').notNull().references(() => users.id),
   format: text('format').notNull().default('html'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  // README §16 バックログ「Reporting出力（PDF/DOCX/XLSX）」対応（additive）。
+  // success: report_files に生成物あり / failed: 生成失敗（理由は audit_logs.meta に記録）。
+  // 本カラム追加前に作成された既存行は、実ファイルが存在しないまま 'success' 扱いとなる
+  // （後方互換のための既定値。ダウンロード側は report_files 不在を 404 として扱うため実害はない）。
+  status: text('status').notNull().default('success')
+});
+
+// README §16 バックログ「Reporting出力（PDF/DOCX/XLSX）」対応。
+// reports のメタデータとは別テーブルに実ファイル本体（bytea）を保持する。
+// 自社ホストNode運用（ADR-0007）でオブジェクトストレージが未導入のため、
+// MVPスコープでは Postgres の bytea 列にファイル本体を保存する方針とする。
+// 一覧画面（reports/page.tsx）では content 列を選択しない（重量列のSELECT回避）。
+export const reportFiles = pgTable('report_files', {
+  id: uuid('id').primaryKey(),
+  reportId: uuid('report_id').notNull().unique().references(() => reports.id, { onDelete: 'cascade' }),
+  content: bytea('content').notNull(),
+  mimeType: text('mime_type').notNull(),
+  byteSize: integer('byte_size').notNull(),
+  generatedAt: timestamp('generated_at', { withTimezone: true }).notNull().defaultNow()
 });
 
 export const featureFlags = pgTable('feature_flags', {
