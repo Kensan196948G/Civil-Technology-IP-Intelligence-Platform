@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { resolveCitationLabels } from '@/lib/citations';
 import { getCurrentUser } from '@/lib/auth/current-user';
-import { canViewRow } from '@/lib/authz/row-visibility';
+import { canViewRowAudited } from '@/lib/authz/row-visibility';
 
 // notFound() は (app)/error.tsx の error boundary に捕まり HTTP 200 になる既知事象があるため、
 // 存在しない実在しないパスへ redirect（307 → Next標準の404）するヘルパー。
@@ -35,7 +35,15 @@ export default async function InventionDetailPage({ params }: { params: Promise<
   // C3/C4 で権限が無い場合は、存在自体を出さず 404（403 にしない）。
   // Next.js の notFound() は (app)/error.tsx の error boundary に捕まり 200 になる既知事象があるため、
   // 存在しない静的パスへ redirect する（307 → 存在しない = 404。middleware の /admin と同じパターン）。
-  if (!canViewRow(user.role, invention.classification as 'C1' | 'C2' | 'C3' | 'C4', isOwner)) notFoundPage();
+  const canView = await canViewRowAudited(db, {
+    role: user.role,
+    classification: invention.classification as 'C1' | 'C2' | 'C3' | 'C4',
+    isOwner,
+    actorUserId: me?.id ?? null,
+    targetType: 'invention',
+    targetId: invention.id
+  });
+  if (!canView) notFoundPage();
 
   const [submitter] = await db.select().from(s.users).where(eq(s.users.id, invention.submittedBy)).limit(1);
   const [site] = invention.siteId

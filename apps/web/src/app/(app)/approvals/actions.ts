@@ -6,6 +6,7 @@ import * as s from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { requireCurrentDbUser } from '@/lib/auth/require-user';
+import { logAudit, auditLogTxnStatement } from '@/lib/audit/log';
 
 const NEXT_STATUS: Record<string, string> = {
   draft: 'researching', researching: 'ai_reviewed', ai_reviewed: 'technical_review',
@@ -44,26 +45,26 @@ export async function decideAction(formData: FormData) {
 
   // 自己承認の禁止
   if (instance.authorId === approver.id) {
-    await db.insert(s.auditLogs).values({
-      id: crypto.randomUUID(), actorUserId: approver.id, action: 'approve', targetType: 'workflow_instance',
-      targetId: instanceId, result: 'denied', reason: 'self_approval_forbidden', meta: {}
+    await logAudit(db, {
+      actorUserId: approver.id, action: 'approve', targetType: 'workflow_instance',
+      targetId: instanceId, result: 'denied', reason: 'self_approval_forbidden'
     });
     revalidatePath(`/approvals/${instanceId}`);
     return;
   }
   // 人間確認事項が未完了なら承認不可（差戻し・保留は可）
   if (decision === 'approved' && instance.humanCheckRequired && !instance.humanCheckCompletedAt) {
-    await db.insert(s.auditLogs).values({
-      id: crypto.randomUUID(), actorUserId: approver.id, action: 'approve', targetType: 'workflow_instance',
-      targetId: instanceId, result: 'denied', reason: 'human_check_incomplete', meta: {}
+    await logAudit(db, {
+      actorUserId: approver.id, action: 'approve', targetType: 'workflow_instance',
+      targetId: instanceId, result: 'denied', reason: 'human_check_incomplete'
     });
     revalidatePath(`/approvals/${instanceId}`);
     return;
   }
   // 終端状態（承認済み／却下済み）からは遷移しない
   if (TERMINAL_STATUSES.has(instance.status)) {
-    await db.insert(s.auditLogs).values({
-      id: crypto.randomUUID(), actorUserId: approver.id, action: 'approve', targetType: 'workflow_instance',
+    await logAudit(db, {
+      actorUserId: approver.id, action: 'approve', targetType: 'workflow_instance',
       targetId: instanceId, result: 'denied', reason: 'already_terminal', meta: { status: instance.status }
     });
     revalidatePath(`/approvals/${instanceId}`);
@@ -76,7 +77,6 @@ export async function decideAction(formData: FormData) {
   if (decision === 'hold') newStatus = 'hold';
 
   const approvalId = crypto.randomUUID();
-  const auditId = crypto.randomUUID();
 
   // CodeRabbit指摘: 承認記録・状態更新・監査ログの3書き込みが個別クエリだと、
   // 途中で失敗した場合に不整合な状態が残る。原子的トランザクションにまとめる。
@@ -88,9 +88,10 @@ export async function decideAction(formData: FormData) {
     txn`insert into approvals (id, instance_id, approver_id, decision, comment)
         values (${approvalId}, ${instanceId}, ${approver.id}, ${decision}, ${comment})`,
     txn`update workflow_instances set status = ${newStatus} where id = ${instanceId}`,
-    txn`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
-        values (${auditId}, ${approver.id}, 'approve', 'workflow_instance', ${instanceId}, 'success',
-                ${JSON.stringify({ decision, newStatus })}::jsonb)`
+    auditLogTxnStatement(txn, {
+      actorUserId: approver.id, action: 'approve', targetType: 'workflow_instance',
+      targetId: instanceId, result: 'success', meta: { decision, newStatus }
+    })
   ]);
 
   revalidatePath(`/approvals/${instanceId}`);
@@ -117,16 +118,16 @@ export async function completeHumanCheck(formData: FormData) {
   `;
 
   if (updated.length === 0) {
-    await db.insert(s.auditLogs).values({
-      id: crypto.randomUUID(), actorUserId: me.id, action: 'update', targetType: 'workflow_instance',
-      targetId: instanceId, result: 'denied', reason: 'not_applicable', meta: {}
+    await logAudit(db, {
+      actorUserId: me.id, action: 'update', targetType: 'workflow_instance',
+      targetId: instanceId, result: 'denied', reason: 'not_applicable'
     });
     revalidatePath(`/approvals/${instanceId}`);
     return;
   }
 
-  await db.insert(s.auditLogs).values({
-    id: crypto.randomUUID(), actorUserId: me.id, action: 'update', targetType: 'workflow_instance',
+  await logAudit(db, {
+    actorUserId: me.id, action: 'update', targetType: 'workflow_instance',
     targetId: instanceId, result: 'success', meta: { field: 'human_check_completed' }
   });
 

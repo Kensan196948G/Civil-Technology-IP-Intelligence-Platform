@@ -4,6 +4,7 @@ import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
 import { requireCurrentDbUser } from '@/lib/auth/require-user';
+import { logAudit } from '@/lib/audit/log';
 
 const ALLOWED_KINDS = new Set([
   'tech-survey', 'patent-survey', 'prior-art', 'claim-compare', 'novelty', 'inventive-step',
@@ -22,10 +23,16 @@ export async function createReportAction(formData: FormData) {
   if (!ALLOWED_FORMATS.has(format)) throw new Error('不正な出力形式です');
   if (!title) throw new Error('タイトルを入力してください');
 
+  const reportId = crypto.randomUUID();
   await db.insert(s.reports).values({
-    id: crypto.randomUUID(),
+    id: reportId,
     kind, title, format,
     createdBy: user.id
+  });
+  // 監査ログ NFR-L-001: レポート生成も主要操作として記録する（従来は未記録だった）。
+  await logAudit(db, {
+    actorUserId: user.id, action: 'create', targetType: 'report',
+    targetId: reportId, result: 'success', meta: { kind, format }
   });
 
   redirect('/reports');

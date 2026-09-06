@@ -1,7 +1,7 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import Link from 'next/link';
 import { Notice, Tag } from '@/components/ui';
 import { DetailTr } from '@/components/detail/DetailOpener';
@@ -11,16 +11,26 @@ import { AUDIT_ACTION, stamp } from '@/lib/labels';
 // 設計案（design-B-copilot）の「セキュリティ・監査」。
 // 操作種別のチップ（nav.ts の ?action= と同じ）＋監査ログの表。行から詳細ドロワー。
 
-const ACTION_CHIPS = ['login', 'ai_run', 'search', 'view', 'export', 'update', 'role_change', 'security_event'] as const;
+const ACTION_CHIPS = [
+  'login', 'ai_run', 'search', 'view', 'export', 'create', 'update', 'approve',
+  'access', 'role_change', 'security_event'
+] as const;
 
-export default async function AuditPage({ searchParams }: { searchParams: Promise<{ action?: string }> })
+const RESULT_LABEL: Record<string, string> = { success: '成功', denied: '拒否', failure: '失敗' };
+
+export default async function AuditPage({ searchParams }: { searchParams: Promise<{ action?: string; result?: string }> })
 {
   // Next.js 15: searchParams は Promise になったため await する
   const sp = await searchParams;
   const db = getDb(getDatabaseUrl());
   const action = sp.action;
+  const result = sp.result;
+  const conditions = [
+    action ? eq(s.auditLogs.action, action) : undefined,
+    result ? eq(s.auditLogs.result, result) : undefined
+  ].filter((c): c is NonNullable<typeof c> => !!c);
   const base = db.select().from(s.auditLogs);
-  const rows = await (action ? base.where(eq(s.auditLogs.action, action)) : base)
+  const rows = await (conditions.length ? base.where(and(...conditions)) : base)
     .orderBy(desc(s.auditLogs.occurredAt))
     .limit(200);
 
@@ -28,13 +38,34 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   const actors = actorIds.length ? await db.select().from(s.users).where(inArray(s.users.id, actorIds)) : [];
   const actorById = new Map(actors.map(a => [a.id, a]));
 
+  // action/result のどちらかを切り替えても、もう一方の絞り込みを維持する
+  const withQuery = (next: { action?: string; result?: string }) => {
+    const qs = new URLSearchParams();
+    const a = next.action ?? action;
+    const r = next.result ?? result;
+    if (a) qs.set('action', a);
+    if (r) qs.set('result', r);
+    const query = qs.toString();
+    return query ? `/audit?${query}` : '/audit';
+  };
+
   return (
     <div className="measure" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <Link href="/audit" className={`chip${action ? '' : ' active'}`}>すべて</Link>
+        <Link href={withQuery({ action: undefined })} className={`chip${action ? '' : ' active'}`}>すべて</Link>
         {ACTION_CHIPS.map(a => (
-          <Link key={a} href={`/audit?action=${a}`} className={`chip${action === a ? ' active' : ''}`}>
+          <Link key={a} href={withQuery({ action: a })} className={`chip${action === a ? ' active' : ''}`}>
             {AUDIT_ACTION[a]?.label ?? a}
+          </Link>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>結果：</span>
+        <Link href={withQuery({ result: undefined })} className={`chip${result ? '' : ' active'}`}>すべて</Link>
+        {(['success', 'denied', 'failure'] as const).map(r => (
+          <Link key={r} href={withQuery({ result: r })} className={`chip${result === r ? ' active' : ''}`}>
+            {RESULT_LABEL[r]}
           </Link>
         ))}
       </div>
@@ -65,7 +96,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                         { k: '日時', v: stamp(r.occurredAt) },
                         { k: 'ユーザー', v: actor },
                         { k: '対象', v: target },
-                        { k: '結果', v: r.result },
+                        { k: '結果', v: RESULT_LABEL[r.result] ?? r.result },
                         ...(r.reason ? [{ k: '理由', v: r.reason }] : [])
                       ],
                       body: '監査ログは追記専用です。UPDATE・DELETEはデータベース権限のレベルで禁止されています。'
@@ -81,7 +112,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                     <td><Tag tone={meta.tone}><span className="mono">{meta.label}</span></Tag></td>
                     <td style={{ color: 'var(--ink-2)' }}>{actor}</td>
                     <td className="mono" style={{ fontSize: 11.5 }}>{target}</td>
-                    <td><Tag tone={success ? 'green' : 'red'}>{success ? '成功' : r.result}</Tag></td>
+                    <td><Tag tone={success ? 'green' : 'red'}>{RESULT_LABEL[r.result] ?? r.result}</Tag></td>
                   </DetailTr>
                 );
               })}

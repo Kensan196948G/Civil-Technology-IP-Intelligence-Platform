@@ -1,6 +1,11 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from './current-user';
+import { eq } from 'drizzle-orm';
+import { getCurrentUser, type CurrentUser } from './current-user';
 import type { DemoRole } from './demo';
+import { getDb } from '@/lib/db/client';
+import { getDatabaseUrl } from '@/lib/env';
+import * as s from '@/lib/db/schema';
+import { logAuditDenied } from '@/lib/audit/log';
 
 // Deep Debug Round2 で発見: docs/10-requirements/05-rbac-matrix.md と README §14
 // (「行レベル権限がない場合は404」) が要求する認可制御が未実装で、認証済みなら
@@ -26,6 +31,28 @@ import type { DemoRole } from './demo';
 export async function requireRole(allowedRoles: DemoRole[]) {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
-  if (!allowedRoles.includes(user.role)) redirect('/not-found');
+  if (!allowedRoles.includes(user.role)) {
+    // 監査ログ NFR-L-001: 認可拒否も記録する（README §16 既知バックログ対応）。
+    // 記録の失敗が本来の拒否（redirect）を妨げてはならないため best-effort。
+    await recordRoleDenied(user, allowedRoles);
+    redirect('/not-found');
+  }
   return user;
+}
+
+async function recordRoleDenied(user: CurrentUser, allowedRoles: DemoRole[]): Promise<void> {
+  try {
+    const db = getDb(getDatabaseUrl());
+    const [dbUser] = await db.select({ id: s.users.id }).from(s.users).where(eq(s.users.email, user.email)).limit(1);
+    await logAuditDenied(db, {
+      actorUserId: dbUser?.id ?? null,
+      action: 'access',
+      targetType: 'role_gate',
+      targetId: null,
+      reason: 'role_not_allowed',
+      meta: { role: user.role, allowedRoles }
+    });
+  } catch (err) {
+    console.error('[audit] requireRole denial logging failed', err);
+  }
 }

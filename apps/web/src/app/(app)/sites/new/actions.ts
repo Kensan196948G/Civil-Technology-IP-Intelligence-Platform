@@ -5,6 +5,7 @@ import { getDatabaseUrl } from '@/lib/env';
 import { requireCurrentDbUser } from '@/lib/auth/require-user';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { auditLogTxnStatement } from '@/lib/audit/log';
 
 // /tech/civil-category/* と同じ工種区分コードのみを許可する（クライアント入力の
 // 任意文字列がそのまま work_types 配列へ混入するのを防ぐ、フォームなのでホワイトリスト化）。
@@ -45,15 +46,16 @@ export async function createSite(formData: FormData) {
   const me = await requireCurrentDbUser(db);
 
   const siteId = crypto.randomUUID();
-  const auditId = crypto.randomUUID();
 
   // 現場登録と監査ログ記録を原子的に行う
   const sql = getRawSql(dbUrl);
   await sql.transaction((txn) => [
     txn`insert into sites (id, code, name, work_types, conditions)
         values (${siteId}, ${code}, ${name}, ${workTypes}::text[], ${JSON.stringify(conditions)}::jsonb)`,
-    txn`insert into audit_logs (id, actor_user_id, action, target_type, target_id, result, meta)
-        values (${auditId}, ${me.id}, 'create', 'site', ${siteId}, 'success', ${JSON.stringify({ name, workTypes })}::jsonb)`
+    auditLogTxnStatement(txn, {
+      actorUserId: me.id, action: 'create', targetType: 'site',
+      targetId: siteId, result: 'success', meta: { name, workTypes }
+    })
   ]);
 
   revalidatePath('/sites/new');
