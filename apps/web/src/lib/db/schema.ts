@@ -755,3 +755,29 @@ export const patentTranslations = pgTable('patent_translations', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M42 R&D Funding Intelligence（第二拡張群）
+// NEDO・JST・SIP・BRIDGE等の研究助成制度台帳と、研究テーマ（technologies）とのマッチングを管理する。
+// 依存: M14 R&D Intelligence（研究テーマは既存の technologies テーブルをそのまま用いる。新テーブル化しない）。
+export const fundingPrograms = pgTable('funding_programs', {
+  id: uuid('id').primaryKey(),
+  agency: text('agency').notNull(),      // NEDO / JST / SIP / BRIDGE 等
+  name: text('name').notNull(),
+  summary: text('summary'),
+  field: text('field'),                  // 対象分野
+  amountRange: text('amount_range'),     // 例: "500万〜3000万円"（簡易テキスト）
+  applicationDeadline: date('application_deadline'),
+  sourceUrl: text('source_url'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const fundingMatches = pgTable('funding_matches', {
+  id: uuid('id').primaryKey(),
+  fundingProgramId: uuid('funding_program_id').notNull().references(() => fundingPrograms.id, { onDelete: 'cascade' }),
+  technologyId: uuid('technology_id').notNull().references(() => technologies.id), // ＝研究テーマ
+  matchScore: numeric('match_score', { precision: 5, scale: 2 }).notNull(), // 0-100
+  rationale: text('rationale'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});

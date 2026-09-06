@@ -721,6 +721,37 @@ CREATE TABLE IF NOT EXISTS patent_translations (
 CREATE INDEX IF NOT EXISTS idx_patent_translations_patent ON patent_translations (patent_id);
 CREATE INDEX IF NOT EXISTS idx_patent_translations_lang ON patent_translations (language);
 
+-- M42 R&D Funding Intelligence（第二拡張群）
+-- NEDO・JST・SIP・BRIDGE等の研究助成制度台帳と、研究テーマ（technologies）とのマッチング。
+-- 依存: M14 R&D Intelligence。研究テーマは既存の technologies テーブルをそのまま用いる（新テーブル化しない）。
+-- ロールバック: DROP TABLE IF EXISTS funding_matches; DROP TABLE IF EXISTS funding_programs;
+-- （funding_matches → funding_programs の順で削除。他テーブルからの参照なし）
+CREATE TABLE IF NOT EXISTS funding_programs (
+  id uuid PRIMARY KEY,
+  agency text NOT NULL,
+  name text NOT NULL,
+  summary text,
+  field text,
+  amount_range text,
+  application_deadline date,
+  source_url text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_funding_programs_agency ON funding_programs (agency);
+
+CREATE TABLE IF NOT EXISTS funding_matches (
+  id uuid PRIMARY KEY,
+  funding_program_id uuid NOT NULL REFERENCES funding_programs(id) ON DELETE CASCADE,
+  technology_id uuid NOT NULL REFERENCES technologies(id),
+  match_score numeric(5,2) NOT NULL,
+  rationale text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_funding_matches_program ON funding_matches (funding_program_id);
+CREATE INDEX IF NOT EXISTS idx_funding_matches_technology ON funding_matches (technology_id);
+
 -- FR-M06-002 AI Claim分解: ai_runs に ADR-0006「実装上の必須ルール2」
 -- （model / prompt_version / params / input_hash / token_usage を必ず記録する）に
 -- 必要な列を追加する。加算のみ・既存列は変更しない（後方互換）。
