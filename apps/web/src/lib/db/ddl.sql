@@ -892,6 +892,13 @@ CREATE TABLE IF NOT EXISTS drawing_similarities (
 CREATE INDEX IF NOT EXISTS idx_drawing_similarities_drawing ON drawing_similarities (drawing_id);
 CREATE INDEX IF NOT EXISTS idx_drawing_similarities_similar ON drawing_similarities (similar_drawing_id);
 
+-- Vision AI実接続（ユーザー承認済み。M47/M48 Vision AI統合）対応。additive のみ。
+-- 実画像本体（bytea）を patent_drawings に保持する。既存の image_url 列はプレースホルダ用途の
+-- ままとし変更しない。既存のデモ行は image_data/mime_type とも NULL のまま（後方互換）。
+-- ロールバック: ALTER TABLE patent_drawings DROP COLUMN IF EXISTS image_data; DROP COLUMN IF EXISTS mime_type;
+ALTER TABLE patent_drawings ADD COLUMN IF NOT EXISTS image_data bytea;
+ALTER TABLE patent_drawings ADD COLUMN IF NOT EXISTS mime_type text;
+
 -- M48 Engineering Document Intelligence（第二拡張群）。additive のみ・既存テーブルは無変更。
 -- 依存: M02（sites。任意参照）/ M03（users。任意参照）/ M04（patents）/ M09（technologiesは使わず独立管理）。
 -- ⚠️ Vision AI・文書解析AI（PDF/CAD/BIM/写真/スケッチからの技術要素抽出・特許マッチング）の実呼び出しは
