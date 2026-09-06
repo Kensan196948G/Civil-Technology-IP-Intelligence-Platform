@@ -218,6 +218,8 @@ export const approvals = pgTable('approvals', {
 });
 
 // M24/根拠追跡（簡略版）
+// ADR-0006「実装上の必須ルール2」: prompt_version/params/input_hash/token_usage を
+// 記録する（既存ギャップの解消。追加のみ・既存列は変更しない）。
 export const aiRuns = pgTable('ai_runs', {
   id: uuid('id').primaryKey(),
   kind: text('kind').notNull(),
@@ -225,6 +227,10 @@ export const aiRuns = pgTable('ai_runs', {
   targetType: text('target_type'),
   targetId: uuid('target_id'),
   model: text('model').notNull(),
+  promptVersion: text('prompt_version'),
+  params: jsonb('params').notNull().default({}),
+  inputHash: text('input_hash'),
+  tokenUsage: jsonb('token_usage'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
