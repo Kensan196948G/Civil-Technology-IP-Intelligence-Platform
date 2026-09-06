@@ -52,3 +52,19 @@ const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-5';
 export function getAnthropicModel(): string {
   return getEnvVar('ANTHROPIC_MODEL') ?? DEFAULT_ANTHROPIC_MODEL;
 }
+
+// 意味検索（pgvector, ADR-0003 §4.3）用の埋め込みAPI（Voyage AI）連携。requireEnvVar は使わない
+// — 本番APIキー（VOYAGE_API_KEY）がまだ発行されていない前提のため、未設定は正常系として扱う
+// （呼び出し元は lib/ai/embeddings.ts で意味検索レイヤーを無効化し、RRF融合には
+// ①構造検索・②字句検索のみが寄与する。既存の /api/search の挙動は変えない）。
+export function getVoyageApiKey(): string | undefined {
+  return getEnvVar('VOYAGE_API_KEY');
+}
+
+// コストを優先し既定モデルは voyage-4-lite（$0.02/1Mトークン）とする。より高精度が必要な場合は
+// VOYAGE_MODEL=voyage-4 や voyage-4-large を設定して上書きできる。
+const DEFAULT_VOYAGE_MODEL = 'voyage-4-lite';
+
+export function getVoyageModel(): string {
+  return getEnvVar('VOYAGE_MODEL') ?? DEFAULT_VOYAGE_MODEL;
+}

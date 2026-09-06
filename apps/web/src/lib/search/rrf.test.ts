@@ -57,6 +57,36 @@ describe('fuseRrf', () => {
     expect(result.find(r => r.id === 'b')!.score).toBeCloseTo(1 / (RRF_K_DEFAULT + 2));
   });
 
+  it('③意味検索リストを追加した3リスト融合: 構造検索＞字句検索・意味検索の順で優先され、字句・意味の両方に現れるIDは加点される（ADR-0003）', () => {
+    const lists: RankedList[] = [
+      { name: 'structured', weight: SEARCH_WEIGHTS.structured, ids: ['exact-match'] },
+      { name: 'lexical:patents', weight: SEARCH_WEIGHTS.lexical, ids: ['lex-only', 'both'] },
+      { name: 'semantic:patents', weight: SEARCH_WEIGHTS.semantic, ids: ['both', 'sem-only'] }
+    ];
+    const result = fuseRrf(lists);
+    const scoreOf = (id: string) => result.find(r => r.id === id)!.score;
+
+    // 構造検索一致は最優先
+    expect(result[0]!.id).toBe('exact-match');
+    // 字句・意味の両方に現れた 'both' は、どちらか一方にしか現れない候補より高スコア
+    expect(scoreOf('both')).toBeGreaterThan(scoreOf('lex-only'));
+    expect(scoreOf('both')).toBeGreaterThan(scoreOf('sem-only'));
+  });
+
+  it('意味検索の結果が空リストでも（VOYAGE_API_KEY未設定を想定）、構造検索＋字句検索のみで従来通り融合される', () => {
+    const withoutSemantic: RankedList[] = [
+      { name: 'structured', weight: SEARCH_WEIGHTS.structured, ids: ['a'] },
+      { name: 'lexical:patents', weight: SEARCH_WEIGHTS.lexical, ids: ['b', 'c'] }
+    ];
+    const withEmptySemantic: RankedList[] = [
+      ...withoutSemantic,
+      { name: 'semantic:patents', weight: SEARCH_WEIGHTS.semantic, ids: [] }
+    ];
+
+    // 空の意味検索リストを渡しても渡さなくても、結果は同一（既存の/api/searchの挙動を変えない）
+    expect(fuseRrf(withEmptySemantic)).toEqual(fuseRrf(withoutSemantic));
+  });
+
   it('k を大きくするほど順位間のスコア差が小さくなる（雑音への頑健性）', () => {
     const lists: RankedList[] = [{ name: 'lexical', weight: 1, ids: ['a', 'b'] }];
     const diffSmallK = (() => {

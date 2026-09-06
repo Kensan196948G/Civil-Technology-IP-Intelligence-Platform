@@ -1,10 +1,12 @@
 // ADR-0003 / docs/30-design/06-search-and-rag-design.md §4.4 の RRF（Reciprocal Rank Fusion）実装。
 //
-// 今回のスコープは①構造検索＋②字句検索（pg_trgm）のみで、③意味検索（pgvector）は
-// 埋め込みモデル・次元数が未確定（docs/40-infrastructure/02-neon-setup.md）のため見送っている。
-// そのため現時点で融合するリストは「構造検索」「字句検索（テーブルごと）」のみだが、
-// 将来 pgvector を導入した際に意味検索のリストを1つ追加するだけで済むよう、
-// 「複数の順位付きリストを重み付きで融合する」汎用ロジックとして切り出す。
+// ①構造検索＋②字句検索（pg_trgm）＋③意味検索（pgvector, Voyage AI）を融合する。
+// ③意味検索は VOYAGE_API_KEY 未設定時（本番APIキー未発行の間）は呼び出し元
+// （api/search/route.ts）がリストを渡さない（＝空リスト相当）ため、その場合は
+// 従来通り①②のみで融合される（挙動を変えない）。
+//
+// 「複数の順位付きリストを重み付きで融合する」汎用ロジックとして切り出しているため、
+// 将来リストの種類が増えても本ファイルの変更は不要。
 //
 // DBアクセスを含まない純粋関数にすることで、SQL/実DB無しで vitest によるユニットテストが書ける
 // ようにしている（route.ts 側は SQL 結果から RankedList を組み立てて渡すだけにする）。
@@ -21,9 +23,13 @@ export const SEARCH_WEIGHTS = {
   /** ①構造検索（特許番号・NETIS番号の完全一致/前方一致）。ほぼ確実に意図した1件のため高めに設定 */
   structured: 2.0,
   /** ②字句検索（pg_trgm類似度） */
-  lexical: 1.0
-  // semantic（③意味検索・pgvector）は embedding モデル未確定のため未導入。
-  // 導入時はここに `semantic: <weight>` を追加し、fuseRrf へ渡すリストを1つ増やすだけでよい。
+  lexical: 1.0,
+  /**
+   * ③意味検索（pgvector, Voyage AI のコサイン距離）。言い換え・概念的な近さを拾える一方、
+   * 固有名詞の厳密一致には弱いため、字句検索と同程度〜やや低めに設定する。
+   * VOYAGE_API_KEY 未設定時は呼び出し元がこの重みのリストを渡さないため実質未使用となる。
+   */
+  semantic: 1.0
 } as const;
 
 export interface RankedList<K extends string = string> {

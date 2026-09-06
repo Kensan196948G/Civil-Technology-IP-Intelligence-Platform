@@ -2,8 +2,12 @@
 // ここでは6画面の実動作に必要な最小サブセットのみを実装する。
 import {
   pgTable, pgEnum, uuid, text, timestamp, integer, numeric, boolean, jsonb, date,
-  unique, customType, type AnyPgColumn
+  unique, customType, vector, type AnyPgColumn
 } from 'drizzle-orm/pg-core';
+
+// ADR-0003 意味検索（pgvector）基盤。Voyage AI（既定 voyage-4-lite）の埋め込みベクトルの次元数。
+// DB側 `vector(1024)`（ddl.sql）・lib/ai/embeddings.ts の VOYAGE_EMBEDDING_DIMENSIONS と一致させること。
+const EMBEDDING_DIMENSIONS = 1024;
 
 // README §16 バックログ「Reporting出力（PDF/DOCX/XLSX）」対応。
 // drizzle-orm/pg-core に bytea のビルトイン型が無いため customType で定義する。
@@ -59,7 +63,10 @@ export const patents = pgTable('patents', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   // ADR-0003 字句検索基盤。DB側の GENERATED ALWAYS AS カラム（ctiip_text_norm(title)）。
   // 読み取り専用（アプリからは書き込まない）。ddl.sql 参照。
-  titleNorm: text('title_norm')
+  titleNorm: text('title_norm'),
+  // ADR-0003 §4.3 意味検索（pgvector）基盤。Voyage AI埋め込みベクトル。VOYAGE_API_KEY未設定時はNULL
+  // （意味検索は無効化され、字句検索・構造検索のみで動作する）。ddl.sql 参照。
+  embedding: vector('embedding', { dimensions: EMBEDDING_DIMENSIONS })
 });
 
 export const patentClaims = pgTable('patent_claims', {
@@ -104,7 +111,9 @@ export const papers = pgTable('papers', {
   retrievedAt: timestamp('retrieved_at', { withTimezone: true }).notNull(),
   isSample: boolean('is_sample').notNull().default(true),
   // ADR-0003 字句検索基盤。DB側の GENERATED ALWAYS AS カラム。読み取り専用。ddl.sql 参照。
-  titleNorm: text('title_norm')
+  titleNorm: text('title_norm'),
+  // ADR-0003 §4.3 意味検索（pgvector）基盤。Voyage AI埋め込みベクトル。VOYAGE_API_KEY未設定時はNULL。ddl.sql 参照。
+  embedding: vector('embedding', { dimensions: EMBEDDING_DIMENSIONS })
 });
 
 export const netisTechnologies = pgTable('netis_technologies', {
@@ -118,7 +127,9 @@ export const netisTechnologies = pgTable('netis_technologies', {
   retrievedAt: timestamp('retrieved_at', { withTimezone: true }).notNull(),
   isSample: boolean('is_sample').notNull().default(true),
   // ADR-0003 字句検索基盤。DB側の GENERATED ALWAYS AS カラム。読み取り専用。ddl.sql 参照。
-  nameNorm: text('name_norm')
+  nameNorm: text('name_norm'),
+  // ADR-0003 §4.3 意味検索（pgvector）基盤。Voyage AI埋め込みベクトル。VOYAGE_API_KEY未設定時はNULL。ddl.sql 参照。
+  embedding: vector('embedding', { dimensions: EMBEDDING_DIMENSIONS })
 });
 
 export const technologies = pgTable('technologies', {
@@ -133,7 +144,9 @@ export const technologies = pgTable('technologies', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   // ADR-0003 字句検索基盤。DB側の GENERATED ALWAYS AS カラム。読み取り専用。ddl.sql 参照。
-  nameNorm: text('name_norm')
+  nameNorm: text('name_norm'),
+  // ADR-0003 §4.3 意味検索（pgvector）基盤。Voyage AI埋め込みベクトル。VOYAGE_API_KEY未設定時はNULL。ddl.sql 参照。
+  embedding: vector('embedding', { dimensions: EMBEDDING_DIMENSIONS })
 });
 
 // M06 Claim Intelligence: 他社特許 vs 自社案の比較結果

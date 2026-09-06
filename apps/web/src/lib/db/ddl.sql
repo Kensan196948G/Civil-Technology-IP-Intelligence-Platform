@@ -934,3 +934,31 @@ CREATE TABLE IF NOT EXISTS document_element_patent_matches (
 );
 CREATE INDEX IF NOT EXISTS idx_document_element_patent_matches_element ON document_element_patent_matches (element_id);
 CREATE INDEX IF NOT EXISTS idx_document_element_patent_matches_patent ON document_element_patent_matches (patent_id);
+
+-- ADR-0003 / docs/30-design/06-search-and-rag-design.md §4.3 意味検索（pgvector）基盤。
+-- 埋め込みモデルベンダーとして Voyage AI を採用（ユーザー決定事項。既定モデル voyage-4-lite、
+-- 既定次元数1024。apps/web/src/lib/ai/embeddings.ts 参照）。本番APIキー（VOYAGE_API_KEY）は
+-- 未発行のため、キー未設定時は意味検索レイヤーを無効化する（RRF融合には①構造検索・②字句検索
+-- [pg_trgm] のみが寄与し、既存の /api/search の挙動は変わらない。embedding列はNULLのまま）。
+-- additive のみ・既存列は無変更。
+-- ロールバック: 各テーブルのHNSW索引を DROP INDEX IF EXISTS し、続けて embedding 列を
+-- ALTER TABLE ... DROP COLUMN IF EXISTS embedding; すれば元に戻せる（他テーブルからの参照なし）。
+-- vector 拡張自体は他機能で使われていない前提であれば DROP EXTENSION IF EXISTS vector; で削除できる
+-- （既に他用途で利用中の場合は削除しないこと）。
+CREATE EXTENSION IF NOT EXISTS vector;
+
+ALTER TABLE patents ADD COLUMN IF NOT EXISTS embedding vector(1024);
+ALTER TABLE papers ADD COLUMN IF NOT EXISTS embedding vector(1024);
+ALTER TABLE netis_technologies ADD COLUMN IF NOT EXISTS embedding vector(1024);
+ALTER TABLE technologies ADD COLUMN IF NOT EXISTS embedding vector(1024);
+
+-- HNSW索引（コサイン距離）。設計書§4.3の注意事項の通り、`ORDER BY embedding <=> $query LIMIT n`
+-- の形でクエリした場合にのみ有効に働く。embedding が NULL の行は索引・検索対象から自然に除外される。
+CREATE INDEX IF NOT EXISTS idx_patents_embedding_hnsw
+  ON patents USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX IF NOT EXISTS idx_papers_embedding_hnsw
+  ON papers USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX IF NOT EXISTS idx_netis_technologies_embedding_hnsw
+  ON netis_technologies USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX IF NOT EXISTS idx_technologies_embedding_hnsw
+  ON technologies USING hnsw (embedding vector_cosine_ops);

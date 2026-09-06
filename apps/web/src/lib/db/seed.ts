@@ -3,6 +3,16 @@
 // すべてのレコードに is_sample=true（相当）を付与し、MVP画面に「デモ用」表示を出す根拠とする。
 import { randomUUID as uuid } from 'node:crypto';
 import postgres from 'postgres';
+// ADR-0003 §4.3 意味検索（pgvector）基盤。`@/lib/ai/embeddings-core` は `@/lib/env`
+// （`@cloudflare/next-on-pages` 依存）を import しないコア実装のため、tsx で直接実行する
+// このスクリプトからも安全に import できる（apps/web/src/lib/ai/embeddings-core.ts のコメント参照）。
+import { embedTextsWithCredentials, toPgVectorLiteral } from '@/lib/ai/embeddings-core';
+
+// VOYAGE_API_KEY が設定されている場合のみ、投入データの埋め込みベクトルを生成して保存する。
+// 未設定の場合は embedding 列を NULL のままにし、シード自体は従来通り成功する
+// （意味検索が使えないだけで、他のMVP機能には一切影響しない）。
+const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY;
+const VOYAGE_MODEL = process.env.VOYAGE_MODEL ?? 'voyage-4-lite';
 
 async function main() {
   const url = process.env.DATABASE_URL;
@@ -51,6 +61,19 @@ async function main() {
   };
   // 既存の sql(text, params) 呼び出しと互換性を持たせる
   const sql = (text: string, params: any[] = []) => pg.unsafe(text, params);
+
+  // ADR-0003 §4.3 意味検索（pgvector）。VOYAGE_API_KEY未設定時は embedTextsWithCredentials が
+  // 即座に undefined の配列を返す（実APIは呼ばれない）ため、呼び出し自体は常に行ってよいが、
+  // 大量件数で無駄なループを避けるため未設定時は早期リターンする。
+  async function embedAndSaveEmbeddings(table: string, ids: readonly string[], texts: readonly string[]) {
+    if (!VOYAGE_API_KEY) return;
+    const embeddings = await embedTextsWithCredentials(texts, VOYAGE_API_KEY, VOYAGE_MODEL, { inputType: 'document' });
+    for (let i = 0; i < ids.length; i++) {
+      const embedding = embeddings[i];
+      if (!embedding) continue; // このテキストの埋め込み取得に失敗した場合はNULLのまま（他行の処理は継続）
+      await sql(`UPDATE ${table} SET embedding = $2::vector WHERE id = $1`, [ids[i], toPgVectorLiteral(embedding)]);
+    }
+  }
 
   try {
     await client.query('BEGIN');
@@ -183,6 +206,12 @@ async function main() {
       elementIdsByClaim[cid] = els;
     }
   }
+  // ADR-0003 意味検索: title+abstract（INSERT時と同じ組み立て方）から埋め込みを生成する。
+  await embedAndSaveEmbeddings(
+    'patents',
+    patentIds,
+    patentDefs.map(p => `${p.title}\n${p.title}に関する要約（デモ）。`)
+  );
 
   // 論文
   const paperDefs = [
@@ -198,6 +227,12 @@ async function main() {
       [pid, title, title + 'についての要旨（デモ）。', venue]
     );
   }
+  // ADR-0003 意味検索: title+abstract（INSERT時と同じ組み立て方）から埋め込みを生成する。
+  await embedAndSaveEmbeddings(
+    'papers',
+    paperIds,
+    paperDefs.map(([title]) => `${title}\n${title}についての要旨（デモ）。`)
+  );
 
   // 特許引用関係（M26 Patent Citation Intelligence）
   // 後方引用(backward)・NPL引用(npl)のデモエッジ。前方引用は登録後に他特許が引用した際に付与される想定。
@@ -417,29 +452,50 @@ async function main() {
 
   // NETIS
   const netisId = uuid();
+  const netisName1 = 'GNSS併用ケーソン据付支援システム（デモ）';
+  const netisSummary1 = 'RTK-GNSSと傾斜計を併用し、据付位置をリアルタイム表示する支援システム（デモデータ）。';
   await sql(
     `INSERT INTO netis_technologies (id, netis_no, name, summary, category, registered_on, source, retrieved_at, is_sample)
-     VALUES ($1,'KT-990000-A','GNSS併用ケーソン据付支援システム（デモ）','RTK-GNSSと傾斜計を併用し、据付位置をリアルタイム表示する支援システム（デモデータ）。','港湾・海洋','2023-09-01','デモ用サンプルデータ', now(), true)`,
-    [netisId]
+     VALUES ($1,'KT-990000-A',$2,$3,'港湾・海洋','2023-09-01','デモ用サンプルデータ', now(), true)`,
+    [netisId, netisName1, netisSummary1]
   );
+  const netisId2 = uuid();
+  const netisName2 = '浚渫土砂の含水比自動計測装置（デモ）';
+  const netisSummary2 = '浚渫土砂の含水比を現場でリアルタイム計測し、処分方法の判断を支援する装置のデモデータ。';
   await sql(
     `INSERT INTO netis_technologies (id, netis_no, name, summary, category, registered_on, source, retrieved_at, is_sample)
-     VALUES ($1,'KK-000000-B','浚渫土砂の含水比自動計測装置（デモ）','浚渫土砂の含水比を現場でリアルタイム計測し、処分方法の判断を支援する装置のデモデータ。','土工・浚渫','2022-11-15','デモ用サンプルデータ', now(), true)`,
-    [uuid()]
+     VALUES ($1,'KK-000000-B',$2,$3,'土工・浚渫','2022-11-15','デモ用サンプルデータ', now(), true)`,
+    [netisId2, netisName2, netisSummary2]
+  );
+  // ADR-0003 意味検索: name+summary から埋め込みを生成する。
+  await embedAndSaveEmbeddings(
+    'netis_technologies',
+    [netisId, netisId2],
+    [`${netisName1}\n${netisSummary1}`, `${netisName2}\n${netisSummary2}`]
   );
 
   // 自社技術台帳
   const techId = uuid();
+  const techName1 = 'ケーソン据付管理システム（自社保有・デモ）';
+  const techSummary1 = '当社が港湾工事で運用する据付管理技術のデモデータ。動揺補償は未実装。';
   await sql(
     `INSERT INTO technologies (id, kind, name, summary, applicable_conditions, work_types, maturity, classification, is_sample)
-     VALUES ($1,'technology','ケーソン据付管理システム（自社保有・デモ）','当社が港湾工事で運用する据付管理技術のデモデータ。動揺補償は未実装。',$2::jsonb,$3,'実用','C2', true)`,
-    [techId, { marine_wave_limit_m: 1.5, ground_min_n: 10, yard_min_m2: 500 }, ['port','marine']]
+     VALUES ($1,'technology',$4,$5,$2::jsonb,$3,'実用','C2', true)`,
+    [techId, { marine_wave_limit_m: 1.5, ground_min_n: 10, yard_min_m2: 500 }, ['port','marine'], techName1, techSummary1]
   );
   const techId2 = uuid();
+  const techName2 = 'GNSS併用ケーソン据付支援システム（デモ）';
+  const techSummary2 = 'NETIS登録技術のデモ複製。据付精度向上を目的とする。';
   await sql(
     `INSERT INTO technologies (id, kind, name, summary, applicable_conditions, work_types, maturity, classification, is_sample)
-     VALUES ($1,'method','GNSS併用ケーソン据付支援システム（デモ）','NETIS登録技術のデモ複製。据付精度向上を目的とする。',$2::jsonb,$3,'実用','C1', true)`,
-    [techId2, { marine_wave_limit_m: 2.5, ground_min_n: 10, yard_min_m2: 800 }, ['port','marine']]
+     VALUES ($1,'method',$4,$5,$2::jsonb,$3,'実用','C1', true)`,
+    [techId2, { marine_wave_limit_m: 2.5, ground_min_n: 10, yard_min_m2: 800 }, ['port','marine'], techName2, techSummary2]
+  );
+  // ADR-0003 意味検索: name+summary から埋め込みを生成する。
+  await embedAndSaveEmbeddings(
+    'technologies',
+    [techId, techId2],
+    [`${techName1}\n${techSummary1}`, `${techName2}\n${techSummary2}`]
   );
 
   // Claim比較（1件目の特許 × 自社技術）

@@ -73,13 +73,22 @@ GRANT INSERT, SELECT ON audit_logs TO ctip_app;
 全角半角統一・大文字小文字統一・空白圧縮を行う `ctiip_text_norm()` 関数の `GENERATED ALWAYS AS`）と
 `gin_trgm_ops` の GIN インデックスを追加している。
 
-意味検索（pgvector）は、埋め込みモデル・次元数が未確定（下記）かつ新規の埋め込みAPI契約が
-未承認のため、引き続き未導入（見送り）:
+意味検索（pgvector）は、埋め込みモデルベンダーとして Voyage AI を採用し導入済み
+（既定モデル `voyage-4-lite`、既定次元数1024。`apps/web/src/lib/ai/embeddings.ts`）。
+本番APIキー（`VOYAGE_API_KEY`）は未発行のため、キー未設定時は意味検索レイヤーを無効化する
+フォールバック設計（RRF融合には①構造検索・②字句検索のみが寄与し、`/api/search` の挙動は
+変わらない）。DB側の対応（additive・`apps/web/src/lib/db/ddl.sql`）:
 
 ```sql
-CREATE EXTENSION IF NOT EXISTS vector;     -- 意味検索（未導入・埋め込みモデル未確定のため見送り）
+CREATE EXTENSION IF NOT EXISTS vector;
+-- 検索対象4テーブル（patents / papers / netis_technologies / technologies）へ
+-- embedding vector(1024) 列（nullable）とHNSW索引（vector_cosine_ops）を追加済み。
 CREATE EXTENSION IF NOT EXISTS unaccent;   -- 正規化補助（未導入。ctiip_text_norm() はPostgres標準関数のみで代替実装）
 ```
+
+⚠️ `vector` 拡張は Postgres サーバー側にパッケージ（例: `postgresql-<version>-pgvector`）が
+インストールされている必要がある。本番ホストへ本マイグレーションを適用する前に、
+対象ホストで拡張が利用可能であることを確認すること。
 
 ## 5. マイグレーション運用
 

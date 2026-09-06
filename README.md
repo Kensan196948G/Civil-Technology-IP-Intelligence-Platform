@@ -226,7 +226,7 @@ AIの出力をそのままお客様向けの資料に貼ることは禁止して
 | フロント | Next.js（App Router）。**現行: 自社ホストで Node ランタイム実行**（本番設計では Cloudflare Workers へ OpenNext で載せる） |
 | API | Hono on Workers（本番設計）／ 現行は Next.js Route + Server Actions |
 | ORM / DB | Drizzle ORM / **ローカル PostgreSQL 16**（2026-08-29 に Neon から移行・[ADR-0007](docs/20-architecture/adr/ADR-0007-local-postgresql.md)） |
-| 検索 | 構造検索＋`pg_trgm`（字句）を **RRF** で融合（実装済み）。`pgvector` HNSW（意味）は埋め込みモデル未確定のため未導入（§17） |
+| 検索 | 構造検索＋`pg_trgm`（字句）＋`pgvector` HNSW（意味, Voyage AI）を **RRF** で融合（実装済み）。`VOYAGE_API_KEY`未設定時は意味検索レイヤーを無効化するフォールバック設計（§17） |
 | 非同期 | Cloudflare Queues（単発）／ Cloudflare Workflows（多段・永続）（本番設計） |
 | ストレージ | R2（docs / reports / raw / backup）、Workers KV（本番設計） |
 | 認証 | 現行: デモ認証（cookie＋ロール選択）。本番は Cloudflare Access（SSO + MFA）へ置換（バックログ） |
@@ -332,7 +332,7 @@ MVPは「主要ユースケースを実際に操作できること」を優先�
 |---|---|
 | Next.js 単体アプリ（Route + Server Actions） | Hono API を分離、複数Workerへ分割 |
 | デモログイン（cookie + ロール選択） | Cloudflare Access（SSO + MFA） |
-| ~~ILIKE ベースの横断検索~~ → `/api/search` は構造検索＋pg_trgm字句検索をRRFで融合済み（画面側 `/search` は種別別ILIKE集計のまま） | pgvector（意味検索）を追加したフルハイブリッド検索（[ADR-0003](docs/20-architecture/adr/ADR-0003-japanese-search.md)。埋め込みモデル未確定のため見送り中） |
+| ~~ILIKE ベースの横断検索~~ → `/api/search` は構造検索＋pg_trgm字句検索＋pgvector意味検索（Voyage AI）をRRFで融合済み（画面側 `/search` は種別別ILIKE集計のまま） | `VOYAGE_API_KEY`本番発行後の埋め込み再生成・重み（`w_sem`等）のPhase 1実測調整（[ADR-0003](docs/20-architecture/adr/ADR-0003-japanese-search.md)） |
 | ~~Claim分解は事前投入データ（人手相当）~~ → FR-M06-002（特許詳細ページ）はAnthropic Claude API実接続済み（`ANTHROPIC_API_KEY`未設定時は決定論的モックへフォールバック） | 他のAI機能（AI模擬審査・各種スコアリング等）への接続拡大。実AI呼び出しの土台（`lib/ai/client.ts`）は共通化済みなので、モジュールごとに同パターンで接続する |
 | Field Applicability Score は事前計算値 | 規則＋AI推定によるオンライン算出（[検出設計 §3.4](docs/30-design/01-detailed-design.md)） |
 | ~~監査ログ（`audit_logs`）は主要操作のみ記録~~ → `lib/audit/log.ts` に一元化し、認可拒否も自動記録するようにした（[NFR-L-001](docs/10-requirements/03-non-functional-requirements.md)） | 現状DB書き込みを行うServer Actionはリポジトリ全体で数ファイルのみ（大半の画面はまだ読み取り専用）のため、今後追加される書き込み機能にも同ユーティリティを継続適用すること |
@@ -384,9 +384,9 @@ MVPは「主要ユースケースを実データで最後まで動かせるこ�
 
 | 制約 | 対応 | 参照 |
 |---|---|---|
-| **日本語形態素解析拡張（PGroonga / pg_bigm）が未導入の DB 環境** | `pg_trgm`（字句）による構造検索＋字句検索のRRFハイブリッドを実装済み（`/api/search`）。`pgvector`（意味検索）は埋め込みモデル・次元数が未確定のため未導入。Phase 1 で検索品質を実測し、達成できなければ外部検索エンジンを再検討 | [ADR-0003](docs/20-architecture/adr/ADR-0003-japanese-search.md) |
+| **日本語形態素解析拡張（PGroonga / pg_bigm）が未導入の DB 環境** | `pg_trgm`（字句）による構造検索＋字句検索＋`pgvector`（意味検索, Voyage AI）のRRFハイブリッドを実装済み（`/api/search`）。Phase 1 で検索品質を実測し、達成できなければ外部検索エンジンを再検討 | [ADR-0003](docs/20-architecture/adr/ADR-0003-japanese-search.md) |
 | Workers の CPU 時間・サブリクエスト上限 | 重い処理は Queues / Workflows へ分離（本番設計） | [ADR-0004](docs/20-architecture/adr/ADR-0004-async-ai-execution.md) |
-| 埋め込みの次元数がテーブル定義に固定される | Phase 1 でモデルを比較評価し、本格取り込み前に確定 | [検索・RAG設計](docs/30-design/06-search-and-rag-design.md) |
+| **意味検索の埋め込みAPI（Voyage AI）の本番キー未発行** | `VOYAGE_API_KEY`未設定時は`lib/ai/embeddings.ts`が意味検索レイヤーを無効化（RRF融合には構造検索・字句検索のみが寄与し、`/api/search`の挙動は変わらない）。既定モデル`voyage-4-lite`・次元数1024（`VOYAGE_MODEL`で上書き可）。本番キー発行後は`db:seed`実行時に埋め込みが自動生成される | [検索・RAG設計](docs/30-design/06-search-and-rag-design.md) |
 | DB が単一ホストにある | ホスト障害＝サービス停止。バックアップ（日次 `pg_dump`）と可用性方針を本番設計で再定義 | [DB構成](docs/40-infrastructure/02-neon-setup.md) |
 | 特許明細書が LLM のトークン上限を超える | 章単位に分割して処理し結果を統合 | [AIエージェント構成](docs/20-architecture/04-ai-agent-architecture.md) |
 | ネットワーク往復のレイテンシ | N+1 を作らない。ローカル接続のため旧「リージョン固定」の制約は消滅 | 同上 |
