@@ -840,7 +840,14 @@ export const engineeringDocuments = pgTable('engineering_documents', {
   sourceUrl: text('source_url'),
   uploadedBy: uuid('uploaded_by').references(() => users.id),
   isSample: boolean('is_sample').notNull().default(true),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  // Vision AI実接続（ユーザー承認済み）対応。additive。実ファイル本体を保持する
+  // （pdf/photo/sketchのみ。cad/bimはAIで直接解析できないため対象外＝本列もNULLのまま）。
+  // report_files / patent_drawings.image_data と同じ方針でPostgresのbytea列に保存する。
+  // 一覧クエリ（documents/page.tsx）では選択せず、詳細表示・ファイル配信ルートでのみ
+  // 選択すること（重量列のSELECT回避）。
+  fileData: bytea('file_data'),
+  mimeType: text('mime_type')
 });
 
 export const extractedTechElements = pgTable('extracted_tech_elements', {

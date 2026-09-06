@@ -609,3 +609,170 @@ export async function extractDrawingPartsFromImage(
     tokenUsage: usage ? { inputTokens: usage.input_tokens, outputTokens: usage.output_tokens } : null
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// M48: 技術文書（PDF・現場写真・スケッチ）からの技術要素抽出
+// ─────────────────────────────────────────────────────────────────────────
+
+/** 対応する engineering_documents.doc_type（cad/bim はバイナリ形式をAIで直接解析できないため対象外）。 */
+export type EngineeringDocType = 'pdf' | 'photo' | 'sketch';
+
+/** 技術要素抽出プロンプトのバージョン（ai_runs.prompt_version に記録）。 */
+export const TECH_ELEMENTS_PROMPT_VERSION = 'tech-elements-extract-v1';
+
+export const TechElementCandidateSchema = z.object({
+  elementLabel: z.string().trim().min(1).max(100),
+  description: z.string().trim().max(500).optional(),
+  confidence: z.number().min(0).max(1).optional()
+});
+export type TechElementCandidate = z.infer<typeof TechElementCandidateSchema>;
+
+export const TechElementsExtractionSchema = z.object({
+  elements: z.array(TechElementCandidateSchema)
+});
+
+export interface TechElementsExtractResult {
+  source: 'live' | 'mock';
+  model: string;
+  promptVersion: string;
+  params: Record<string, unknown>;
+  inputHash: string;
+  elements: TechElementCandidate[];
+  tokenUsage: TokenUsage | null;
+}
+
+const TECH_ELEMENTS_TOOL_NAME = 'return_tech_elements';
+
+const TECH_ELEMENTS_SYSTEM_PROMPT =
+  'あなたは建設技術文書（PDF・現場写真・スケッチ）を解析し、記載されている技術要素を' +
+  '抽出するアシスタントです。与えられた文書を見て、実際に読み取れる技術要素（工法名・' +
+  '装置名・材料名等）ごとに、短い名称（elementLabel）と簡潔な説明（description、任意）、' +
+  'その要素をどの程度確信を持って読み取れたかを示す confidence（0〜1、任意）を' +
+  '列挙してください。文書から読み取れない・推測が必要な要素は含めないでください。' +
+  '1件も技術要素を認識できない場合は空配列を返してください。';
+
+const DOC_TYPE_LABEL_JA: Record<EngineeringDocType, string> = { pdf: 'PDF文書', photo: '現場写真', sketch: 'スケッチ' };
+
+/**
+ * 決定論的なモック技術要素抽出（APIキー未設定時のフォールバック）。
+ * ファイルの中身は実際には見ず、呼び出し元が渡した文書タイトル・種別のメタデータのみから
+ * 機械的にダミー技術要素を生成する。
+ */
+export function mockExtractTechElements(hint: { title: string; docType: EngineeringDocType }): TechElementCandidate[] {
+  const label = DOC_TYPE_LABEL_JA[hint.docType];
+  return [
+    { elementLabel: `${hint.title}に関する技術要素A`, description: `${label}（モック生成・対象文書: ${hint.title}）から抽出した技術要素`, confidence: 0.6 },
+    { elementLabel: `${hint.title}に関する技術要素B`, description: `${label}（モック生成・対象文書: ${hint.title}）から抽出した技術要素`, confidence: 0.5 }
+  ];
+}
+
+/**
+ * 技術文書のファイルをAI（またはモック）で解析し、技術要素候補を取得する。
+ * docType が photo/sketch の場合はvision（画像）入力、pdf の場合はdocument入力で渡す。
+ * 実APIを呼ぶ場合、レスポンスは Zod スキーマで検証し、不正な形式は AiClientError を
+ * 投げる（呼び出し元で ai_runs.status='failed' として扱うこと）。
+ */
+export async function extractTechElementsFromFile(
+  file: { data: Buffer; mimeType: string; docType: EngineeringDocType },
+  hint: { title: string },
+  opts: { model?: string } = {}
+): Promise<TechElementsExtractResult> {
+  const model = opts.model ?? getAnthropicModel();
+  const apiKey = getAnthropicApiKey();
+  const params = { maxTokens: 1024, temperature: 0 };
+  const inputHash = hashBinaryInput(TECH_ELEMENTS_PROMPT_VERSION, model, file.data, `${file.docType}\n${hint.title}`);
+
+  if (!apiKey) {
+    return {
+      source: 'mock',
+      model,
+      promptVersion: TECH_ELEMENTS_PROMPT_VERSION,
+      params,
+      inputHash,
+      elements: mockExtractTechElements({ title: hint.title, docType: file.docType }),
+      tokenUsage: null
+    };
+  }
+
+  const fileContentBlock: Anthropic.ImageBlockParam | Anthropic.DocumentBlockParam =
+    file.docType === 'pdf'
+      ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: file.data.toString('base64') } }
+      : { type: 'image', source: { type: 'base64', media_type: file.mimeType as SupportedImageMimeType, data: file.data.toString('base64') } };
+
+  const client = new Anthropic({ apiKey });
+  let response: Anthropic.Message;
+  try {
+    response = await client.messages.create({
+      model,
+      max_tokens: params.maxTokens,
+      temperature: params.temperature,
+      system: TECH_ELEMENTS_SYSTEM_PROMPT,
+      tool_choice: { type: 'tool', name: TECH_ELEMENTS_TOOL_NAME },
+      tools: [
+        {
+          name: TECH_ELEMENTS_TOOL_NAME,
+          description: '技術文書から抽出した技術要素（名称・説明・信頼度）の一覧を返す。',
+          input_schema: {
+            type: 'object',
+            properties: {
+              elements: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    elementLabel: { type: 'string' },
+                    description: { type: 'string' },
+                    confidence: { type: 'number' }
+                  },
+                  required: ['elementLabel']
+                }
+              }
+            },
+            required: ['elements']
+          }
+        }
+      ],
+      messages: [
+        {
+          role: 'user',
+          content: [
+            fileContentBlock,
+            {
+              type: 'text',
+              text: `この技術文書（${hint.title}）から実際に読み取れる技術要素を` +
+                'return_tech_elements ツールで返してください。'
+            }
+          ]
+        }
+      ]
+    });
+  } catch (err) {
+    throw new AiClientError(
+      `Anthropic API 呼び出しに失敗しました: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err }
+    );
+  }
+
+  const toolUse = response.content.find(
+    (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
+  );
+  if (!toolUse) {
+    throw new AiClientError('AI応答に tool_use ブロックが含まれていません（技術要素を取得できませんでした）');
+  }
+
+  const parsed = TechElementsExtractionSchema.safeParse(toolUse.input);
+  if (!parsed.success) {
+    throw new AiClientError(`AI応答の形式が不正です: ${parsed.error.message}`);
+  }
+
+  const usage = response.usage;
+  return {
+    source: 'live',
+    model,
+    promptVersion: TECH_ELEMENTS_PROMPT_VERSION,
+    params,
+    inputHash,
+    elements: parsed.data.elements,
+    tokenUsage: usage ? { inputTokens: usage.input_tokens, outputTokens: usage.output_tokens } : null
+  };
+}
