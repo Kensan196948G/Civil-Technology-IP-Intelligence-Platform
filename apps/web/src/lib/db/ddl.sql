@@ -719,3 +719,12 @@ CREATE TABLE IF NOT EXISTS patent_translations (
 );
 CREATE INDEX IF NOT EXISTS idx_patent_translations_patent ON patent_translations (patent_id);
 CREATE INDEX IF NOT EXISTS idx_patent_translations_lang ON patent_translations (language);
+
+-- FR-M06-002 AI Claim分解: ai_runs に ADR-0006「実装上の必須ルール2」
+-- （model / prompt_version / params / input_hash / token_usage を必ず記録する）に
+-- 必要な列を追加する。加算のみ・既存列は変更しない（後方互換）。
+-- ロールバック: 下記4列を DROP COLUMN すれば元に戻せる（他テーブルからの参照なし）。
+ALTER TABLE ai_runs ADD COLUMN IF NOT EXISTS prompt_version text;
+ALTER TABLE ai_runs ADD COLUMN IF NOT EXISTS params jsonb NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE ai_runs ADD COLUMN IF NOT EXISTS input_hash text;
+ALTER TABLE ai_runs ADD COLUMN IF NOT EXISTS token_usage jsonb;

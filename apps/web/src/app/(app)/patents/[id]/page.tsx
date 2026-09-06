@@ -4,7 +4,12 @@ import * as s from '@/lib/db/schema';
 import { eq, asc, inArray } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { decomposeClaim } from './actions';
 
+// FR-M06-002: AI Claim分解の書込権限（docs/10-requirements/05-rbac-matrix.md M06 Claim W）。
+// UI側の表示制御のみ（実効的な認可は actions.ts の decomposeClaim 側で必ず再検証する）。
+const CLAIM_DECOMPOSE_ROLES = new Set(['tech_manager', 'ip']);
 
 export default async function PatentDetailPage({ params }: { params: Promise<{ id: string }> })
 {
@@ -13,6 +18,8 @@ export default async function PatentDetailPage({ params }: { params: Promise<{ i
   const db = getDb(getDatabaseUrl());
   const [patent] = await db.select().from(s.patents).where(eq(s.patents.id, p.id)).limit(1);
   if (!patent) notFound();
+  const user = await getCurrentUser();
+  const canDecompose = !!user && CLAIM_DECOMPOSE_ROLES.has(user.role);
 
   const claims = await db.select().from(s.patentClaims).where(eq(s.patentClaims.patentId, patent.id)).orderBy(asc(s.patentClaims.claimNo));
   const claimIds = claims.map(c => c.id);
@@ -70,14 +77,27 @@ export default async function PatentDetailPage({ params }: { params: Promise<{ i
                 {c.isIndependent && <span className="badge" style={{ color: 'var(--blue)', border: '1px solid var(--blue)' }}>独立項</span>}
               </div>
               <div style={{ fontSize: 13, lineHeight: 1.8 }}>{c.text}</div>
-              {(elementsByClaim.get(c.id) ?? []).length > 0 && (
+              {(elementsByClaim.get(c.id) ?? []).length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 12, borderLeft: '2px solid var(--line)' }}>
+                  <span className="badge" style={{ alignSelf: 'flex-start', color: 'var(--green)', border: '1px solid var(--green)' }}>
+                    AIで分解済み（構成要件 {(elementsByClaim.get(c.id) ?? []).length} 件・根拠は原文から機械抽出）
+                  </span>
                   {(elementsByClaim.get(c.id) ?? []).map(el => (
                     <div key={el.id} style={{ fontSize: 12, color: 'var(--ink-2)' }}>
                       <span className="mono" style={{ fontWeight: 700, color: 'var(--ink)' }}>{el.label}</span>：{el.text}
                     </div>
                   ))}
                 </div>
+              ) : canDecompose ? (
+                <form action={decomposeClaim} style={{ alignSelf: 'flex-start' }}>
+                  <input type="hidden" name="claimId" value={c.id} />
+                  <input type="hidden" name="patentId" value={patent.id} />
+                  <button type="submit" className="btn btn-secondary" style={{ fontSize: 12.5 }}>
+                    AIで構成要件に分解
+                  </button>
+                </form>
+              ) : (
+                <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>構成要件は未分解です（分解権限：技術管理者・知財担当）。</div>
               )}
             </div>
           ))}
