@@ -920,6 +920,15 @@ CREATE TABLE IF NOT EXISTS engineering_documents (
 CREATE INDEX IF NOT EXISTS idx_engineering_documents_site ON engineering_documents (site_id);
 CREATE INDEX IF NOT EXISTS idx_engineering_documents_doc_type ON engineering_documents (doc_type);
 
+-- Vision AI実接続（ユーザー承認済み。M47/M48 Vision AI統合）対応。additive のみ。
+-- 実ファイル本体（bytea）を engineering_documents に保持する（pdf/photo/sketchのみ。
+-- cad/bimはAIで直接解析できないため対象外＝本列は常にNULLのまま）。既存の source_url 列は
+-- プレースホルダ用途のまま変更しない。既存のデモ行は file_data/mime_type とも NULL のまま
+-- （後方互換）。
+-- ロールバック: ALTER TABLE engineering_documents DROP COLUMN IF EXISTS file_data; DROP COLUMN IF EXISTS mime_type;
+ALTER TABLE engineering_documents ADD COLUMN IF NOT EXISTS file_data bytea;
+ALTER TABLE engineering_documents ADD COLUMN IF NOT EXISTS mime_type text;
+
 CREATE TABLE IF NOT EXISTS extracted_tech_elements (
   id uuid PRIMARY KEY,
   document_id uuid NOT NULL REFERENCES engineering_documents(id) ON DELETE CASCADE,
