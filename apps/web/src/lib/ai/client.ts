@@ -421,3 +421,191 @@ export async function compareClaimElements(
     tokenUsage: usage ? { inputTokens: usage.input_tokens, outputTokens: usage.output_tokens } : null
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Vision AI基盤（M47 Patent Drawing / M48 Engineering Document 共通）
+//
+// 画像（PNG/JPEG/WebP）・PDF文書を入力として渡し、構造化された抽出結果を
+// Zodスキーマで検証して返す（Anthropic Messages APIのvision入力: content配列に
+// {type:'image', source:{type:'base64', media_type, data}} または PDFの場合
+// {type:'document', source:{type:'base64', media_type:'application/pdf', data}}
+// を含める）。ANTHROPIC_API_KEY 未設定時は、他のAI機能と同様に決定論的な
+// モック応答（画像・PDFの中身は実際には見ずに、呼び出し元が渡したメタデータ
+// [図番・キャプション・文書タイトル等]から機械的に生成するダミー結果）へ
+// フォールバックする。
+//
+// ADR-0006 provenance-first 実装上の注意（画像/PDF固有）:
+// テキスト解析（decomposeClaimText 等）と異なり、画像・PDFからは「原文の該当箇所」を
+// charStart/charEnd のような形で機械的に切り出すことができない。そのため
+// 呼び出し元（lib/ai/drawing-parts.ts, lib/ai/tech-elements.ts）は、
+// ai_citations.quoted_text にAIが生成した説明文をそのまま使わず、解析対象そのものを
+// 特定できる検証可能な情報（図番・キャプション・文書タイトル等、実際にDBに存在し
+// 閲覧可能な値）を用いる。この設計判断はPR本文にも明記する。
+// ─────────────────────────────────────────────────────────────────────────
+
+/** Anthropic Messages APIのvision入力でサポートする画像MIMEタイプ。 */
+export type SupportedImageMimeType = 'image/png' | 'image/jpeg' | 'image/webp';
+
+/** 画像/PDFなどバイナリ入力用の input_hash 計算（テキストと違いバイト列を直接ハッシュに含める）。 */
+function hashBinaryInput(promptVersion: string, model: string, data: Buffer, extra: string): string {
+  return createHash('sha256')
+    .update(promptVersion).update('\n')
+    .update(model).update('\n')
+    .update(extra).update('\n')
+    .update(data)
+    .digest('hex');
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// M47: 特許図面の部品（符号）自動認識
+// ─────────────────────────────────────────────────────────────────────────
+
+/** 図面部品認識プロンプトのバージョン（ai_runs.prompt_version に記録）。 */
+export const DRAWING_PARTS_PROMPT_VERSION = 'drawing-parts-extract-v1';
+
+export const DrawingPartCandidateSchema = z.object({
+  partNo: z.string().trim().min(1).max(20),
+  description: z.string().trim().min(1).max(300)
+});
+export type DrawingPartCandidate = z.infer<typeof DrawingPartCandidateSchema>;
+
+export const DrawingPartsExtractionSchema = z.object({
+  parts: z.array(DrawingPartCandidateSchema)
+});
+
+export interface DrawingPartsExtractResult {
+  source: 'live' | 'mock';
+  model: string;
+  promptVersion: string;
+  params: Record<string, unknown>;
+  inputHash: string;
+  parts: DrawingPartCandidate[];
+  tokenUsage: TokenUsage | null;
+}
+
+const DRAWING_PARTS_TOOL_NAME = 'return_drawing_parts';
+
+const DRAWING_PARTS_SYSTEM_PROMPT =
+  'あなたは特許図面を解析し、図面中に記載されている部品の符号を認識するアシスタントです。' +
+  '与えられた図面画像を見て、図中に実際に記載されている符号（数字・アルファベット等）と、' +
+  'その符号が指す部品についての短い説明を列挙してください。画像から読み取れない・' +
+  '推測が必要な部品は含めないでください。partNo には図中の符号をそのまま、' +
+  'description には日本語で簡潔な説明を入れてください。1件も符号を認識できない場合は' +
+  '空配列を返してください。';
+
+/**
+ * 決定論的なモック部品認識（APIキー未設定時のフォールバック）。
+ * 画像を実際には見ず、呼び出し元が渡した図番・キャプションのメタデータのみから
+ * 機械的にダミー部品を生成する。
+ */
+export function mockExtractDrawingParts(hint: { figureNo: string; caption?: string | null }): DrawingPartCandidate[] {
+  const base = hint.caption?.trim() || hint.figureNo;
+  return [
+    { partNo: '1', description: `${base}に示される主要部材（モック生成・対象図番: ${hint.figureNo}）` },
+    { partNo: '2', description: `${base}に示される付随部材（モック生成・対象図番: ${hint.figureNo}）` }
+  ];
+}
+
+/**
+ * 特許図面の画像をAI（またはモック）で解析し、部品（符号・説明）候補を取得する。
+ * 実APIを呼ぶ場合、レスポンスは Zod スキーマで検証し、不正な形式は AiClientError を
+ * 投げる（呼び出し元で ai_runs.status='failed' として扱うこと）。
+ */
+export async function extractDrawingPartsFromImage(
+  image: { data: Buffer; mimeType: SupportedImageMimeType },
+  hint: { figureNo: string; caption?: string | null },
+  opts: { model?: string } = {}
+): Promise<DrawingPartsExtractResult> {
+  const model = opts.model ?? getAnthropicModel();
+  const apiKey = getAnthropicApiKey();
+  const params = { maxTokens: 1024, temperature: 0 };
+  const inputHash = hashBinaryInput(DRAWING_PARTS_PROMPT_VERSION, model, image.data, `${hint.figureNo}\n${hint.caption ?? ''}`);
+
+  if (!apiKey) {
+    return {
+      source: 'mock',
+      model,
+      promptVersion: DRAWING_PARTS_PROMPT_VERSION,
+      params,
+      inputHash,
+      parts: mockExtractDrawingParts(hint),
+      tokenUsage: null
+    };
+  }
+
+  const client = new Anthropic({ apiKey });
+  let response: Anthropic.Message;
+  try {
+    response = await client.messages.create({
+      model,
+      max_tokens: params.maxTokens,
+      temperature: params.temperature,
+      system: DRAWING_PARTS_SYSTEM_PROMPT,
+      tool_choice: { type: 'tool', name: DRAWING_PARTS_TOOL_NAME },
+      tools: [
+        {
+          name: DRAWING_PARTS_TOOL_NAME,
+          description: '図面から認識した部品（符号・説明）の一覧を返す。',
+          input_schema: {
+            type: 'object',
+            properties: {
+              parts: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    partNo: { type: 'string' },
+                    description: { type: 'string' }
+                  },
+                  required: ['partNo', 'description']
+                }
+              }
+            },
+            required: ['parts']
+          }
+        }
+      ],
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: image.mimeType, data: image.data.toString('base64') } },
+            {
+              type: 'text',
+              text: `この特許図面（${hint.figureNo}${hint.caption ? ` / ${hint.caption}` : ''}）に記載されている` +
+                '部品符号と説明を return_drawing_parts ツールで返してください。'
+            }
+          ]
+        }
+      ]
+    });
+  } catch (err) {
+    throw new AiClientError(
+      `Anthropic API 呼び出しに失敗しました: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err }
+    );
+  }
+
+  const toolUse = response.content.find(
+    (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
+  );
+  if (!toolUse) {
+    throw new AiClientError('AI応答に tool_use ブロックが含まれていません（部品を取得できませんでした）');
+  }
+
+  const parsed = DrawingPartsExtractionSchema.safeParse(toolUse.input);
+  if (!parsed.success) {
+    throw new AiClientError(`AI応答の形式が不正です: ${parsed.error.message}`);
+  }
+
+  const usage = response.usage;
+  return {
+    source: 'live',
+    model,
+    promptVersion: DRAWING_PARTS_PROMPT_VERSION,
+    params,
+    inputHash,
+    parts: parsed.data.parts,
+    tokenUsage: usage ? { inputTokens: usage.input_tokens, outputTokens: usage.output_tokens } : null
+  };
+}

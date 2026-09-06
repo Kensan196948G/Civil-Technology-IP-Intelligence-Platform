@@ -796,7 +796,13 @@ export const patentDrawings = pgTable('patent_drawings', {
   imageUrl: text('image_url'),             // 外部参照URLのプレースホルダ（実画像は保存しない）
   caption: text('caption'),
   isSample: boolean('is_sample').notNull().default(true),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  // Vision AI実接続（ユーザー承認済み）対応。additive。実画像本体を保持する。
+  // 自社ホストNode運用（ADR-0007）でオブジェクトストレージが未導入のため、report_files
+  // と同じ方針で Postgres の bytea 列に保存する。一覧クエリ（drawings/page.tsx）では
+  // 選択せず、詳細表示・画像配信ルートでのみ選択すること（重量列のSELECT回避）。
+  imageData: bytea('image_data'),
+  mimeType: text('mime_type')
 });
 
 export const drawingParts = pgTable('drawing_parts', {
