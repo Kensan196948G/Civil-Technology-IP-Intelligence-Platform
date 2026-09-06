@@ -333,10 +333,10 @@ MVPは「主要ユースケースを実際に操作できること」を優先�
 | Next.js 単体アプリ（Route + Server Actions） | Hono API を分離、複数Workerへ分割 |
 | デモログイン（cookie + ロール選択） | Cloudflare Access（SSO + MFA） |
 | ~~ILIKE ベースの横断検索~~ → `/api/search` は構造検索＋pg_trgm字句検索をRRFで融合済み（画面側 `/search` は種別別ILIKE集計のまま） | pgvector（意味検索）を追加したフルハイブリッド検索（[ADR-0003](docs/20-architecture/adr/ADR-0003-japanese-search.md)。埋め込みモデル未確定のため見送り中） |
-| Claim分解は事前投入データ（人手相当） | AI（Claude API）による自動分解・自動模擬審査 |
+| ~~Claim分解は事前投入データ（人手相当）~~ → FR-M06-002（特許詳細ページ）はAnthropic Claude API実接続済み（`ANTHROPIC_API_KEY`未設定時は決定論的モックへフォールバック） | 他のAI機能（AI模擬審査・各種スコアリング等）への接続拡大。実AI呼び出しの土台（`lib/ai/client.ts`）は共通化済みなので、モジュールごとに同パターンで接続する |
 | Field Applicability Score は事前計算値 | 規則＋AI推定によるオンライン算出（[検出設計 §3.4](docs/30-design/01-detailed-design.md)） |
-| 監査ログ（`audit_logs`）は主要操作のみ記録 | 全操作・拒否操作を含む完全な監査（[NFR-L-001](docs/10-requirements/03-non-functional-requirements.md)） |
-| RBAC は画面上の表示のみ（行レベル制御なし） | プロジェクト単位の行レベル制御・C3/C4の404秘匿（[詳細設計 §3.1](docs/30-design/01-detailed-design.md)） |
+| ~~監査ログ（`audit_logs`）は主要操作のみ記録~~ → `lib/audit/log.ts` に一元化し、認可拒否も自動記録するようにした（[NFR-L-001](docs/10-requirements/03-non-functional-requirements.md)） | 現状DB書き込みを行うServer Actionはリポジトリ全体で数ファイルのみ（大半の画面はまだ読み取り専用）のため、今後追加される書き込み機能にも同ユーティリティを継続適用すること |
+| ~~RBAC は画面上の表示のみ（行レベル制御なし）~~ → `inventions`/`workflow_instances` の一覧・詳細・件数・検索にロール×分類のWHERE句を適用し、C4は個別付与（grant）がある利用者のみ可視にした（詳細は下記追記） | プロジェクト参加者モデル自体の導入（現状はRBAC §3のRロール＋起案者本人＋個別付与で近似）、`patents`/`technologies`（classification列は存在するが行レベル制御は未適用）への適用拡大（[詳細設計 §3.1](docs/30-design/01-detailed-design.md)） |
 
 > **📌 追記（#11 対応・2026-09-05）**: 上記「行レベル制御なし」は解消済み。`lib/authz/row-visibility.ts` を新設し、
 > 発明（既定 C3）・発明 workflow（C3）を表示する一覧・詳細・件数・検索の各クエリへ**ロール×分類の可視条件（WHERE句）**を適用した
@@ -358,18 +358,20 @@ MVPは「主要ユースケースを実際に操作できること」を優先�
 
 ### モジュール実装状況（幅の簡略化）
 
-上表は各機能の実装の*深さ*の簡略化を示す。以下は構想している25モジュールのうち、
-MVPで画面化した範囲（幅）を示す。
+上表は各機能の実装の*深さ*の簡略化を示す。以下は構想しているモジュール群（v0.1基本25モジュール＋
+[M26-M50拡張群](docs/90-project/05-module-expansion-m26-m50.md)）のうち、MVPで画面化した範囲（幅）を示す
+（**2026-09-06 追加実装分を反映して全面更新**）。
 
-| 画面化済み（10） | 未着手（バックログ） |
+| 区分 | モジュール |
 |---|---|
-| ダッシュボード / 横断検索 / 特許 / NETIS・公開技術 / Claim解析 / 現場適用 / 現場・課題 / 発明管理 / AI実行履歴・根拠 / 承認・案件 | Prior Art Intelligence（先行技術調査専用画面） / Competitor Intelligence / Patent Landscape / R&D Intelligence / Licensing Intelligence / IP Portfolio Management / Legal Intelligence / Monitoring & Watch / Knowledge・RAG / Data Management（クレンジング・名寄せ画面） / Administration・監査ログ画面 / 論文（papers）専用一覧画面 |
+| ✅ 画面化済み | ダッシュボード / 横断検索 / 特許 / NETIS・公開技術 / Claim解析 / 現場適用 / 現場・課題 / 発明管理 / AI実行履歴・根拠 / 承認・案件 / 論文（papers）専用一覧画面 / Prior Art Intelligence（`investigations`配下） / Competitor Intelligence・Patent Landscape（`landscape`配下） / R&D Intelligence（`rnd`配下） / Licensing Intelligence（`licensing`配下） / Legal Intelligence（`legal`配下） / Monitoring & Watch（`watch`配下） / Knowledge・RAG（`knowledge`配下） / Data Management（`data`配下のクレンジング・名寄せ・品質・マスタ画面） / Administration・監査ログ画面（`admin`/`audit`配下） / M42 R&D Funding Intelligence（`rnd/funding`） |
+| 🟡 UI・データモデルのみ（Vision AI等は未接続） | M47 Patent Drawing / Image Intelligence（`patents/drawings`。図面・部品・類似図面はデモデータ表示のみで、実際の画像解析AIは未接続） / M48 Engineering Document Intelligence（技術文書からの要素抽出・特許マッチはデモデータ表示のみで、実際のVision AIは未接続）。両モジュールとも「Vision AI基盤のコスト見積り後に採否判断」という未決事項（[拡張計画書](docs/90-project/05-module-expansion-m26-m50.md)）があり、AI接続自体は今回のスコープ外とした |
+| ⬜ 未着手 | IP Portfolio Management（`patents`/`licensing`配下に関連画面はあるが専用の統合ポートフォリオビューは未整備） |
 
 MVPは「主要ユースケースを実データで最後まで動かせること」を優先したため、
-上記バックログの各モジュールは、テーブル設計（`schema.ts`）レベルでは一部先行しているものの、
-画面としては未実装である。
+上記モジュールのテーブル設計（`schema.ts`）は先行しているものの、一部は画面が未整備・AI接続が未了である。
 
-> **📌 追記（Reporting出力対応・2026-09-06）**: 「Reporting出力（PDF/DOCX/XLSX）」は解消済みのため上記バックログから除外した。
+> **📌 追記（Reporting出力対応・2026-09-06）**: 「Reporting出力（PDF/DOCX/XLSX）」は解消済み。
 > `/reports/new` でのレポート作成時に、種別（`kind`）ごとに関連DBテーブルから件数サマリ＋上位20件の一覧を集計し、
 > 実際に html/pdf/docx/xlsx のファイル本体を生成するようにした（`apps/web/src/lib/reports/`）。
 > 自社ホストNode運用（ADR-0007）でオブジェクトストレージが未導入のため、ファイル本体は新設テーブル
@@ -389,6 +391,7 @@ MVPは「主要ユースケースを実データで最後まで動かせるこ�
 | 特許明細書が LLM のトークン上限を超える | 章単位に分割して処理し結果を統合 | [AIエージェント構成](docs/20-architecture/04-ai-agent-architecture.md) |
 | ネットワーク往復のレイテンシ | N+1 を作らない。ローカル接続のため旧「リージョン固定」の制約は消滅 | 同上 |
 | 詳細ページの `notFound()` が HTTP 200 を返す問題（Next.js 15.5 でも継続） | App Router 配下のページで `notFound()`/`redirect()` を呼ぶと、RSC レンダリング経由では not-found 画面が描画されるものの HTTP ステータスが 200 になる（Next.js のレンダリング仕様。直接リクエストの unknown ルート・`/404` ルートは 404 を返す）。**機密コンテンツ自体は描画されない**ため行レベル秘匿は有効 | `require-role.ts` 冒頭コメント |
+| **CI の `Cloudflare Pages build（next-on-pages）verification` ステップが恒常的に失敗する（2026-08-29〜）** | DBドライバ（`postgres.js`。Node.js組み込みモジュール依存）を使う現行のNode.js自社ホスト構成（ADR-0007）と、`next-on-pages`が要求するEdge Runtime（全ルートに `export const runtime='edge'` が必要）が本質的に非両立。全249ルートをEdge化するとDB接続自体が壊れるため対応していない。**既知・未決事項（拡張計画書 D-5）**であり、`quality`ジョブ内のこのステップ以外（lint/typecheck/build/audit/secret-scan）が成功していればPRの品質は担保されていると判断してよい。CI/CDパイプラインの本番デプロイ経路自体の見直し（要決定） | [ADR-0007](docs/20-architecture/adr/ADR-0007-local-postgresql.md) |
 
 > **行レベル制御（#11）と HTTP ステータス**: C3/C4 の秘匿は「一覧・件数・検索では WHERE 句で除外し存在自体を返さない」ことで担保している（こちらは完全に有効）。
 > 詳細ページ（URL 直叩き）では not-found 画面を返し機密内容を出さない。HTTP ステータスの 200/404 差は上記の Next.js レンダリング仕様によるもので、
