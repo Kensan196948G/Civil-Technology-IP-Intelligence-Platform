@@ -47,7 +47,10 @@ export const patents = pgTable('patents', {
   sourceUrl: text('source_url'),
   retrievedAt: timestamp('retrieved_at', { withTimezone: true }).notNull(),
   isSample: boolean('is_sample').notNull().default(true),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  // ADR-0003 字句検索基盤。DB側の GENERATED ALWAYS AS カラム（ctiip_text_norm(title)）。
+  // 読み取り専用（アプリからは書き込まない）。ddl.sql 参照。
+  titleNorm: text('title_norm')
 });
 
 export const patentClaims = pgTable('patent_claims', {
@@ -90,7 +93,9 @@ export const papers = pgTable('papers', {
   source: text('source').notNull(),
   sourceUrl: text('source_url'),
   retrievedAt: timestamp('retrieved_at', { withTimezone: true }).notNull(),
-  isSample: boolean('is_sample').notNull().default(true)
+  isSample: boolean('is_sample').notNull().default(true),
+  // ADR-0003 字句検索基盤。DB側の GENERATED ALWAYS AS カラム。読み取り専用。ddl.sql 参照。
+  titleNorm: text('title_norm')
 });
 
 export const netisTechnologies = pgTable('netis_technologies', {
@@ -102,7 +107,9 @@ export const netisTechnologies = pgTable('netis_technologies', {
   registeredOn: date('registered_on'),
   source: text('source').notNull(),
   retrievedAt: timestamp('retrieved_at', { withTimezone: true }).notNull(),
-  isSample: boolean('is_sample').notNull().default(true)
+  isSample: boolean('is_sample').notNull().default(true),
+  // ADR-0003 字句検索基盤。DB側の GENERATED ALWAYS AS カラム。読み取り専用。ddl.sql 参照。
+  nameNorm: text('name_norm')
 });
 
 export const technologies = pgTable('technologies', {
@@ -115,7 +122,9 @@ export const technologies = pgTable('technologies', {
   maturity: text('maturity'),
   classification: classificationEnum('classification').notNull().default('C2'),
   isSample: boolean('is_sample').notNull().default(true),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  // ADR-0003 字句検索基盤。DB側の GENERATED ALWAYS AS カラム。読み取り専用。ddl.sql 参照。
+  nameNorm: text('name_norm')
 });
 
 // M06 Claim Intelligence: 他社特許 vs 自社案の比較結果

@@ -719,3 +719,55 @@ CREATE TABLE IF NOT EXISTS patent_translations (
 );
 CREATE INDEX IF NOT EXISTS idx_patent_translations_patent ON patent_translations (patent_id);
 CREATE INDEX IF NOT EXISTS idx_patent_translations_lang ON patent_translations (language);
+
+-- ADR-0003 / docs/30-design/06-search-and-rag-design.md 字句検索（pg_trgm）基盤。
+-- 意味検索（pgvector）は埋め込みモデル・次元数が未確定（docs/40-infrastructure/02-neon-setup.md）のため
+-- 本マイグレーションのスコープ外（見送り）。ここでは①構造検索の強化と②字句検索（トライグラム類似）の
+-- 基盤のみを additive に追加する。全て IF NOT EXISTS / CREATE OR REPLACE で再実行安全。
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- text_norm 相当の正規化関数。設計書§3の正規化のうち、Postgres標準関数のみで実現できる範囲
+-- （全角英数字→半角、大文字小文字統一、連続空白の圧縮）を IMMUTABLE 関数として実装し、
+-- 生成列（GENERATED ALWAYS AS ... STORED）から呼び出す。
+-- 注: 完全なUnicode NFKC正規化・半角カナ→全角カナ変換・長音/波ダッシュの統一は
+-- Postgres標準関数だけでは行えないため未実装（⚠️ 将来 unaccent 等の追加拡張やアプリ側の
+-- 事前正規化での補完を検討する）。表示には原文（title/name列）を使い、この列は検索専用。
+CREATE OR REPLACE FUNCTION ctiip_text_norm(src text) RETURNS text AS $$
+  SELECT trim(
+    regexp_replace(
+      lower(
+        translate(
+          coalesce(src, ''),
+          '０１２３４５６７８９ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ',
+          '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+        )
+      ),
+      '\s+', ' ', 'g'
+    )
+  );
+$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
+-- 検索対象4テーブルへ text_norm 相当の生成列を追加する（additive・既存列は無変更）。
+ALTER TABLE patents ADD COLUMN IF NOT EXISTS title_norm text
+  GENERATED ALWAYS AS (ctiip_text_norm(title)) STORED;
+ALTER TABLE papers ADD COLUMN IF NOT EXISTS title_norm text
+  GENERATED ALWAYS AS (ctiip_text_norm(title)) STORED;
+ALTER TABLE netis_technologies ADD COLUMN IF NOT EXISTS name_norm text
+  GENERATED ALWAYS AS (ctiip_text_norm(name)) STORED;
+ALTER TABLE technologies ADD COLUMN IF NOT EXISTS name_norm text
+  GENERATED ALWAYS AS (ctiip_text_norm(name)) STORED;
+
+-- pg_trgm の GIN インデックス（字句検索の類似度検索を高速化）。
+CREATE INDEX IF NOT EXISTS idx_patents_title_norm_trgm
+  ON patents USING gin (title_norm gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_papers_title_norm_trgm
+  ON papers USING gin (title_norm gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_netis_technologies_name_norm_trgm
+  ON netis_technologies USING gin (name_norm gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_technologies_name_norm_trgm
+  ON technologies USING gin (name_norm gin_trgm_ops);
+
+-- ①構造検索（特許番号・NETIS番号の完全一致/前方一致）を高速化する索引。
+-- text_pattern_ops は ILIKE 'xxx%'（前方一致）にも使える演算子クラス。
+CREATE INDEX IF NOT EXISTS idx_patents_publication_no_prefix ON patents (publication_no text_pattern_ops);
+CREATE INDEX IF NOT EXISTS idx_netis_technologies_netis_no_prefix ON netis_technologies (netis_no text_pattern_ops);

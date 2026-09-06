@@ -65,14 +65,20 @@ GRANT INSERT, SELECT ON audit_logs TO ctip_app;
 
 ## 4. 拡張
 
-現行の `civil_tech_ip_intelligence` に作成済みの拡張: `pgcrypto`, `plpgsql`。
+現行の `civil_tech_ip_intelligence` に作成済みの拡張: `pgcrypto`, `plpgsql`, `pg_trgm`。
 
-検索高度化（ADR-0003 の pg_trgm / pgvector）や正規化補助（unaccent）は、実装フェーズで追加する:
+`pg_trgm` は ADR-0003 の②字句検索（構造検索＋トライグラム類似度のRRFハイブリッド、`/api/search`）で
+導入済み（`apps/web/src/lib/db/ddl.sql`）。検索対象4テーブル（`patents.title` / `papers.title` /
+`netis_technologies.name` / `technologies.name`）に正規化済み生成列（`title_norm` / `name_norm`。
+全角半角統一・大文字小文字統一・空白圧縮を行う `ctiip_text_norm()` 関数の `GENERATED ALWAYS AS`）と
+`gin_trgm_ops` の GIN インデックスを追加している。
+
+意味検索（pgvector）は、埋め込みモデル・次元数が未確定（下記）かつ新規の埋め込みAPI契約が
+未承認のため、引き続き未導入（見送り）:
 
 ```sql
-CREATE EXTENSION IF NOT EXISTS vector;     -- 意味検索（未導入）
-CREATE EXTENSION IF NOT EXISTS pg_trgm;    -- 日本語字句検索（未導入）
-CREATE EXTENSION IF NOT EXISTS unaccent;   -- 正規化補助（未導入）
+CREATE EXTENSION IF NOT EXISTS vector;     -- 意味検索（未導入・埋め込みモデル未確定のため見送り）
+CREATE EXTENSION IF NOT EXISTS unaccent;   -- 正規化補助（未導入。ctiip_text_norm() はPostgres標準関数のみで代替実装）
 ```
 
 ## 5. マイグレーション運用
