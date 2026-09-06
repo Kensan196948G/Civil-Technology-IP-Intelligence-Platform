@@ -207,7 +207,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     key: 'research', icon: '📚', label: '07. 論文・研究・NETIS',
     items: [
-      { label: '論文', href: '/search?tab=paper' },
+      { label: '論文', href: '/papers' },
       { label: '学会資料', href: '/research/proceedings' },
       { label: '研究成果', href: '/research/results' },
       { label: '大学・研究機関', href: '/research/institutions' },
