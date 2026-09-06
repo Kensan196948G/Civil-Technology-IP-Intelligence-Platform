@@ -13,6 +13,7 @@ import {
   type TokenUsage
 } from './client';
 import { getAnthropicModel } from '@/lib/env';
+import { extractSubstring } from './text-extract';
 
 export interface DecomposedElement {
   seq: number;
@@ -52,12 +53,10 @@ export interface ClaimDecompositionRun {
  * claimText の charStart/charEnd の範囲が有効な場合のみ、機械的に該当文字列を
  * 切り出して返す。範囲外・不整合（charStart>=charEnd、負数、非整数、claimText
  * の長さを超える等）の場合は null を返す（ADR-0006ルール1の厳格な実装）。
+ * 実体は lib/ai/text-extract.ts の共通実装（claim-compare.ts と共用）。
  */
 export function extractQuote(claimText: string, charStart: number, charEnd: number): string | null {
-  if (!Number.isInteger(charStart) || !Number.isInteger(charEnd)) return null;
-  if (charStart < 0 || charEnd <= charStart || charEnd > claimText.length) return null;
-  const quote = claimText.slice(charStart, charEnd);
-  return quote.length > 0 ? quote : null;
+  return extractSubstring(claimText, charStart, charEnd);
 }
 
 /**

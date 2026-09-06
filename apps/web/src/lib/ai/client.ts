@@ -202,3 +202,222 @@ export async function decomposeClaimText(
     tokenUsage: usage ? { inputTokens: usage.input_tokens, outputTokens: usage.output_tokens } : null
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// FR-M06-005/006/007: Claim Chart / Claim Matrix（他社特許の構成要件 vs 自社技術説明文）
+//
+// ADR-0006ルール1と同様に、quoted_text 相当の文字列はAIに生成させない。
+// このモジュールは自社技術の説明文（technologies.summary 等）中の該当箇所を
+// 「charStart/charEnd」としてのみ返し、実際の切り出しは呼び出し元
+// （lib/ai/claim-compare.ts）が行う。
+// ─────────────────────────────────────────────────────────────────────────
+
+/** Claim比較プロンプトのバージョン（ai_runs.prompt_version に記録）。 */
+export const CLAIM_COMPARE_PROMPT_VERSION = 'claim-compare-v1';
+
+/** 比較対象として渡す他社特許の構成要件（既にFR-M06-002で分解済みのもの）。 */
+export interface ClaimElementInput {
+  label: string;
+  text: string;
+}
+
+export const ClaimCompareRowCandidateSchema = z.object({
+  elementLabel: z.string().trim().min(1).max(60),
+  kind: z.enum(['match', 'similar', 'differ']),
+  rationale: z.string().trim().min(1).max(2000),
+  charStart: z.number().int(),
+  charEnd: z.number().int()
+});
+export type ClaimCompareRowCandidate = z.infer<typeof ClaimCompareRowCandidateSchema>;
+
+export const ClaimComparisonSchema = z.object({
+  rows: z.array(ClaimCompareRowCandidateSchema).min(1)
+});
+
+export interface ClaimCompareResult {
+  source: 'live' | 'mock';
+  model: string;
+  promptVersion: string;
+  params: Record<string, unknown>;
+  inputHash: string;
+  rows: ClaimCompareRowCandidate[];
+  tokenUsage: TokenUsage | null;
+}
+
+const CLAIM_COMPARE_TOOL_NAME = 'return_claim_comparison';
+
+const CLAIM_COMPARE_SYSTEM_PROMPT =
+  'あなたは他社特許の構成要件と自社技術の説明文を比較する専門家アシスタントです。' +
+  '与えられた構成要件（elementLabelごと）ごとに、自社技術の説明文の中から最も関連する' +
+  '箇所を raw な文字オフセット（0始まり、charStart は開始位置、charEnd は終了位置の直後、' +
+  'JavaScriptの string.slice(charStart, charEnd) と同じ規則）で示し、一致(match)/' +
+  '類似(similar)/相違(differ)のいずれかを判定してください。該当箇所の文字列そのものを' +
+  '生成・要約・言い換えしてはいけません（charStart/charEndのみを返してください）。' +
+  '完全に対応する記載が無い場合でも、自社技術の説明文の中で最も関連性が高い箇所を' +
+  '指し示し、kind=differ としてください（説明文全体に一切関連箇所が無い場合を除き、' +
+  'charStart/charEnd を必ず有効な範囲で返してください）。elementLabel には入力で' +
+  '与えた構成要件のラベルをそのまま使ってください。rationale には判定理由を' +
+  '日本語で簡潔に記述してください（この文字列は根拠原文として保存されないため、' +
+  '要約や説明として自由に記述してよい）。オフセットは必ず入力した説明文の範囲内かつ' +
+  'charStart < charEnd としてください。';
+
+function buildComparisonUserPrompt(elements: ClaimElementInput[], technologyText: string): string {
+  const elementsText = elements.map(e => `- ${e.label}: ${e.text}`).join('\n');
+  return `他社特許の構成要件一覧:\n${elementsText}\n\n` +
+    `自社技術の説明文（この文字列中の位置をcharStart/charEndで示すこと）:\n${technologyText}\n\n` +
+    `各構成要件について return_claim_comparison ツールで比較結果を返してください。`;
+}
+
+/** 文字集合の重なり具合（Jaccard近似）を [0, 1] で返す。モックの判定に使う簡易指標。 */
+function charOverlapRatio(a: string, b: string): number {
+  const setA = new Set(Array.from(a));
+  const setB = new Set(Array.from(b));
+  if (setA.size === 0 || setB.size === 0) return 0;
+  let common = 0;
+  for (const ch of setA) if (setB.has(ch)) common++;
+  return common / Math.max(setA.size, setB.size);
+}
+
+/**
+ * 決定論的なモック比較（APIキー未設定時のフォールバック）。
+ * mockDecomposeClaim と同じ方式：technologyText を句読点で機械的に分割し、
+ * 構成要件へ順番に（cyclicに）割り当てる。文字集合の重なり率で
+ * match/similar/differ を決める。AIを一切使わないため、常に technologyText の
+ * 範囲内に収まるオフセットを返す（該当箇所が全く見つからない要素はスキップする）。
+ */
+export function mockCompareClaimElements(
+  elements: ClaimElementInput[],
+  technologyText: string
+): ClaimCompareRowCandidate[] {
+  const trimmed = technologyText.trim();
+  if (!trimmed || elements.length === 0) return [];
+  const delimiter = trimmed.includes('。')
+    ? '。'
+    : (trimmed.includes('、') ? '、' : (trimmed.includes(', ') ? ', ' : null));
+  const segments = delimiter ? trimmed.split(delimiter) : [trimmed];
+
+  const rows: ClaimCompareRowCandidate[] = [];
+  for (let i = 0; i < elements.length; i++) {
+    const el = elements[i]!;
+    const seg = segments[i % segments.length];
+    if (!seg) continue;
+    const segTrimmed = seg.trim();
+    if (!segTrimmed) continue;
+    const start = technologyText.indexOf(segTrimmed);
+    if (start === -1) continue;
+    const end = start + segTrimmed.length;
+    const overlap = charOverlapRatio(el.text, segTrimmed);
+    const kind: 'match' | 'similar' | 'differ' = overlap >= 0.6 ? 'match' : (overlap >= 0.3 ? 'similar' : 'differ');
+    rows.push({
+      elementLabel: el.label,
+      kind,
+      rationale:
+        `構成要件「${el.label}」と自社技術説明文の該当箇所を機械的に比較しました` +
+        `（モック生成、文字重複率 ${Math.round(overlap * 100)}%）。`,
+      charStart: start,
+      charEnd: end
+    });
+  }
+  return rows;
+}
+
+/**
+ * 他社特許の構成要件（elements）と自社技術の説明文（technologyText）をAI（または
+ * モック）で比較する。実APIを呼ぶ場合、レスポンスは Zod スキーマで検証し、
+ * 不正な形式は AiClientError を投げる（呼び出し元で ai_runs.status='failed' として
+ * 扱うこと）。
+ */
+export async function compareClaimElements(
+  elements: ClaimElementInput[],
+  technologyText: string,
+  opts: { model?: string } = {}
+): Promise<ClaimCompareResult> {
+  const model = opts.model ?? getAnthropicModel();
+  const apiKey = getAnthropicApiKey();
+  const params = { maxTokens: 2048, temperature: 0 };
+  const inputHash = hashInput(
+    CLAIM_COMPARE_PROMPT_VERSION,
+    model,
+    JSON.stringify({ elements, technologyText })
+  );
+
+  if (!apiKey) {
+    return {
+      source: 'mock',
+      model,
+      promptVersion: CLAIM_COMPARE_PROMPT_VERSION,
+      params,
+      inputHash,
+      rows: mockCompareClaimElements(elements, technologyText),
+      tokenUsage: null
+    };
+  }
+
+  const client = new Anthropic({ apiKey });
+  let response: Anthropic.Message;
+  try {
+    response = await client.messages.create({
+      model,
+      max_tokens: params.maxTokens,
+      temperature: params.temperature,
+      system: CLAIM_COMPARE_SYSTEM_PROMPT,
+      tool_choice: { type: 'tool', name: CLAIM_COMPARE_TOOL_NAME },
+      tools: [
+        {
+          name: CLAIM_COMPARE_TOOL_NAME,
+          description: '各構成要件についての比較結果（一致/類似/相違・根拠・自社説明文中の文字オフセット）を返す。',
+          input_schema: {
+            type: 'object',
+            properties: {
+              rows: {
+                type: 'array',
+                minItems: 1,
+                items: {
+                  type: 'object',
+                  properties: {
+                    elementLabel: { type: 'string' },
+                    kind: { type: 'string', enum: ['match', 'similar', 'differ'] },
+                    rationale: { type: 'string' },
+                    charStart: { type: 'integer' },
+                    charEnd: { type: 'integer' }
+                  },
+                  required: ['elementLabel', 'kind', 'rationale', 'charStart', 'charEnd']
+                }
+              }
+            },
+            required: ['rows']
+          }
+        }
+      ],
+      messages: [{ role: 'user', content: buildComparisonUserPrompt(elements, technologyText) }]
+    });
+  } catch (err) {
+    throw new AiClientError(
+      `Anthropic API 呼び出しに失敗しました: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err }
+    );
+  }
+
+  const toolUse = response.content.find(
+    (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
+  );
+  if (!toolUse) {
+    throw new AiClientError('AI応答に tool_use ブロックが含まれていません（比較結果を取得できませんでした）');
+  }
+
+  const parsed = ClaimComparisonSchema.safeParse(toolUse.input);
+  if (!parsed.success) {
+    throw new AiClientError(`AI応答の形式が不正です: ${parsed.error.message}`);
+  }
+
+  const usage = response.usage;
+  return {
+    source: 'live',
+    model,
+    promptVersion: CLAIM_COMPARE_PROMPT_VERSION,
+    params,
+    inputHash,
+    rows: parsed.data.rows,
+    tokenUsage: usage ? { inputTokens: usage.input_tokens, outputTokens: usage.output_tokens } : null
+  };
+}
