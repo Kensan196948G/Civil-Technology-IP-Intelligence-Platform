@@ -17,7 +17,8 @@ export default function NewReportPage() {
         <span className="mono" style={{ fontSize: 10, letterSpacing: '.16em', color: 'var(--ink-2)' }}>S-23 / REPORT AUTHORING</span>
       </div>
       <div className="notice notice-blue" style={{ fontSize: 12 }}>
-        MVPでは出力履歴への記録のみ行います（実際のPDF/DOCX/XLSX生成は本番設計で実装予定のバックログです）。
+        関連データを集計し、選択した形式（HTML/PDF/DOCX/XLSX）で実際にファイルを生成します。
+        生成後は「出力履歴」一覧からダウンロードできます（生成に失敗した場合は失敗として記録されます）。
       </div>
       <form action={createReportAction} className="card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 480 }}>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12.5 }}>

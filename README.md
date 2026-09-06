@@ -363,11 +363,20 @@ MVPで画面化した範囲（幅）を示す。
 
 | 画面化済み（10） | 未着手（バックログ） |
 |---|---|
-| ダッシュボード / 横断検索 / 特許 / NETIS・公開技術 / Claim解析 / 現場適用 / 現場・課題 / 発明管理 / AI実行履歴・根拠 / 承認・案件 | Prior Art Intelligence（先行技術調査専用画面） / Competitor Intelligence / Patent Landscape / R&D Intelligence / Licensing Intelligence / IP Portfolio Management / Legal Intelligence / Monitoring & Watch / Knowledge・RAG / Reporting出力（PDF/DOCX/XLSX） / Data Management（クレンジング・名寄せ画面） / Administration・監査ログ画面 / 論文（papers）専用一覧画面 |
+| ダッシュボード / 横断検索 / 特許 / NETIS・公開技術 / Claim解析 / 現場適用 / 現場・課題 / 発明管理 / AI実行履歴・根拠 / 承認・案件 | Prior Art Intelligence（先行技術調査専用画面） / Competitor Intelligence / Patent Landscape / R&D Intelligence / Licensing Intelligence / IP Portfolio Management / Legal Intelligence / Monitoring & Watch / Knowledge・RAG / Data Management（クレンジング・名寄せ画面） / Administration・監査ログ画面 / 論文（papers）専用一覧画面 |
 
 MVPは「主要ユースケースを実データで最後まで動かせること」を優先したため、
 上記バックログの各モジュールは、テーブル設計（`schema.ts`）レベルでは一部先行しているものの、
 画面としては未実装である。
+
+> **📌 追記（Reporting出力対応・2026-09-06）**: 「Reporting出力（PDF/DOCX/XLSX）」は解消済みのため上記バックログから除外した。
+> `/reports/new` でのレポート作成時に、種別（`kind`）ごとに関連DBテーブルから件数サマリ＋上位20件の一覧を集計し、
+> 実際に html/pdf/docx/xlsx のファイル本体を生成するようにした（`apps/web/src/lib/reports/`）。
+> 自社ホストNode運用（ADR-0007）でオブジェクトストレージが未導入のため、ファイル本体は新設テーブル
+> `report_files`（`content bytea`, additive migration）に保存し、`/reports/[id]/download` からログイン済み利用者のみ
+> ダウンロードできる。一覧画面（`/reports`）では `report_files.content` は選択せず、ダウンロード時のみ取得する。
+> PDF生成（`pdf-lib`）は日本語グリフ描画のため、Noto Sans JP（SIL OFL 1.1）を常用文字域にサブセット化して同梱している
+> （`apps/web/src/lib/reports/assets/NotoSansJP-Regular.ttf`）。
 
 ## 🔧 17. 既知の技術的制約
 

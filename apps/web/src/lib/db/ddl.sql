@@ -276,7 +276,8 @@ CREATE TABLE IF NOT EXISTS reports (
   title text NOT NULL,
   created_by uuid NOT NULL REFERENCES users(id),
   format text NOT NULL DEFAULT 'html',
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  status text NOT NULL DEFAULT 'success'
 );
 
 CREATE TABLE IF NOT EXISTS feature_flags (
@@ -797,3 +798,24 @@ CREATE TABLE IF NOT EXISTS access_grants (
 );
 CREATE INDEX IF NOT EXISTS idx_access_grants_target ON access_grants (target_type, target_id);
 CREATE INDEX IF NOT EXISTS idx_access_grants_user ON access_grants (user_id);
+
+-- README §16 バックログ「Reporting出力（PDF/DOCX/XLSX）」対応。additive のみ・既存カラムは無変更。
+-- reports.status: 'success'（report_files に生成物あり）/ 'failed'（生成失敗。理由は audit_logs.meta）。
+-- 既存行（本カラム追加前に作成されたレポート）は DEFAULT により 'success' となるが実ファイルは無い。
+-- ダウンロード側（/reports/[id]/download）は report_files 不在を 404 として扱うため実害はない。
+-- ロールバック: ALTER TABLE reports DROP COLUMN IF EXISTS status;
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'success';
+
+-- 自社ホストNode運用（ADR-0007）でオブジェクトストレージが未導入のため、生成済みレポートの
+-- ファイル本体は Postgres の bytea 列に保存する（MVPスコープ）。reports 1件につき最大1ファイル
+-- （再生成時は同一 report_id の行を UPSERT する想定）。一覧画面では content 列を選択しないこと
+-- （重量列のSELECT回避）。
+-- ロールバック: DROP TABLE IF EXISTS report_files; で元に戻せる（reports 側の列変更なし）。
+CREATE TABLE IF NOT EXISTS report_files (
+  id uuid PRIMARY KEY,
+  report_id uuid NOT NULL UNIQUE REFERENCES reports(id) ON DELETE CASCADE,
+  content bytea NOT NULL,
+  mime_type text NOT NULL,
+  byte_size integer NOT NULL,
+  generated_at timestamptz NOT NULL DEFAULT now()
+);
