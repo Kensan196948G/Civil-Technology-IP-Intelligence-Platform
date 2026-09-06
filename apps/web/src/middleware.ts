@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifySignedValueWeb } from '@/lib/auth/sign-web';
 import { DEMO_USERS, COOKIE_NAME, type DemoRole } from '@/lib/auth/demo';
+import { buildRedirectUrl } from '@/lib/http/redirect-url';
 
 // Deep Debug Round2 再調査（重要）: 当初 /admin/* のRBACは (app)/admin/layout.tsx から
 // requireRole() 経由で notFound()/redirect() を呼ぶ方式で実装していたが、本番ビルド
@@ -17,21 +18,42 @@ import { DEMO_USERS, COOKIE_NAME, type DemoRole } from '@/lib/auth/demo';
 // middlewareのNextResponse.redirect()はReact Server Componentのレンダリング
 // パイプラインを経由しない単純なレスポンス構築のため、この問題の影響を受けない
 // （実機で動作確認済み）。
+//
+// 追記（Cloudflare Tunnel経由での追加不具合・本番実機で確認・2026-09-01頃）:
+// NextResponse.redirect(new URL(path, req.url)) は、Tunnel背後で
+// `next start -H 127.0.0.1 -p <port>` として動いている場合、req.url が
+// Tunnelの接続先（http://127.0.0.1:<port>/...）を反映してしまい、Locationヘッダーが
+// 公開ドメインではなく到達不能なURLになる不具合があった。また、Next.jsの
+// NextResponseはLocationヘッダーに相対パスのみを渡すと `new URL()` の検証で
+// 例外を投げるため、相対Locationも使えない。Cloudflare Tunnelは元のHostヘッダーを
+// そのままoriginへ転送するため、req.headers の host（x-forwarded-hostがあれば優先）
+// から実際の公開ホスト名を組み立てて絶対URLを生成する。
 const ADMIN_ALLOWED_ROLES: DemoRole[] = ['executive', 'sysadmin'];
 
+function redirectTo(req: NextRequest, path: string): NextResponse {
+  return withSecurityHeaders(NextResponse.redirect(buildRedirectUrl(req.headers, req.nextUrl.host, path)));
+}
+
 export async function middleware(req: NextRequest) {
+  // ルート "/" の redirect('/dashboard')（Server Component, next/navigation）が
+  // 本番ビルドでLocationヘッダーの無い307を返し、初回ロードが白画面になる不具合を
+  // 本番実機で確認したため、/admin と同様にmiddleware側のリダイレクトへ切り出して回避する。
+  if (req.nextUrl.pathname === '/') {
+    return redirectTo(req, '/dashboard');
+  }
+
   if (req.nextUrl.pathname.startsWith('/admin')) {
     const raw = req.cookies.get(COOKIE_NAME)?.value;
     const email = raw ? await verifySignedValueWeb(raw) : null;
     const user = email ? DEMO_USERS.find(u => u.email === email) : null;
 
     if (!user) {
-      return withSecurityHeaders(NextResponse.redirect(new URL('/login', req.url)));
+      return redirectTo(req, '/login');
     }
     if (!ADMIN_ALLOWED_ROLES.includes(user.role)) {
       // 権限外であることをURLから読み取れないよう、実在しない汎用パスへ
       // リダイレクトし、Next.js標準の「未マッチルートは404」に載せる。
-      return withSecurityHeaders(NextResponse.redirect(new URL('/not-found', req.url)));
+      return redirectTo(req, '/not-found');
     }
   }
 
