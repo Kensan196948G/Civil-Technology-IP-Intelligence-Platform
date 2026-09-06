@@ -80,7 +80,9 @@ async function main() {
       'competitive_signals',
       'transfer_cases',
       'research_partners',
-      'patent_translations'
+      'patent_translations',
+      'funding_matches',
+      'funding_programs'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -951,6 +953,38 @@ async function main() {
     );
   }
 
+  // ---- M42 R&D Funding Intelligence（第二拡張群）----
+  // NEDO・JST・SIP・BRIDGE等の研究助成制度台帳と、研究テーマ（technologies）とのマッチング。
+  const fundingProgramDefs = [
+    { agency: 'NEDO', name: '港湾・海洋インフラ自動化技術開発事業（デモ）', summary: '港湾・海洋分野の施工自動化・省人化技術の研究開発を支援するデモ制度。', field: '港湾・海洋工学', amountRange: '3000万〜2億円', deadline: '2026-11-30' },
+    { agency: 'JST', name: '研究成果最適展開支援プログラム A-STEP（デモ）', summary: '大学等の研究成果を実用化につなげるための産学共同研究フェーズの支援デモ制度。', field: '土木工学・材料工学', amountRange: '500万〜3000万円', deadline: '2026-12-15' },
+    { agency: 'SIP', name: '戦略的イノベーション創造プログラム 国土強靱化（デモ）', summary: '府省横断でインフラ維持管理・防災技術の社会実装を目指すデモ制度。', field: 'インフラ維持管理・防災', amountRange: '5000万〜3億円', deadline: '2027-01-31' },
+    { agency: 'BRIDGE', name: '官民研究開発投資拡大プログラム（デモ）', summary: '基礎研究から実用化までを一気通貫で支援する府省連携のデモ制度。', field: '建設・防災・環境', amountRange: '1000万〜1億円', deadline: '2026-10-31' }
+  ] as const;
+  const fundingProgramIds: string[] = [];
+  for (const f of fundingProgramDefs) {
+    const id = uuid(); fundingProgramIds.push(id);
+    await sql(
+      `INSERT INTO funding_programs (id, agency, name, summary, field, amount_range, application_deadline, is_sample)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,true)`,
+      [id, f.agency, f.name, f.summary, f.field, f.amountRange, f.deadline]
+    );
+  }
+  const fundingMatchDefs = [
+    { programIdx: 0, techId, score: 88.5, rationale: '港湾・海洋分野のケーソン据付管理技術であり、NEDOの支援対象分野と一致（デモ）。' },
+    { programIdx: 0, techId: techId2, score: 76.0, rationale: 'GNSS併用の据付支援技術。自動化・省人化の要件に部分的に合致（デモ）。' },
+    { programIdx: 1, techId: techId2, score: 64.5, rationale: 'NETIS登録技術の実用化フェーズに該当し、産学共同研究の枠組みと親和性あり（デモ）。' },
+    { programIdx: 2, techId, score: 55.0, rationale: '国土強靱化テーマとの関連は間接的だが、港湾インフラの維持管理に応用可能（デモ）。' },
+    { programIdx: 3, techId, score: 71.0, rationale: '基礎技術から実用化までの一気通貫支援の対象として妥当性あり（デモ）。' }
+  ] as const;
+  for (const m of fundingMatchDefs) {
+    await sql(
+      `INSERT INTO funding_matches (id, funding_program_id, technology_id, match_score, rationale, is_sample)
+       VALUES ($1,$2,$3,$4,$5,true)`,
+      [uuid(), fundingProgramIds[m.programIdx]!, m.techId, m.score, m.rationale]
+    );
+  }
+
   // ---- M33 Technology Knowledge Graph（第一拡張群・実装順位5）----
   // 特許・論文・NETIS・技術・会社・研究者・現場を横断して結ぶグラフのデモリンク。
   // FR-M33-001（多種エンティティの関係）/002（n-hop関係検索の素材）。表示は /technology-graph。
@@ -1207,6 +1241,7 @@ async function main() {
     console.log(`   M44 Transfer: ${transferDefs.length}件`);
     console.log(`   M41 Partners: ${partnerDefs.length}件`);
     console.log(`   M46 翻訳: ${translationDefs.length}件`);
+    console.log(`   M42 助成金マッチング: 制度${fundingProgramDefs.length}件 / マッチ${fundingMatchDefs.length}件`);
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     throw e;

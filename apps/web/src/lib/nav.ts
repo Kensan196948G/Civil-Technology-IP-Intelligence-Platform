@@ -301,7 +301,8 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '技術ロードマップ', href: '/rnd/roadmap' },
       { label: '技術成熟度（M35 TRL）', href: '/rnd/trl' },
       { label: 'Business Case（M37）', href: '/rnd/business-case' },
-      { label: '出願候補', href: '/rnd/filing-candidates' }
+      { label: '出願候補', href: '/rnd/filing-candidates' },
+      { label: '助成金マッチング（M42）', href: '/rnd/funding' }
     ]
   },
   {
