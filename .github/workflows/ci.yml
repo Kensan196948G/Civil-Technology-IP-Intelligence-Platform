@@ -70,6 +70,21 @@ jobs:
         # `@cloudflare/next-on-pages`（Edge Runtime変換）を一度も検証していなかった。
         # ローカルの `next build` は通っても cf:build 側で初めて失敗するケースを防ぐため、
         # マージ前にCI上でも変換が成功することを確認する。
+        #
+        # 2026-09-06 追記（ユーザー承認済みの暫定対応）: ADR-0007（2026-08-29採択）により
+        # 本番・MVPともに自社ホストNode.js（postgres.js、Node組み込みモジュール依存）＋
+        # Cloudflare Tunnel構成へ移行済みで、Edge Runtime必須のnext-on-pages変換とは
+        # 本質的に非両立になった（全ルートに`export const runtime='edge'`が必要だが、
+        # それを行うとDB接続自体が壊れる）。一方 `.github/workflows/deploy-production.yml` は
+        # 依然としてこのCloudflare Pagesビルド成果物をwranglerでデプロイする内容のままで、
+        # ADR-0007後の実際の本番デプロイ経路（自社ホストNodeへの反映方法）とは不整合な
+        # 状態にある（実デプロイ手順の詳細が本リポジトリ内に無いため、パイプライン自体の
+        # 再構築は別途対応が必要＝拡張計画書D-5、要決定）。
+        # それまでの間、このステップの恒常的な失敗でPRごとの`quality`ジョブが赤くなり
+        # 品質シグナルとして機能しなくなっていたため、continue-on-error として
+        # 「参考情報として記録はするが、他の必須チェック（lint/typecheck/build/audit/
+        # secret-scan）の合否とは独立に扱う」設計に変更する。
+        continue-on-error: true
         run: pnpm --filter @ctiip/web cf:build
 
       - name: Secret scan (簡易)
