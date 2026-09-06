@@ -35,7 +35,11 @@ export const AUDIT_ACTION: Record<string, { label: string; tone: Tone }> = {
   ai_run: { label: 'ai_run', tone: 'purple' },
   view: { label: 'view', tone: 'gray' },
   export: { label: 'export', tone: 'amber' },
+  create: { label: 'create', tone: 'green' },
   update: { label: 'update', tone: 'blue' },
+  approve: { label: 'approve', tone: 'purple' },
+  // 認可拒否（RBACロールゲート）の記録用。lib/auth/require-role.ts 参照。
+  access: { label: 'access', tone: 'red' },
   role_change: { label: 'role_change', tone: 'purple' },
   security_event: { label: 'security_event', tone: 'red' },
   seed: { label: 'seed', tone: 'gray' }

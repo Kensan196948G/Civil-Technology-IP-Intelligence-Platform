@@ -13,6 +13,8 @@
 //     （現行シードに C4 データは存在しない。導入時は本ヘルパーの拡張点）
 import { sql, type SQL } from 'drizzle-orm';
 import type { DemoRole } from '@/lib/auth/demo';
+import type { getDb } from '@/lib/db/client';
+import { logAuditDenied } from '@/lib/audit/log';
 
 export type Classification = 'C1' | 'C2' | 'C3' | 'C4';
 export const CLASSIFICATIONS: Classification[] = ['C1', 'C2', 'C3', 'C4'];
@@ -48,6 +50,38 @@ export function canViewRow(
   if (classification === 'C4') return false; // 個別付与（grant）導入まで不可視
   // C3: R ロール、または起案者本人
   return C3_READER_ROLES.has(role) || isOwner;
+}
+
+/**
+ * canViewRow() の監査ログ付きラッパー。行レベル秘匿の404（README §14 ルール2）を
+ * 返す直前に呼び、拒否された場合のみ監査ログ（result: 'denied'）を記録する
+ * （NFR-L-001「拒否操作を残す」対応）。canViewRow 自体は同期・純粋関数のまま
+ * 変更しない（既存の単体テスト・呼び出し箇所への影響を避けるため）。
+ * 監査ログの書き込み失敗はここでの可視性判定結果に一切影響しない（best-effort）。
+ */
+export async function canViewRowAudited(
+  db: ReturnType<typeof getDb>,
+  params: {
+    role: DemoRole;
+    classification: Classification;
+    isOwner: boolean;
+    actorUserId: string | null;
+    targetType: string;
+    targetId: string;
+  }
+): Promise<boolean> {
+  const allowed = canViewRow(params.role, params.classification, params.isOwner);
+  if (!allowed) {
+    await logAuditDenied(db, {
+      actorUserId: params.actorUserId,
+      action: 'view',
+      targetType: params.targetType,
+      targetId: params.targetId,
+      reason: 'row_visibility_denied',
+      meta: { classification: params.classification, role: params.role }
+    });
+  }
+  return allowed;
 }
 
 /**

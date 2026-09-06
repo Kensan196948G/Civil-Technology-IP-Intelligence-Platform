@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   defaultVisibleClassifications,
   canViewRow,
+  canViewRowAudited,
   isC3ReaderRole,
   visibleWhere
 } from './row-visibility';
@@ -55,6 +56,55 @@ describe('canViewRow', () => {
     expect(canViewRow('sysadmin', 'C4', true)).toBe(false);
     expect(canViewRow('ip', 'C4', false)).toBe(false);
     expect(canViewRow('engineer', 'C4', false)).toBe(false);
+  });
+});
+
+describe('canViewRowAudited', () => {
+  // NFR-L-001（拒否操作の監査記録）: canViewRow が false を返した場合のみ
+  // 監査ログ（result: 'denied'）を記録し、true の場合は書き込まないことを確認する。
+  function createFakeDb() {
+    const values = vi.fn().mockResolvedValue(undefined);
+    const insert = vi.fn(() => ({ values }));
+    return { db: { insert } as unknown as Parameters<typeof canViewRowAudited>[0], insert, values };
+  }
+
+  it('閲覧不可の場合、監査ログを denied で記録し false を返す', async () => {
+    const { db, insert, values } = createFakeDb();
+    const allowed = await canViewRowAudited(db, {
+      role: 'engineer', classification: 'C3', isOwner: false,
+      actorUserId: 'u1', targetType: 'invention', targetId: 'inv-1'
+    });
+
+    expect(allowed).toBe(false);
+    expect(insert).toHaveBeenCalledTimes(1);
+    const row = values.mock.calls[0]![0];
+    expect(row.result).toBe('denied');
+    expect(row.actorUserId).toBe('u1');
+    expect(row.targetType).toBe('invention');
+    expect(row.targetId).toBe('inv-1');
+    expect(row.meta).toEqual({ classification: 'C3', role: 'engineer' });
+  });
+
+  it('閲覧可能な場合、監査ログを書き込まず true を返す', async () => {
+    const { db, insert } = createFakeDb();
+    const allowed = await canViewRowAudited(db, {
+      role: 'ip', classification: 'C3', isOwner: false,
+      actorUserId: 'u1', targetType: 'invention', targetId: 'inv-1'
+    });
+
+    expect(allowed).toBe(true);
+    expect(insert).not.toHaveBeenCalled();
+  });
+
+  it('C4 は個別付与導入まで sysadmin でも denied として記録される', async () => {
+    const { db, values } = createFakeDb();
+    const allowed = await canViewRowAudited(db, {
+      role: 'sysadmin', classification: 'C4', isOwner: false,
+      actorUserId: 'u1', targetType: 'invention', targetId: 'inv-2'
+    });
+
+    expect(allowed).toBe(false);
+    expect(values.mock.calls[0]![0].reason).toBe('row_visibility_denied');
   });
 });
 

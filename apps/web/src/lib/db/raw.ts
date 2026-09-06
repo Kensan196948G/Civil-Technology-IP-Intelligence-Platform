@@ -13,7 +13,9 @@ import postgres from 'postgres';
 // 移行し、対話型トランザクション＋行ロックを使うこと（本番実装のバックログ）。
 
 type Row = Record<string, unknown>;
-type TaggedSql = (strings: TemplateStringsArray, ...values: unknown[]) => Promise<Row[]>;
+// lib/audit/log.ts の auditLogTxnStatement() が sql.transaction(txn => [...]) の
+// txn 引数の型として参照するため export する。
+export type TaggedSql = (strings: TemplateStringsArray, ...values: unknown[]) => Promise<Row[]>;
 export interface RawSql {
   (strings: TemplateStringsArray, ...values: unknown[]): Promise<Row[]>;
   transaction(callback: (txn: TaggedSql) => Array<Promise<unknown>>): Promise<unknown[]>;

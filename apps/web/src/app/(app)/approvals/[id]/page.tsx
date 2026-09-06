@@ -6,7 +6,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { decideAction, completeHumanCheck } from '../actions';
 import { stamp } from '@/lib/labels';
-import { canViewRow } from '@/lib/authz/row-visibility';
+import { canViewRowAudited } from '@/lib/authz/row-visibility';
 
 // #11 C3/C4 行レベル制御（詳細・404秘匿）: ワークフロー案件は発明 workflow で C3 になる。
 // R ロール以外（engineer/viewer）は自分が起案した案件以外を 404 として存在を見せない。
@@ -29,7 +29,15 @@ export default async function ApprovalDetail({ params }: { params: Promise<{ id:
   if (!me) redirect('/login');
   // #11: C3/C4 案件で権限が無い場合は存在自体を出さず 404（403 にしない）
   const isOwner = me.id === w.authorId;
-  if (!canViewRow(user.role, w.classification as 'C1' | 'C2' | 'C3' | 'C4', isOwner)) notFound();
+  const canView = await canViewRowAudited(db, {
+    role: user.role,
+    classification: w.classification as 'C1' | 'C2' | 'C3' | 'C4',
+    isOwner,
+    actorUserId: me.id,
+    targetType: 'workflow_instance',
+    targetId: w.id
+  });
+  if (!canView) notFound();
   const [author] = await db.select().from(s.users).where(eq(s.users.id, w.authorId)).limit(1);
   const history = await db.select().from(s.approvals).where(eq(s.approvals.instanceId, w.id)).orderBy(desc(s.approvals.decidedAt));
 
