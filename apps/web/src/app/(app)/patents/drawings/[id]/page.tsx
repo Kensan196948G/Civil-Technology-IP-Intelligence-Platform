@@ -5,12 +5,14 @@ import { eq, asc, desc, inArray } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth/current-user';
-import { extractDrawingPartsAction } from '../actions';
+import { extractDrawingPartsAction, calculateDrawingSimilaritiesAction } from '../actions';
 import type { DemoRole } from '@/lib/auth/demo';
 
 // M47 Patent Drawing / Image Intelligence — 図面詳細。
-// Vision AIによる部品自動認識は実接続済み（ユーザー承認済み）。類似図面（drawing_similarities）は
-// 本スライスのスコープ外のため既存のデモデータ表示のまま。
+// Vision AIによる部品自動認識は実接続済み（ユーザー承認済み）。類似図面
+// （drawing_similarities）は、画像ペアごとのVision AI比較が組合せ爆発するため、
+// 抽出済み部品説明文・captionのテキスト類似度（Voyage AI embedding、未設定時は
+// 字句Jaccard係数へフォールバック）で計算する。新規のAI画像解析呼び出しは増やさない。
 
 // RBAC §3 M04 Patent / M06 Claim: R/W は tech_manager, ip のみ。
 const DRAWING_WRITE_ROLES: ReadonlySet<DemoRole> = new Set<DemoRole>(['tech_manager', 'ip']);
@@ -21,6 +23,7 @@ function describeAiError(code: string): string {
     case 'image_not_uploaded': return '先に図面画像をアップロードしてください。';
     case 'ai_call_failed': return 'AI解析の実行に失敗しました。時間をおいて再度お試しください。';
     case 'no_valid_parts': return '有効な部品を認識できませんでした（AIが部品を検出できませんでした）。';
+    case 'no_compare_text': return '比較対象のテキスト（部品・キャプション）がありません。先に部品認識を行ってください。';
     default: return 'AI解析に失敗しました。';
   }
 }
@@ -162,6 +165,23 @@ export default async function PatentDrawingDetailPage({
               );
             })}
           </div>
+        )}
+      </div>
+
+      <div className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 13 }}>類似図面を計算する</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>
+          抽出済みの部品説明文・キャプションのテキスト類似度で計算します（画像同士の直接比較ではありません）。
+        </div>
+        {parts.length === 0 ? (
+          <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>先に「AIで部品を認識する」を実行してください。</div>
+        ) : canOperate ? (
+          <form action={calculateDrawingSimilaritiesAction}>
+            <input type="hidden" name="drawingId" value={drawing.id} />
+            <button type="submit" className="btn btn-primary" style={{ fontSize: 12.5 }}>類似図面を計算する</button>
+          </form>
+        ) : (
+          <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>この操作を行う権限がありません（技術管理者・知財担当のみ）。</div>
         )}
       </div>
 
