@@ -891,3 +891,46 @@ CREATE TABLE IF NOT EXISTS drawing_similarities (
 );
 CREATE INDEX IF NOT EXISTS idx_drawing_similarities_drawing ON drawing_similarities (drawing_id);
 CREATE INDEX IF NOT EXISTS idx_drawing_similarities_similar ON drawing_similarities (similar_drawing_id);
+
+-- M48 Engineering Document Intelligence（第二拡張群）。additive のみ・既存テーブルは無変更。
+-- 依存: M02（sites。任意参照）/ M03（users。任意参照）/ M04（patents）/ M09（technologiesは使わず独立管理）。
+-- ⚠️ Vision AI・文書解析AI（PDF/CAD/BIM/写真/スケッチからの技術要素抽出・特許マッチング）の実呼び出しは
+-- 本スライスでは未実装。データモデルと画面（デモデータの一覧・詳細表示）のみを先行実装する（ユーザー承認済み）。
+-- source_url は実ファイルを保存せず、他エンティティ（patents.source_url 等）と同様の外部参照URLの
+-- プレースホルダとする。
+-- ロールバック: 下記3テーブルを DROP TABLE IF EXISTS document_element_patent_matches,
+-- extracted_tech_elements, engineering_documents CASCADE; の順で削除すれば元に戻せる（他テーブルからの参照なし）。
+CREATE TABLE IF NOT EXISTS engineering_documents (
+  id uuid PRIMARY KEY,
+  doc_type text NOT NULL CHECK (doc_type IN ('pdf','cad','bim','photo','sketch')),
+  title text NOT NULL,
+  site_id uuid REFERENCES sites(id),
+  source_url text,
+  uploaded_by uuid REFERENCES users(id),
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_engineering_documents_site ON engineering_documents (site_id);
+CREATE INDEX IF NOT EXISTS idx_engineering_documents_doc_type ON engineering_documents (doc_type);
+
+CREATE TABLE IF NOT EXISTS extracted_tech_elements (
+  id uuid PRIMARY KEY,
+  document_id uuid NOT NULL REFERENCES engineering_documents(id) ON DELETE CASCADE,
+  element_label text NOT NULL,
+  description text,
+  confidence numeric(4,2),
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_extracted_tech_elements_document ON extracted_tech_elements (document_id);
+
+CREATE TABLE IF NOT EXISTS document_element_patent_matches (
+  id uuid PRIMARY KEY,
+  element_id uuid NOT NULL REFERENCES extracted_tech_elements(id) ON DELETE CASCADE,
+  patent_id uuid NOT NULL REFERENCES patents(id),
+  match_score numeric(5,2) NOT NULL,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_document_element_patent_matches_element ON document_element_patent_matches (element_id);
+CREATE INDEX IF NOT EXISTS idx_document_element_patent_matches_patent ON document_element_patent_matches (patent_id);

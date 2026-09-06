@@ -83,7 +83,8 @@ async function main() {
       'patent_translations',
       'funding_matches',
       'funding_programs',
-      'drawing_similarities','drawing_parts','patent_drawings'
+      'drawing_similarities','drawing_parts','patent_drawings',
+      'document_element_patent_matches','extracted_tech_elements','engineering_documents'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -472,6 +473,79 @@ async function main() {
     [issueId, siteId, '波が高い日にケーソンの据付がなかなか決まらない。潜水士の目視だと2.0mを超えると中断になってしまって、工程が押している。（デモ課題）',
      U('sato.ken@demo.ctiip.example')]
   );
+  // 技術文書インテリジェンス（M48 Engineering Document Intelligence）
+  // PDF・CAD図・BIM・写真・スケッチ等から抽出した技術要素と、関連特許のマッチングのデモデータ。
+  // ⚠️ Vision AI・文書解析AIの実呼び出しは未実装（データモデル・画面のみ先行実装）。
+  const engineeringDocumentIds: string[] = [];
+  const engineeringDocumentDefs: Array<{
+    docType: string; title: string; hasSite: boolean; uploadedBy: string;
+    elements: Array<{ label: string; description: string; confidence: number; matches: Array<{ patentIdx: number; score: number }> }>;
+  }> = [
+    {
+      docType: 'pdf', title: '岸壁改良工事 施工計画書（デモ）', hasSite: true, uploadedBy: 'sato.ken@demo.ctiip.example',
+      elements: [
+        { label: 'ケーソン吊下し工程', description: '吊具を用いてケーソンを吊り下ろす工程の記載（デモ）', confidence: 0.82,
+          matches: [{ patentIdx: 0, score: 88.5 }, { patentIdx: 4, score: 63.0 }] },
+        { label: '動揺補償の要求仕様', description: '波浪時の動揺補償に関する要求仕様の記載（デモ）', confidence: 0.74,
+          matches: [{ patentIdx: 0, score: 79.0 }] }
+      ]
+    },
+    {
+      docType: 'cad', title: 'ケーソン据付治具 CAD図面（デモ）', hasSite: true, uploadedBy: 'inoue.akira@demo.ctiip.example',
+      elements: [
+        { label: '吊具形状', description: 'CAD図中の吊具の3D形状定義（デモ）', confidence: 0.91,
+          matches: [{ patentIdx: 0, score: 91.2 }] },
+        { label: '油圧シリンダ配置', description: '動揺補償機構の油圧シリンダ配置図（デモ）', confidence: 0.68,
+          matches: [{ patentIdx: 0, score: 55.0 }, { patentIdx: 1, score: 40.5 }] }
+      ]
+    },
+    {
+      docType: 'bim', title: '◯◯港 防波堤BIMモデル（デモ）', hasSite: false, uploadedBy: 'tanaka.makoto@demo.ctiip.example',
+      elements: [
+        { label: 'ケーソン躯体モデル', description: 'IFCベースのケーソン躯体3Dモデル（デモ）', confidence: 0.77,
+          matches: [{ patentIdx: 2, score: 58.0 }] }
+      ]
+    },
+    {
+      docType: 'photo', title: '水中点検ロボット 現場撮影写真（デモ）', hasSite: true, uploadedBy: 'morita.yui@demo.ctiip.example',
+      elements: [
+        { label: '水中カメラユニット', description: '写真から認識された水中カメラユニットの外観（デモ）', confidence: 0.59,
+          matches: [{ patentIdx: 3, score: 72.0 }] }
+      ]
+    },
+    {
+      docType: 'sketch', title: '現場手書きスケッチ（据付治具改良案・デモ）', hasSite: true, uploadedBy: 'sato.ken@demo.ctiip.example',
+      elements: [
+        { label: '改良吊具の概念図', description: '手書きスケッチから抽出した改良吊具の概念（デモ）', confidence: 0.41,
+          matches: []
+        }
+      ]
+    }
+  ];
+  for (const doc of engineeringDocumentDefs) {
+    const did = uuid(); engineeringDocumentIds.push(did);
+    await sql(
+      `INSERT INTO engineering_documents (id, doc_type, title, site_id, source_url, uploaded_by, is_sample)
+       VALUES ($1,$2,$3,$4,NULL,$5,true)`,
+      [did, doc.docType, doc.title, doc.hasSite ? siteId : null, U(doc.uploadedBy)]
+    );
+    for (const el of doc.elements) {
+      const eid = uuid();
+      await sql(
+        `INSERT INTO extracted_tech_elements (id, document_id, element_label, description, confidence, is_sample)
+         VALUES ($1,$2,$3,$4,$5,true)`,
+        [eid, did, el.label, el.description, el.confidence]
+      );
+      for (const m of el.matches) {
+        await sql(
+          `INSERT INTO document_element_patent_matches (id, element_id, patent_id, match_score, is_sample)
+           VALUES ($1,$2,$3,$4,true)`,
+          [uuid(), eid, patentIds[m.patentIdx]!, m.score]
+        );
+      }
+    }
+  }
+
   const axes = [
     { axis: '工種適合性', value: 1.0, weight: 3, basis: '技術の工種分類「港湾・海洋」と現場が一致（デモ）', is_estimated: false },
     { axis: '海象', value: 0.6, weight: 3, basis: '現場の有義波高2.0mに対し、技術の適用限界は2.5m（デモ）', is_estimated: false },
