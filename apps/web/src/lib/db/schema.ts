@@ -781,3 +781,39 @@ export const fundingMatches = pgTable('funding_matches', {
   isSample: boolean('is_sample').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// M47 Patent Drawing / Image Intelligence（第二拡張群）
+// 特許図面の管理・部品（符号）対応・図面間の類似検索を扱う。
+// 依存: M04（特許取得。既存の patents テーブルを利用）/ M06（Claim解析。claim_elements と任意で対応付け）。
+// ⚠️ Vision AI（画像解析による部品自動認識・図面類似検索）の実呼び出しは本スライスでは未実装。
+// データモデルと画面（デモデータの一覧・詳細表示）のみを先行実装する（ユーザー承認済み・未決事項は
+// docs/90-project/05-module-expansion-m26-m50.md 246-247行目「Vision AI基盤のコスト見積り後に採否判断」）。
+// 実画像は保存せず、他エンティティ（patents.source_url 等）と同様に外部参照URLのプレースホルダとする。
+export const patentDrawings = pgTable('patent_drawings', {
+  id: uuid('id').primaryKey(),
+  patentId: uuid('patent_id').notNull().references(() => patents.id, { onDelete: 'cascade' }),
+  figureNo: text('figure_no').notNull(),   // 例: "図1", "FIG.2"
+  imageUrl: text('image_url'),             // 外部参照URLのプレースホルダ（実画像は保存しない）
+  caption: text('caption'),
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const drawingParts = pgTable('drawing_parts', {
+  id: uuid('id').primaryKey(),
+  drawingId: uuid('drawing_id').notNull().references(() => patentDrawings.id, { onDelete: 'cascade' }),
+  partNo: text('part_no').notNull(),       // 図面中の符号・部品番号
+  description: text('description').notNull(),
+  elementId: uuid('element_id').references(() => claimElements.id), // Claim構成要件との対応（任意）
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export const drawingSimilarities = pgTable('drawing_similarities', {
+  id: uuid('id').primaryKey(),
+  drawingId: uuid('drawing_id').notNull().references(() => patentDrawings.id, { onDelete: 'cascade' }),
+  similarDrawingId: uuid('similar_drawing_id').notNull().references(() => patentDrawings.id, { onDelete: 'cascade' }),
+  similarityScore: numeric('similarity_score', { precision: 5, scale: 2 }).notNull(), // 0-100
+  isSample: boolean('is_sample').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});

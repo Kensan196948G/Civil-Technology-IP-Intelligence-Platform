@@ -850,3 +850,44 @@ CREATE TABLE IF NOT EXISTS report_files (
   byte_size integer NOT NULL,
   generated_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- M47 Patent Drawing / Image Intelligence（第二拡張群）。additive のみ・既存テーブルは無変更。
+-- 依存: M04（patents）/ M06（claim_elements。任意対応）。
+-- ⚠️ Vision AI（画像解析による部品自動認識・図面類似検索）の実呼び出しは本スライスでは未実装。
+-- データモデルと画面（デモデータの一覧・詳細表示）のみを先行実装する（ユーザー承認済み）。
+-- image_url は実画像を保存せず、他エンティティ（patents.source_url 等）と同様の外部参照URLの
+-- プレースホルダとする。
+-- ロールバック: 下記3テーブルを DROP TABLE IF EXISTS drawing_similarities, drawing_parts,
+-- patent_drawings CASCADE; の順で削除すれば元に戻せる（他テーブルからの参照なし）。
+CREATE TABLE IF NOT EXISTS patent_drawings (
+  id uuid PRIMARY KEY,
+  patent_id uuid NOT NULL REFERENCES patents(id) ON DELETE CASCADE,
+  figure_no text NOT NULL,
+  image_url text,
+  caption text,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_patent_drawings_patent ON patent_drawings (patent_id);
+
+CREATE TABLE IF NOT EXISTS drawing_parts (
+  id uuid PRIMARY KEY,
+  drawing_id uuid NOT NULL REFERENCES patent_drawings(id) ON DELETE CASCADE,
+  part_no text NOT NULL,
+  description text NOT NULL,
+  element_id uuid REFERENCES claim_elements(id),
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_drawing_parts_drawing ON drawing_parts (drawing_id);
+
+CREATE TABLE IF NOT EXISTS drawing_similarities (
+  id uuid PRIMARY KEY,
+  drawing_id uuid NOT NULL REFERENCES patent_drawings(id) ON DELETE CASCADE,
+  similar_drawing_id uuid NOT NULL REFERENCES patent_drawings(id) ON DELETE CASCADE,
+  similarity_score numeric(5,2) NOT NULL,
+  is_sample boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_drawing_similarities_drawing ON drawing_similarities (drawing_id);
+CREATE INDEX IF NOT EXISTS idx_drawing_similarities_similar ON drawing_similarities (similar_drawing_id);
