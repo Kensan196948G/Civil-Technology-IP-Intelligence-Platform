@@ -18,15 +18,19 @@ async function resolveTargets(db: ReturnType<typeof getDb>, runs: Run[]) {
   const inventionIds = runs.filter(r => r.targetType === 'invention' && r.targetId).map(r => r.targetId!);
   const analysisIds = runs.filter(r => r.targetType === 'claim_analysis' && r.targetId).map(r => r.targetId!);
   const fieldAppIds = runs.filter(r => r.targetType === 'field_application' && r.targetId).map(r => r.targetId!);
+  // FR-M06-002 Claim分解: targetType='patent_claim' / targetId=patent_claims.id
+  const claimIds = runs.filter(r => r.targetType === 'patent_claim' && r.targetId).map(r => r.targetId!);
 
-  const [inventionRows, analysisRows, fieldAppRows] = await Promise.all([
+  const [inventionRows, analysisRows, fieldAppRows, claimRows] = await Promise.all([
     inventionIds.length ? db.select().from(s.inventions).where(inArray(s.inventions.id, inventionIds)) : Promise.resolve([]),
     analysisIds.length ? db.select().from(s.claimAnalyses).where(inArray(s.claimAnalyses.id, analysisIds)) : Promise.resolve([]),
-    fieldAppIds.length ? db.select().from(s.fieldApplications).where(inArray(s.fieldApplications.id, fieldAppIds)) : Promise.resolve([])
+    fieldAppIds.length ? db.select().from(s.fieldApplications).where(inArray(s.fieldApplications.id, fieldAppIds)) : Promise.resolve([]),
+    claimIds.length ? db.select().from(s.patentClaims).where(inArray(s.patentClaims.id, claimIds)) : Promise.resolve([])
   ]);
   const inventionById = new Map(inventionRows.map(r => [r.id, r]));
   const analysisById = new Map(analysisRows.map(r => [r.id, r]));
   const fieldAppById = new Map(fieldAppRows.map(r => [r.id, r]));
+  const claimById = new Map(claimRows.map(r => [r.id, r]));
 
   const targets = new Map<string, { label: string; href: string | null }>();
   for (const run of runs) {
@@ -41,6 +45,12 @@ async function resolveTargets(db: ReturnType<typeof getDb>, runs: Run[]) {
     } else if (run.targetType === 'field_application') {
       const row = fieldAppById.get(run.targetId);
       targets.set(run.id, { label: row ? '現場適用性評価' : '現場適用性評価（削除済み）', href: row ? `/field/${run.targetId}` : null });
+    } else if (run.targetType === 'patent_claim') {
+      const row = claimById.get(run.targetId);
+      targets.set(run.id, {
+        label: row ? `Claim分解：請求項${row.claimNo}` : 'Claim分解（削除済み）',
+        href: row ? `/patents/${row.patentId}` : null
+      });
     } else {
       targets.set(run.id, { label: `${run.targetType}：${run.targetId}`, href: null });
     }

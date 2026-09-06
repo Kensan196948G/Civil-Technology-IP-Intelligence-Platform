@@ -39,3 +39,16 @@ export function getDemoCookieSecret(): string {
 export function isCookieSecureEnabled(): boolean {
   return getEnvVar('CTIIP_COOKIE_SECURE') === 'true';
 }
+
+// AI (Anthropic Claude API) 連携。requireEnvVar は使わない — 本番APIキーが
+// まだ発行されていない前提のため、未設定は正常系として扱い（呼び出し元は
+// lib/ai/client.ts のモックフォールバックへ切り替える）、ここでは例外を投げない。
+export function getAnthropicApiKey(): string | undefined {
+  return getEnvVar('ANTHROPIC_API_KEY');
+}
+
+const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-5';
+
+export function getAnthropicModel(): string {
+  return getEnvVar('ANTHROPIC_MODEL') ?? DEFAULT_ANTHROPIC_MODEL;
+}
