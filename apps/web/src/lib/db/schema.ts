@@ -2,7 +2,7 @@
 // ここでは6画面の実動作に必要な最小サブセットのみを実装する。
 import {
   pgTable, pgEnum, uuid, text, timestamp, integer, numeric, boolean, jsonb, date,
-  type AnyPgColumn
+  unique, type AnyPgColumn
 } from 'drizzle-orm/pg-core';
 
 export const classificationEnum = pgEnum('classification_t', ['C1', 'C2', 'C3', 'C4']);
@@ -207,6 +207,22 @@ export const workflowInstances = pgTable('workflow_instances', {
   aiRiskSummary: jsonb('ai_risk_summary'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+// #11 C4 個別付与（grant）モデル: docs/10-requirements/05-rbac-matrix.md §4 の
+// C4「個別付与された利用者のみ」を実装する。対象（invention / workflow_instance）ごとに
+// 利用者へ個別にアクセス権を付与する。付与操作は sysadmin のみが行い（admin/project-permissions）、
+// 監査ログ（audit_logs）に記録する。target_type は将来の対象拡張に備え汎用の文字列とする。
+export const accessGrants = pgTable('access_grants', {
+  id: uuid('id').primaryKey(),
+  targetType: text('target_type').notNull(), // 'invention' | 'workflow_instance'
+  targetId: uuid('target_id').notNull(),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  grantedBy: uuid('granted_by').notNull().references(() => users.id),
+  grantedAt: timestamp('granted_at', { withTimezone: true }).notNull().defaultNow(),
+  note: text('note')
+}, table => ([
+  unique('access_grants_target_user_uq').on(table.targetType, table.targetId, table.userId)
+]));
 
 export const approvals = pgTable('approvals', {
   id: uuid('id').primaryKey(),

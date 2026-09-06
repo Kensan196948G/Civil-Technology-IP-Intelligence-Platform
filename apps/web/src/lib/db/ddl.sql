@@ -780,3 +780,20 @@ CREATE INDEX IF NOT EXISTS idx_technologies_name_norm_trgm
 -- text_pattern_ops は ILIKE 'xxx%'（前方一致）にも使える演算子クラス。
 CREATE INDEX IF NOT EXISTS idx_patents_publication_no_prefix ON patents (publication_no text_pattern_ops);
 CREATE INDEX IF NOT EXISTS idx_netis_technologies_netis_no_prefix ON netis_technologies (netis_no text_pattern_ops);
+
+-- FR-RBAC-05 C4 個別付与（grant）モデル。docs/10-requirements/05-rbac-matrix.md §4 の
+-- C4「個別付与された利用者のみ」を実装する。additive のみ・既存テーブルは無変更。
+-- 対象（target_type）は将来の拡張に備え汎用の文字列とする（現状 invention / workflow_instance）。
+-- ロールバック: DROP TABLE IF EXISTS access_grants; で元に戻せる（他テーブルからの参照なし）。
+CREATE TABLE IF NOT EXISTS access_grants (
+  id uuid PRIMARY KEY,
+  target_type text NOT NULL,
+  target_id uuid NOT NULL,
+  user_id uuid NOT NULL REFERENCES users(id),
+  granted_by uuid NOT NULL REFERENCES users(id),
+  granted_at timestamptz NOT NULL DEFAULT now(),
+  note text,
+  UNIQUE (target_type, target_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_access_grants_target ON access_grants (target_type, target_id);
+CREATE INDEX IF NOT EXISTS idx_access_grants_user ON access_grants (user_id);

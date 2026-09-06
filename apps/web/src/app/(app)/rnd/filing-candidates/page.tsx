@@ -22,7 +22,7 @@ export default async function RndFilingCandidatesPage() {
     and(
       eq(s.workflowInstances.kind, 'invention'),
       inArray(s.workflowInstances.status, ['ip_review', 'legal_review', 'approved']),
-      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id })
+      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id, grant: { idCol: s.workflowInstances.id, targetType: 'workflow_instance' } })
     )
   ).orderBy(desc(s.workflowInstances.createdAt));
 

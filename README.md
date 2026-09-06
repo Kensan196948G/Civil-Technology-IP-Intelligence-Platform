@@ -340,9 +340,16 @@ MVPは「主要ユースケースを実際に操作できること」を優先�
 
 > **📌 追記（#11 対応・2026-09-05）**: 上記「行レベル制御なし」は解消済み。`lib/authz/row-visibility.ts` を新設し、
 > 発明（既定 C3）・発明 workflow（C3）を表示する一覧・詳細・件数・検索の各クエリへ**ロール×分類の可視条件（WHERE句）**を適用した
-> （存在・件数にも出さない 404 秘匿。README §14 ルール1/2 準拠）。プロジェクト参加・個別付与（grant）のモデルは
-> 未導入のため、MVP では「RBAC §3 の参照(R)ロール ＋ 起案者本人（owner 特例）」で近似する。C4 は grant 導入まで全ロール不可視。
+> （存在・件数にも出さない 404 秘匿。README §14 ルール1/2 準拠）。
 > 実データ上 C3 を持つのは `inventions` と発明 `workflow_instances` の2テーブル（シード確認済み）。
+>
+> **📌 追記（RBAC §4 C4 個別付与モデル対応）**: `access_grants` テーブル（additive migration）を新設し、
+> C4（最高機密）を「個別に付与された利用者のみ」閲覧可能にした（RBAC §4 MUST）。プロジェクト参加者モデルは
+> 依然未導入のため、C3 は引き続き「RBAC §3 の参照(R)ロール ＋ 起案者本人（owner 特例）」で近似するが、
+> `canViewRow`/`visibleWhere` に `hasGrant`/`grant` オプションを追加し、C3・C4 いずれも個別付与があれば
+> 追加で可視になる（grant を渡さない既存呼び出し箇所は挙動不変）。付与・取消は `admin/project-permissions`
+> 画面から sysadmin のみ実行でき、監査ログに記録される。シードに C4 サンプル1件（grant 付き・grant 無し利用者
+> 双方で確認可能）を追加済み。
 | データ取り込みなし（シード投入のみ） | JPO/WIPO/NETIS等の自動取り込み（[データフロー](docs/20-architecture/03-data-flow.md)） |
 | 自社ホストの Next.js（Node）＋Cloudflare Tunnel（2026-08-29〜） | Cloudflare Workers + Workflows + Queues 構成（[ADR-0001](docs/20-architecture/adr/ADR-0001-cloudflare-neon-github.md)。DB は [ADR-0007](docs/20-architecture/adr/ADR-0007-local-postgresql.md)） |
 

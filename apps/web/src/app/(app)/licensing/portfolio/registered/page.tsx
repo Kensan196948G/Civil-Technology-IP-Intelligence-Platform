@@ -18,7 +18,7 @@ export default async function PortfolioRegisteredPage() {
     .where(and(
       eq(s.workflowInstances.kind, 'invention'),
       eq(s.workflowInstances.status, 'approved'),
-      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id })
+      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id, grant: { idCol: s.workflowInstances.id, targetType: 'workflow_instance' } })
     ))
     .orderBy(desc(s.workflowInstances.createdAt));
 

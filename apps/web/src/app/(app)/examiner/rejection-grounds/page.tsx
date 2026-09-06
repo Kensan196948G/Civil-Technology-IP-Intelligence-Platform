@@ -31,7 +31,7 @@ export default async function RejectionGroundsPage() {
   // description（記載要件）のみがリスク要因の案件も同じ分類で表示されてしまう。
   // novelty/inventive の評価値から該当する拒絶理由だけを生成する。
   const workflows = await db.select().from(s.workflowInstances)
-    .where(visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id }))
+    .where(visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id, grant: { idCol: s.workflowInstances.id, targetType: 'workflow_instance' } }))
     .orderBy(desc(s.workflowInstances.createdAt));
   const workflowGrounds: GroundRow[] = workflows
     .filter(w => (w.aiRiskSummary as RiskSummary | null)?.note)

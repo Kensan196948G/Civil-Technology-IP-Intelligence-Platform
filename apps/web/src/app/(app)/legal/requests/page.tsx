@@ -18,7 +18,7 @@ export default async function LegalRequestsPage() {
   const rows = await db.select().from(s.workflowInstances)
     .where(and(
       eq(s.workflowInstances.status, 'legal_review'),
-      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id })
+      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id, grant: { idCol: s.workflowInstances.id, targetType: 'workflow_instance' } })
     ))
     .orderBy(desc(s.workflowInstances.createdAt));
 

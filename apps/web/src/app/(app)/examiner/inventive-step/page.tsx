@@ -27,7 +27,7 @@ export default async function InventiveStepReviewPage() {
   const workflows = await db.select().from(s.workflowInstances)
     .where(and(
       inArray(s.workflowInstances.kind, ['invention', 'field_adoption']),
-      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id })
+      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id, grant: { idCol: s.workflowInstances.id, targetType: 'workflow_instance' } })
     ))
     .orderBy(desc(s.workflowInstances.createdAt));
 

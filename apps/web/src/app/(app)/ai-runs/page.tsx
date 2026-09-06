@@ -73,7 +73,7 @@ export default async function AiRunsPage() {
   const visibleInventions = inventionTargetIds.length
     ? await db.select().from(s.inventions).where(and(
         inArray(s.inventions.id, inventionTargetIds),
-        visibleWhere(s.inventions.classification, s.inventions.submittedBy, { role: user.role, viewerUserId: me?.id })
+        visibleWhere(s.inventions.classification, s.inventions.submittedBy, { role: user.role, viewerUserId: me?.id, grant: { idCol: s.inventions.id, targetType: 'invention' } })
       ))
     : [];
   const visibleInventionIds = new Set(visibleInventions.map(i => i.id));

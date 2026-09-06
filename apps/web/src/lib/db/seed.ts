@@ -57,7 +57,7 @@ async function main() {
 
     console.log('🧹 既存データをクリア中... (接続先: ' + host + ')');
     const tables = [
-      'audit_logs','ai_citations','ai_runs','approvals','workflow_instances',
+      'audit_logs','ai_citations','ai_runs','approvals','access_grants','workflow_instances',
       'inventions','field_applications','site_issues','sites',
       'claim_chart_rows','claim_analyses','claim_elements','patent_claims','patents',
       'technologies','netis_technologies','papers',
@@ -478,6 +478,38 @@ async function main() {
     `INSERT INTO workflow_instances (id, kind, subject_type, subject_id, title, status, classification, author_id, due_on, human_check_required, human_check_completed_at)
      VALUES ($1,'field_adoption','field_application',$2,$3,'technical_review','C2',$4,'2026-08-25', false, now())`,
     [faWfId, fieldApplicationId, 'GNSS併用ケーソン据付支援システムの導入（デモ）', U('sato.ken@demo.ctiip.example')]
+  );
+
+  // 4件目（C4 最高機密のデモ: 未公開の重要発明。個別付与（grant）が無ければ
+  // sysadmin・ip 等いずれのロールでも起案者本人でも見えないことを確認する用途。
+  // docs/10-requirements/05-rbac-matrix.md §4 MUST「個別付与された利用者のみ」）
+  const inventionId4 = uuid();
+  await sql(
+    `INSERT INTO inventions (id, title, summary, site_id, classification, submitted_by)
+     VALUES ($1,$2,$3,$4,'C4',$5)`,
+    [inventionId4, '次世代係争対応：中核構造の秘匿発明（デモ・C4）',
+     '未公開の重要発明のデモデータ。個別付与（grant）された利用者のみ閲覧できる想定。', siteId,
+     U('takahashi.minoru@demo.ctiip.example')]
+  );
+  const wfId4 = uuid();
+  await sql(
+    `INSERT INTO workflow_instances (id, kind, subject_type, subject_id, title, status, classification, author_id, due_on, human_check_required, human_check_completed_at)
+     VALUES ($1,'invention','invention',$2,$3,'legal_review','C4',$4,'2026-09-30', true, NULL)`,
+    [wfId4, inventionId4, '次世代係争対応：中核構造の秘匿発明（デモ・C4）', U('takahashi.minoru@demo.ctiip.example')]
+  );
+  // 個別付与（grant）: 経営層（山本 恵）にのみ、この C4 発明・ワークフローへの閲覧を個別付与する。
+  // 起案者本人（高橋 実）も付与が無い限り見えない（C4 は owner 特例の対象外）。
+  await sql(
+    `INSERT INTO access_grants (id, target_type, target_id, user_id, granted_by, note)
+     VALUES ($1,'invention',$2,$3,$4,$5)`,
+    [uuid(), inventionId4, U('yamamoto.kei@demo.ctiip.example'), U('kondo.jun@demo.ctiip.example'),
+     'デモ: C4発明の個別付与（経営層のみ閲覧）']
+  );
+  await sql(
+    `INSERT INTO access_grants (id, target_type, target_id, user_id, granted_by, note)
+     VALUES ($1,'workflow_instance',$2,$3,$4,$5)`,
+    [uuid(), wfId4, U('yamamoto.kei@demo.ctiip.example'), U('kondo.jun@demo.ctiip.example'),
+     'デモ: C4ワークフロー案件の個別付与（経営層のみ閲覧）']
   );
 
   // AI実行と根拠（Provenance の実演。異なる機能から呼ばれたAI実行を横断的に一覧できることを示す）

@@ -32,6 +32,18 @@ export default async function InventionDetailPage({ params }: { params: Promise<
 
   const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
   const isOwner = !!me && invention.submittedBy === me.id;
+  // #11 C4 個別付与（grant）: 対象（この発明）への access_grants を確認する。
+  // C3 は owner 特例があるため引き続き isOwner でも可視だが、C4 は grant が無ければ
+  // 起案者本人でも不可視（RBAC §4 MUST「個別付与された利用者のみ」）。
+  const [grant] = me
+    ? await db.select().from(s.accessGrants).where(
+        and(
+          eq(s.accessGrants.targetType, 'invention'),
+          eq(s.accessGrants.targetId, invention.id),
+          eq(s.accessGrants.userId, me.id)
+        )
+      ).limit(1)
+    : [undefined];
   // C3/C4 で権限が無い場合は、存在自体を出さず 404（403 にしない）。
   // Next.js の notFound() は (app)/error.tsx の error boundary に捕まり 200 になる既知事象があるため、
   // 存在しない静的パスへ redirect する（307 → 存在しない = 404。middleware の /admin と同じパターン）。
@@ -41,7 +53,8 @@ export default async function InventionDetailPage({ params }: { params: Promise<
     isOwner,
     actorUserId: me?.id ?? null,
     targetType: 'invention',
-    targetId: invention.id
+    targetId: invention.id,
+    hasGrant: !!grant
   });
   if (!canView) notFoundPage();
 
