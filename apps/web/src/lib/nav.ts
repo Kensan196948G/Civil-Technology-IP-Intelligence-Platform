@@ -143,6 +143,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: 'IPC / CPC分析', href: '/patents/ipc' },
       { label: '引用・被引用', href: '/patents/citations' },
       { label: '競合引用分析（M26-004）', href: '/patents/citations/by-competitors' },
+      { label: '図面解析（M47）', href: '/patents/drawings' },
       { label: '権利状態', href: '/patents/status' },
       { label: '審査経過', href: '/patents/prosecution' },
       { label: '類似特許', href: '/patents/similar' },

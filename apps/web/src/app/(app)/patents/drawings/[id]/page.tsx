@@ -1,0 +1,132 @@
+import { getDb } from '@/lib/db/client';
+import { getDatabaseUrl } from '@/lib/env';
+import * as s from '@/lib/db/schema';
+import { eq, asc, desc, inArray } from 'drizzle-orm';
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+
+// M47 Patent Drawing / Image Intelligence — 図面詳細。
+// ⚠️ Vision AI の実呼び出しは未実装。部品対応・類似度はデモデータ。
+
+export default async function PatentDrawingDetailPage({ params }: { params: Promise<{ id: string }> })
+{
+  // Next.js 15: params は Promise になったため await する
+  const p = await params;
+  const db = getDb(getDatabaseUrl());
+  const [drawing] = await db.select().from(s.patentDrawings).where(eq(s.patentDrawings.id, p.id)).limit(1);
+  if (!drawing) notFound();
+
+  const [patent] = await db.select().from(s.patents).where(eq(s.patents.id, drawing.patentId)).limit(1);
+  const parts = await db.select().from(s.drawingParts).where(eq(s.drawingParts.drawingId, drawing.id)).orderBy(asc(s.drawingParts.partNo));
+
+  const elementIds = parts.filter(part => part.elementId).map(part => part.elementId as string);
+  const elements = elementIds.length
+    ? await db.select().from(s.claimElements).where(inArray(s.claimElements.id, elementIds))
+    : [];
+  const elementById = new Map(elements.map(e => [e.id, e]));
+
+  const similarities = await db.select().from(s.drawingSimilarities)
+    .where(eq(s.drawingSimilarities.drawingId, drawing.id))
+    .orderBy(desc(s.drawingSimilarities.similarityScore));
+  const similarDrawingIds = similarities.map(sim => sim.similarDrawingId);
+  const similarDrawings = similarDrawingIds.length
+    ? await db.select().from(s.patentDrawings).where(inArray(s.patentDrawings.id, similarDrawingIds))
+    : [];
+  const similarDrawingById = new Map(similarDrawings.map(d => [d.id, d]));
+  const similarPatentIds = [...new Set(similarDrawings.map(d => d.patentId))];
+  const similarPatents = similarPatentIds.length
+    ? await db.select().from(s.patents).where(inArray(s.patents.id, similarPatentIds))
+    : [];
+  const similarPatentById = new Map(similarPatents.map(p2 => [p2.id, p2]));
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+        <h1 style={{ fontSize: 22 }}>{drawing.figureNo}</h1>
+        {drawing.isSample && <span className="badge" style={{ color: 'var(--amber)', border: '1px solid var(--amber)' }}>デモ</span>}
+      </div>
+      <div className="card" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}>
+        <div>
+          対象特許：{patent ? <Link href={`/patents/${patent.id}`} style={{ color: 'var(--blue)' }}>{patent.title}</Link> : '特許（削除済み）'}
+        </div>
+        {drawing.caption && <div style={{ color: 'var(--ink-2)' }}>{drawing.caption}</div>}
+      </div>
+
+      <div className="card" style={{ padding: 0 }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 700, fontSize: 13 }}>
+          図面イメージ
+        </div>
+        <div style={{ padding: '16px', display: 'flex', justifyContent: 'center' }}>
+          {drawing.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={drawing.imageUrl} alt={drawing.figureNo} style={{ maxWidth: '100%', border: '1px solid var(--line)' }} />
+          ) : (
+            <div style={{
+              width: '100%', maxWidth: 480, aspectRatio: '4 / 3', border: '1px dashed var(--line)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', fontSize: 12.5
+            }}>
+              図面画像は未登録です（プレースホルダ）
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="card" style={{ padding: 0 }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 700, fontSize: 13 }}>
+          部品一覧（符号・説明）
+        </div>
+        {parts.length === 0 ? (
+          <div style={{ padding: '13px 16px', fontSize: 12.5, color: 'var(--ink-2)' }}>
+            部品データはまだありません。
+          </div>
+        ) : (
+          <div>
+            {parts.map(part => {
+              const element = part.elementId ? elementById.get(part.elementId) : undefined;
+              return (
+                <div key={part.id} style={{ padding: '11px 16px', borderBottom: '1px solid var(--line-2)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span className="mono" style={{ fontWeight: 700 }}>符号{part.partNo}</span>
+                    <span style={{ fontSize: 13 }}>{part.description}</span>
+                  </div>
+                  {element && (
+                    <div style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>
+                      構成要件対応：<span className="mono" style={{ fontWeight: 700 }}>{element.label}</span>：{element.text}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="card" style={{ padding: 0 }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 700, fontSize: 13 }}>
+          類似図面（スコア降順）
+        </div>
+        {similarities.length === 0 ? (
+          <div style={{ padding: '13px 16px', fontSize: 12.5, color: 'var(--ink-2)' }}>
+            類似図面の記録はまだありません。
+          </div>
+        ) : (
+          <div>
+            {similarities.map(sim => {
+              const sd = similarDrawingById.get(sim.similarDrawingId);
+              const sp = sd ? similarPatentById.get(sd.patentId) : undefined;
+              return (
+                <Link key={sim.id} href={`/patents/drawings/${sim.similarDrawingId}`} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: '1px solid var(--line-2)', color: 'var(--ink)' }}>
+                  <span className="mono" style={{ fontSize: 15, color: 'var(--blue)' }}>{Number(sim.similarityScore).toFixed(1)}<span style={{ fontSize: 11, color: 'var(--ink-2)' }}> / 100</span></span>
+                  <span style={{ flexGrow: 1, fontSize: 12.5 }}>
+                    {sd?.figureNo ?? '—'} ｜ {sp?.title ?? '特許（削除済み）'}
+                  </span>
+                  <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>詳細を見る →</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

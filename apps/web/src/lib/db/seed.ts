@@ -82,7 +82,8 @@ async function main() {
       'research_partners',
       'patent_translations',
       'funding_matches',
-      'funding_programs'
+      'funding_programs',
+      'drawing_similarities','drawing_parts','patent_drawings'
     ];
     for (const t of tables) await sql(`TRUNCATE TABLE ${t} CASCADE`);
 
@@ -217,6 +218,89 @@ async function main() {
       `INSERT INTO patent_citations (id, source_patent_id, kind, cited_patent_id, cited_paper_id, note, is_sample)
        VALUES ($1,$2,$3,$4,$5,$6,true)`,
       [uuid(), patentIds[srcIdx]!, kind, citedPatent, citedPaper, note]
+    );
+  }
+
+  // 特許図面（M47 Patent Drawing / Image Intelligence）
+  // 図面・部品（符号）・図面間類似関係のデモデータ。
+  // ⚠️ Vision AI（画像解析による部品自動認識・図面類似検索）の実呼び出しは未実装（データモデル・画面のみ先行実装）。
+  // image_url は実画像を保存しないため、デモデータでも常に NULL（画面側はプレースホルダ表示）。
+  const drawingIds: string[] = [];
+  const drawingDefs: Array<{
+    patentIdx: number; figureNo: string; caption: string;
+    parts: Array<{ partNo: string; description: string; claimNo?: number; elementSeq?: number }>;
+  }> = [
+    {
+      patentIdx: 0, figureNo: '図1', caption: 'ケーソン据付装置の全体構成図（デモ）',
+      parts: [
+        { partNo: '1', description: '吊具', claimNo: 1, elementSeq: 0 },
+        { partNo: '2', description: '計測手段（傾斜計）', claimNo: 1, elementSeq: 1 },
+        { partNo: '3', description: '演算手段（制御盤）', claimNo: 1, elementSeq: 2 }
+      ]
+    },
+    {
+      patentIdx: 0, figureNo: '図2', caption: '動揺補償機構の詳細図（デモ）',
+      parts: [
+        { partNo: '4', description: '動揺補償機構（油圧シリンダ）', claimNo: 1, elementSeq: 3 },
+        { partNo: '5', description: '油圧配管' }
+      ]
+    },
+    {
+      patentIdx: 1, figureNo: '図1', caption: '安全停止制御の概略図（デモ）',
+      parts: [
+        { partNo: '10', description: '過負荷検知センサ' },
+        { partNo: '11', description: '緊急停止回路' }
+      ]
+    },
+    {
+      patentIdx: 2, figureNo: '図1', caption: 'RTK-GNSS位置検出構成図（デモ）',
+      parts: [
+        { partNo: '20', description: 'RTK-GNSSアンテナ' },
+        { partNo: '21', description: '傾斜計ユニット' },
+        { partNo: '22', description: '位置演算部' }
+      ]
+    },
+    {
+      patentIdx: 2, figureNo: '図2', caption: '姿勢計測フローチャート（デモ）',
+      parts: [
+        { partNo: '23', description: 'データ収集モジュール' },
+        { partNo: '24', description: '姿勢推定アルゴリズム' }
+      ]
+    }
+  ];
+  for (const d of drawingDefs) {
+    const did = uuid(); drawingIds.push(did);
+    await sql(
+      `INSERT INTO patent_drawings (id, patent_id, figure_no, image_url, caption, is_sample) VALUES ($1,$2,$3,NULL,$4,true)`,
+      [did, patentIds[d.patentIdx]!, d.figureNo, d.caption]
+    );
+    for (const part of d.parts) {
+      let elementId: string | null = null;
+      if (part.claimNo != null && part.elementSeq != null) {
+        const cid = claimIdByPatentClaim[`${patentIds[d.patentIdx]}:${part.claimNo}`];
+        if (cid) elementId = elementIdsByClaim[cid]?.[part.elementSeq] ?? null;
+      }
+      await sql(
+        `INSERT INTO drawing_parts (id, drawing_id, part_no, description, element_id, is_sample) VALUES ($1,$2,$3,$4,$5,true)`,
+        [uuid(), did, part.partNo, part.description, elementId]
+      );
+    }
+  }
+  // 図面間の類似関係（デモ・双方向に登録）。同一特許内の図面同士、および別特許の図面同士。
+  const drawingSimilarityDefs: Array<[number, number, number]> = [
+    [0, 1, 78.5],
+    [0, 3, 61.2],
+    [3, 4, 84.0],
+    [2, 4, 55.5]
+  ];
+  for (const [aIdx, bIdx, score] of drawingSimilarityDefs) {
+    await sql(
+      `INSERT INTO drawing_similarities (id, drawing_id, similar_drawing_id, similarity_score, is_sample) VALUES ($1,$2,$3,$4,true)`,
+      [uuid(), drawingIds[aIdx]!, drawingIds[bIdx]!, score]
+    );
+    await sql(
+      `INSERT INTO drawing_similarities (id, drawing_id, similar_drawing_id, similarity_score, is_sample) VALUES ($1,$2,$3,$4,true)`,
+      [uuid(), drawingIds[bIdx]!, drawingIds[aIdx]!, score]
     );
   }
 

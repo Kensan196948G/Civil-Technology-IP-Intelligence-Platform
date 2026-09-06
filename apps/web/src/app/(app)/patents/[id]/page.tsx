@@ -33,6 +33,8 @@ export default async function PatentDetailPage({ params }: { params: Promise<{ i
     elementsByClaim.set(e.claimId, arr);
   }
   const [analysis] = await db.select().from(s.claimAnalyses).where(eq(s.claimAnalyses.patentId, patent.id)).limit(1);
+  // M47 Patent Drawing / Image Intelligence: この特許に紐づく図面への簡易リンク。
+  const drawings = await db.select().from(s.patentDrawings).where(eq(s.patentDrawings.patentId, patent.id));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -54,11 +56,18 @@ export default async function PatentDetailPage({ params }: { params: Promise<{ i
         )}
       </div>
 
-      {analysis && (
-        <Link href={`/claims/${analysis.id}`} className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>
-          自社案とのClaim比較を見る →
-        </Link>
-      )}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        {analysis && (
+          <Link href={`/claims/${analysis.id}`} className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>
+            自社案とのClaim比較を見る →
+          </Link>
+        )}
+        {drawings.length > 0 && (
+          <Link href="/patents/drawings" className="btn btn-secondary" style={{ alignSelf: 'flex-start' }}>
+            図面一覧を見る（M47・{drawings.length}件）→
+          </Link>
+        )}
+      </div>
 
       <div className="card" style={{ padding: 0 }}>
         <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 700, fontSize: 13 }}>
