@@ -10,6 +10,14 @@ name: Deploy Production
 # `ctiip-mvp`（https://ctiip-mvp.mirai-dx-platform.com）。
 # docs/40-infrastructure/03-dns-and-domain.md には本番 `ctiip` の記載もあるが、
 # 現状スクリプトが向いているのは MVP 側のみのため、ここでも MVP を対象にする。
+#
+# ⚠️ 2026-09-06 追記（既知の不整合・要決定＝拡張計画書D-5）: ADR-0007（2026-08-29採択）により
+# 本番・MVPともに自社ホストNode.js＋Cloudflare Tunnel構成へ移行済みで、DBドライバ（postgres.js）が
+# Node組み込みモジュールに依存するためEdge Runtime必須のCloudflare Pages（next-on-pages変換）とは
+# 非両立になっている。このワークフローは実行すると `pnpm cf:build` の時点で失敗し、
+# 実際の本番反映経路（自社ホストNodeへの反映方法）を表していない可能性が高い。
+# 実際のデプロイ手順の詳細情報が無いため、本ワークフローの再設計は見送っている。
+# タグpushでの実行前に、現在の本番反映方法を運用担当に確認すること。
 
 on:
   push:
