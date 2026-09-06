@@ -17,14 +17,18 @@ async function loadCounts() {
   const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
   const viewer = { role: user.role, viewerUserId: me?.id };
   const [ideas] = await db.select({ n: count() }).from(s.inventions)
-    .where(visibleWhere(s.inventions.classification, s.inventions.submittedBy, viewer));
+    .where(visibleWhere(s.inventions.classification, s.inventions.submittedBy, {
+      ...viewer, grant: { idCol: s.inventions.id, targetType: 'invention' }
+    }));
   const [themes] = await db.select({ n: count() }).from(s.technologies);
   const [openChallenges] = await db.select({ n: count() }).from(s.siteIssues).where(eq(s.siteIssues.status, 'open'));
   const [pipeline] = await db.select({ n: count() }).from(s.workflowInstances).where(
     and(
       eq(s.workflowInstances.kind, 'invention'),
       notInArray(s.workflowInstances.status, ['approved', 'rejected', 'archived']),
-      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, viewer)
+      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, {
+        ...viewer, grant: { idCol: s.workflowInstances.id, targetType: 'workflow_instance' }
+      })
     )
   );
   const [aiOrganized] = await db.select({ n: count() }).from(s.aiRuns).where(eq(s.aiRuns.kind, 'examine'));

@@ -20,7 +20,7 @@ export default async function PortfolioLapsedPage() {
     .where(and(
       eq(s.workflowInstances.kind, 'invention'),
       inArray(s.workflowInstances.status, ['rejected', 'archived']),
-      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id })
+      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id, grant: { idCol: s.workflowInstances.id, targetType: 'workflow_instance' } })
     ))
     .orderBy(desc(s.workflowInstances.createdAt));
 

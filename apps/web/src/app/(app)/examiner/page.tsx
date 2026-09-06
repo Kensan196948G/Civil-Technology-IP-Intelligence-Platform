@@ -18,7 +18,7 @@ export default async function ExaminerHomePage() {
   const [runsCount] = await db.select({ n: count() }).from(s.aiRuns);
   const [analysesCount] = await db.select({ n: count() }).from(s.claimAnalyses);
   const workflows = await db.select().from(s.workflowInstances)
-    .where(visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id }));
+    .where(visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id, grant: { idCol: s.workflowInstances.id, targetType: 'workflow_instance' } }));
   const riskEvaluated = workflows.filter(w => w.aiRiskSummary != null).length;
   const [modelSetting] = await db.select().from(s.settings).where(eq(s.settings.key, 'ai.model.examiner')).limit(1);
   const [flag] = await db.select().from(s.featureFlags).where(eq(s.featureFlags.key, 'ai_examiner_v2')).limit(1);

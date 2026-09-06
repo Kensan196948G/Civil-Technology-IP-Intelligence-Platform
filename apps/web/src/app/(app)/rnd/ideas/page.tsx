@@ -15,7 +15,7 @@ export default async function RndIdeasPage() {
   const db = getDb(getDatabaseUrl());
   const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
   const inventions = await db.select().from(s.inventions)
-    .where(visibleWhere(s.inventions.classification, s.inventions.submittedBy, { role: user.role, viewerUserId: me?.id }))
+    .where(visibleWhere(s.inventions.classification, s.inventions.submittedBy, { role: user.role, viewerUserId: me?.id, grant: { idCol: s.inventions.id, targetType: 'invention' } }))
     .orderBy(desc(s.inventions.createdAt));
 
   const userIds = [...new Set(inventions.map(i => i.submittedBy))];

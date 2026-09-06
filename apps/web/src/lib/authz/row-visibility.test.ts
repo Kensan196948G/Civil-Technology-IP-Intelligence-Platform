@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { SQL } from 'drizzle-orm';
 import {
   defaultVisibleClassifications,
   canViewRow,
@@ -6,6 +7,19 @@ import {
   isC3ReaderRole,
   visibleWhere
 } from './row-visibility';
+
+// StringChunk/SQL は drizzle-orm 内部の具象クラスを import せずダックタイピングで
+// 再帰的にテキスト化する（sql`` テンプレートの実装詳細に依存しすぎないため）。
+function flattenSqlText(node: unknown): string {
+  if (!node || typeof node !== 'object') return '';
+  if ('queryChunks' in node && Array.isArray((node as SQL).queryChunks)) {
+    return (node as SQL).queryChunks.map(flattenSqlText).join('');
+  }
+  if ('value' in node && Array.isArray((node as { value: unknown }).value)) {
+    return ((node as { value: string[] }).value).join('');
+  }
+  return '';
+}
 
 // #11 C3/C4 行レベル制御の判定ロジック（Issue #11・D-6 対応）。
 // RBAC §4「権限のない利用者には存在も見せない」をコードで保証する。
@@ -52,10 +66,21 @@ describe('canViewRow', () => {
     expect(canViewRow('viewer', 'C3', false)).toBe(false);
   });
 
-  it('C4 は個別付与（grant）導入まで全ロール不可視', () => {
+  it('C4 は grant が無ければ owner・sysadmin・R ロールでも不可視', () => {
     expect(canViewRow('sysadmin', 'C4', true)).toBe(false);
     expect(canViewRow('ip', 'C4', false)).toBe(false);
     expect(canViewRow('engineer', 'C4', false)).toBe(false);
+  });
+
+  it('C4 は個別付与（grant）がある利用者のみ可視（ロール・owner を問わない）', () => {
+    expect(canViewRow('engineer', 'C4', false, true)).toBe(true);
+    expect(canViewRow('viewer', 'C4', false, true)).toBe(true);
+    expect(canViewRow('sysadmin', 'C4', false, false)).toBe(false);
+  });
+
+  it('C3 は grant があれば R ロール外・非 owner でも可視', () => {
+    expect(canViewRow('engineer', 'C3', false, true)).toBe(true);
+    expect(canViewRow('viewer', 'C3', false, false)).toBe(false);
   });
 });
 
@@ -96,7 +121,7 @@ describe('canViewRowAudited', () => {
     expect(insert).not.toHaveBeenCalled();
   });
 
-  it('C4 は個別付与導入まで sysadmin でも denied として記録される', async () => {
+  it('C4 は grant が無ければ sysadmin でも denied として記録される', async () => {
     const { db, values } = createFakeDb();
     const allowed = await canViewRowAudited(db, {
       role: 'sysadmin', classification: 'C4', isOwner: false,
@@ -105,6 +130,17 @@ describe('canViewRowAudited', () => {
 
     expect(allowed).toBe(false);
     expect(values.mock.calls[0]![0].reason).toBe('row_visibility_denied');
+  });
+
+  it('C4 は hasGrant: true を渡すと監査ログを書き込まず true を返す', async () => {
+    const { db, insert } = createFakeDb();
+    const allowed = await canViewRowAudited(db, {
+      role: 'engineer', classification: 'C4', isOwner: false,
+      actorUserId: 'u1', targetType: 'invention', targetId: 'inv-3', hasGrant: true
+    });
+
+    expect(allowed).toBe(true);
+    expect(insert).not.toHaveBeenCalled();
   });
 });
 
@@ -115,5 +151,29 @@ describe('visibleWhere', () => {
     expect(visibleWhere(c, o, { role: 'ip', viewerUserId: 'u1' })).toBeTruthy();
     expect(visibleWhere(c, o, { role: 'engineer', viewerUserId: 'u1' })).toBeTruthy();
     expect(visibleWhere(c, o, { role: 'engineer' })).toBeTruthy();
+  });
+
+  it('grant を渡すと access_grants への EXISTS 条件を含む SQL を生成する（C4 の可視化に使う）', () => {
+    const c = { name: 'classification' };
+    const o = { name: 'author_id' };
+    const idCol = { name: 'id' };
+
+    const withGrantC3Reader = visibleWhere(c, o, {
+      role: 'ip', viewerUserId: 'u1', grant: { idCol, targetType: 'invention' }
+    });
+    expect(flattenSqlText(withGrantC3Reader)).toContain('access_grants');
+
+    const withGrantEngineer = visibleWhere(c, o, {
+      role: 'engineer', viewerUserId: 'u1', grant: { idCol, targetType: 'workflow_instance' }
+    });
+    expect(flattenSqlText(withGrantEngineer)).toContain('access_grants');
+
+    // viewerUserId が無い場合は grant を渡しても EXISTS を組み込まない（付与判定不能なため）。
+    const withoutViewer = visibleWhere(c, o, { role: 'engineer', grant: { idCol, targetType: 'invention' } });
+    expect(flattenSqlText(withoutViewer)).not.toContain('access_grants');
+
+    // grant を渡さない既存呼び出しは従来どおり access_grants を含まない（後方互換）。
+    const legacyCall = visibleWhere(c, o, { role: 'engineer', viewerUserId: 'u1' });
+    expect(flattenSqlText(legacyCall)).not.toContain('access_grants');
   });
 });

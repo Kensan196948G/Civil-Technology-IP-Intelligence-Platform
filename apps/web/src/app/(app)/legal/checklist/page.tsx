@@ -22,7 +22,7 @@ export default async function LegalChecklistPage() {
   const db = getDb(getDatabaseUrl());
   const [me] = await db.select().from(s.users).where(eq(s.users.email, user.email)).limit(1);
   const rows = await db.select().from(s.workflowInstances)
-    .where(visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id }))
+    .where(visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id, grant: { idCol: s.workflowInstances.id, targetType: 'workflow_instance' } }))
     .orderBy(desc(s.workflowInstances.createdAt));
 
   return (

@@ -1,7 +1,7 @@
 import { getDb } from '@/lib/db/client';
 import { getDatabaseUrl } from '@/lib/env';
 import * as s from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { decideAction, completeHumanCheck } from '../actions';
@@ -29,13 +29,23 @@ export default async function ApprovalDetail({ params }: { params: Promise<{ id:
   if (!me) redirect('/login');
   // #11: C3/C4 案件で権限が無い場合は存在自体を出さず 404（403 にしない）
   const isOwner = me.id === w.authorId;
+  // #11 C4 個別付与（grant）: この案件（workflow_instance）への access_grants を確認する。
+  // C4 は grant が無ければ起案者本人でも不可視（RBAC §4 MUST）。
+  const [grant] = await db.select().from(s.accessGrants).where(
+    and(
+      eq(s.accessGrants.targetType, 'workflow_instance'),
+      eq(s.accessGrants.targetId, w.id),
+      eq(s.accessGrants.userId, me.id)
+    )
+  ).limit(1);
   const canView = await canViewRowAudited(db, {
     role: user.role,
     classification: w.classification as 'C1' | 'C2' | 'C3' | 'C4',
     isOwner,
     actorUserId: me.id,
     targetType: 'workflow_instance',
-    targetId: w.id
+    targetId: w.id,
+    hasGrant: !!grant
   });
   if (!canView) notFound();
   const [author] = await db.select().from(s.users).where(eq(s.users.id, w.authorId)).limit(1);

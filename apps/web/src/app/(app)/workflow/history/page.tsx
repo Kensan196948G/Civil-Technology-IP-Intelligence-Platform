@@ -25,7 +25,7 @@ export default async function WorkflowHistoryPage() {
     instanceIds.length
       ? db.select().from(s.workflowInstances).where(and(
           inArray(s.workflowInstances.id, instanceIds),
-          visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id })
+          visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id, grant: { idCol: s.workflowInstances.id, targetType: 'workflow_instance' } })
         ))
       : Promise.resolve([]),
     approverIds.length ? db.select().from(s.users).where(inArray(s.users.id, approverIds)) : Promise.resolve([])

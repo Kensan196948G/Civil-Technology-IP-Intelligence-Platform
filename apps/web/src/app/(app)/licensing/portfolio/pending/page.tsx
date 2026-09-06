@@ -23,7 +23,7 @@ export default async function PortfolioPendingPage() {
     .where(and(
       eq(s.workflowInstances.kind, 'invention'),
       notInArray(s.workflowInstances.status, ['approved', 'rejected', 'archived']),
-      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id })
+      visibleWhere(s.workflowInstances.classification, s.workflowInstances.authorId, { role: user.role, viewerUserId: me?.id, grant: { idCol: s.workflowInstances.id, targetType: 'workflow_instance' } })
     ))
     .orderBy(desc(s.workflowInstances.createdAt));
 

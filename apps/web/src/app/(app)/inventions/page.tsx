@@ -28,7 +28,8 @@ export default async function InventionsPage() {
   const inventions = await db.select().from(s.inventions)
     .where(
       visibleWhere(s.inventions.classification, s.inventions.submittedBy, {
-        role: user.role, viewerUserId: me?.id
+        role: user.role, viewerUserId: me?.id,
+        grant: { idCol: s.inventions.id, targetType: 'invention' }
       })
     )
     .orderBy(desc(s.inventions.createdAt));
