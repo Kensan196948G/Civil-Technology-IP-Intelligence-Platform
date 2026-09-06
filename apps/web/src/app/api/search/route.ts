@@ -3,16 +3,15 @@ import { getDatabaseUrl } from '@/lib/env';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { sql } from 'drizzle-orm';
 import { fuseRrf, normalizeText, SEARCH_WEIGHTS, type RankedList } from '@/lib/search/rrf';
+import { embedText, toPgVectorLiteral } from '@/lib/ai/embeddings';
 
 // ハイブリッド検索API。docs/30-design/06-search-and-rag-design.md（ADR-0003）に基づき、
-// ①構造検索（特許番号・NETIS番号の完全一致/前方一致）＋②字句検索（pg_trgm類似度）を
-// RRF（Reciprocal Rank Fusion）で融合して返す。
+// ①構造検索（特許番号・NETIS番号の完全一致/前方一致）＋②字句検索（pg_trgm類似度）＋
+// ③意味検索（pgvector, Voyage AI のコサイン距離）を RRF（Reciprocal Rank Fusion）で融合して返す。
 //
-// ③意味検索（pgvector）は、埋め込みモデル・次元数が未確定
-// （docs/40-infrastructure/02-neon-setup.md §4 参照）かつ新規の埋め込みAPI契約が未承認のため、
-// 今回のスコープ外（見送り）。RRF融合ロジック（lib/search/rrf.ts の fuseRrf）は
-// 複数の順位付きリストを重み付きで融合する汎用実装のため、意味検索を導入する際は
-// SEARCH_WEIGHTS に `semantic` を追加し、リストを1つ増やすだけで拡張できる。
+// ③意味検索は VOYAGE_API_KEY 未設定時（本番APIキー未発行の間の既定動作）は
+// embedText() が undefined を返すため、その場合は完全にスキップされ、①②のみで融合される
+// （既存の /api/search のレスポンス形式・挙動は変えない）。
 
 type SearchKind = 'patent' | 'paper' | 'netis' | 'tech';
 
@@ -25,6 +24,7 @@ interface ResultRow {
 const RESULT_LIMIT = 50;
 const STRUCTURED_LIMIT = 10;
 const LEXICAL_LIMIT_PER_TABLE = 30;
+const SEMANTIC_LIMIT_PER_TABLE = 30;
 
 function makeKey(kind: SearchKind, id: string): string {
   return `${kind}:${id}`;
@@ -67,7 +67,10 @@ export async function GET(req: Request) {
   const like = `%${qNorm}%`;
   const prefixLike = `${qRaw}%`;
 
-  const [structured, patentLex, paperLex, netisLex, techLex] = await Promise.all([
+  const [queryEmbedding, structured, patentLex, paperLex, netisLex, techLex] = await Promise.all([
+    // ③意味検索用のクエリ埋め込み。VOYAGE_API_KEY未設定時（本番APIキー未発行の間の既定動作）は
+    // undefined が返り、後段で意味検索そのものをスキップする（例外は投げない）。
+    embedText(qRaw, { inputType: 'query' }),
     // ①構造検索: 特許番号・NETIS番号の完全一致/前方一致
     db.execute(sql`
       select 'patent' as kind, id, title
@@ -140,6 +143,49 @@ export async function GET(req: Request) {
     { name: 'lexical:tech', weight: SEARCH_WEIGHTS.lexical, ids: collect('tech', techLex.rows as Array<{ id: string; title: string }>) }
   ];
 
+  // ③意味検索（pgvector）: クエリ埋め込みが得られた場合（VOYAGE_API_KEY設定時）のみ実行する。
+  // 未設定時は queryEmbedding が undefined のため、このブロックは丸ごとスキップされ、
+  // 従来通り①②のみで融合される（挙動不変）。
+  if (queryEmbedding) {
+    const queryVector = toPgVectorLiteral(queryEmbedding);
+    const [patentSem, paperSem, netisSem, techSem] = await Promise.all([
+      db.execute(sql`
+        select id, title
+        from patents
+        where embedding is not null
+        order by embedding <=> ${queryVector}::vector
+        limit ${SEMANTIC_LIMIT_PER_TABLE}
+      `),
+      db.execute(sql`
+        select id, title
+        from papers
+        where embedding is not null
+        order by embedding <=> ${queryVector}::vector
+        limit ${SEMANTIC_LIMIT_PER_TABLE}
+      `),
+      db.execute(sql`
+        select id, name as title
+        from netis_technologies
+        where embedding is not null
+        order by embedding <=> ${queryVector}::vector
+        limit ${SEMANTIC_LIMIT_PER_TABLE}
+      `),
+      db.execute(sql`
+        select id, name as title
+        from technologies
+        where embedding is not null
+        order by embedding <=> ${queryVector}::vector
+        limit ${SEMANTIC_LIMIT_PER_TABLE}
+      `)
+    ]);
+    lists.push(
+      { name: 'semantic:patents', weight: SEARCH_WEIGHTS.semantic, ids: collect('patent', patentSem.rows as Array<{ id: string; title: string }>) },
+      { name: 'semantic:papers', weight: SEARCH_WEIGHTS.semantic, ids: collect('paper', paperSem.rows as Array<{ id: string; title: string }>) },
+      { name: 'semantic:netis', weight: SEARCH_WEIGHTS.semantic, ids: collect('netis', netisSem.rows as Array<{ id: string; title: string }>) },
+      { name: 'semantic:tech', weight: SEARCH_WEIGHTS.semantic, ids: collect('tech', techSem.rows as Array<{ id: string; title: string }>) }
+    );
+  }
+
   // RRF融合（設計書§4.4）: rrf降順でソートされた {id, score} を、退避しておいた行データと結合する。
   const fused = fuseRrf(lists);
   const results = fused.slice(0, RESULT_LIMIT).map(({ id, score }) => ({
@@ -147,10 +193,14 @@ export async function GET(req: Request) {
     score
   }));
 
+  const note = queryEmbedding
+    ? 'ハイブリッド検索（①構造検索＋②字句検索[pg_trgm]＋③意味検索[pgvector, Voyage AI]をRRFで融合）。'
+    : 'ハイブリッド検索（①構造検索＋②字句検索[pg_trgm]をRRFで融合）。③意味検索(pgvector)はVOYAGE_API_KEY未設定のため無効です。';
+
   return Response.json({
     query: qRaw,
     count: results.length,
     results,
-    note: 'ハイブリッド検索（①構造検索＋②字句検索[pg_trgm]をRRFで融合）。③意味検索(pgvector)は埋め込みモデル未確定のため未導入です。'
+    note
   });
 }
