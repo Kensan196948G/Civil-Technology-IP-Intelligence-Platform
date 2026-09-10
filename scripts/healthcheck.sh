@@ -97,11 +97,36 @@ else
   log "OK  MVP ローカル: HTTP 200"
 fi
 
-# ── 3. 集計 ────────────────────────────────────────────────────────────
-log "=== 結果: failures=$failures warnings=$warnings ==="
+# ── 3. 集計（連続失敗のしきい値） ──────────────────────────────────────
+#
+# 設計書 §1.1 の閾値は「**3回連続失敗**」である。単発の失敗で unit を failed にすると、
+# 計画的な再起動や一瞬のネットワーク断でも通知が出て**警報疲れ**を招き、本当の障害が
+# 埋もれる。連続回数を数え、しきい値に達したときだけ失敗として扱う。
+#
+# ※ 本スクリプト自身が 2026-09-10 の MVP 再起動中に単発 failure を記録し、
+#    この設計不足に気づいた（マーカーが残った）。監視が自分の弱点を検出した形である。
+THRESHOLD="${CTIIP_HEALTHCHECK_FAILURE_THRESHOLD:-3}"
+COUNT_FILE="$STATE_DIR/consecutive-failures"
+prev="$(cat "$COUNT_FILE" 2>/dev/null || echo 0)"
+case "$prev" in ''|*[!0-9]*) prev=0 ;; esac
+
 if [ "$failures" -gt 0 ]; then
-  printf '%s failures=%s warnings=%s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$failures" "$warnings" > "$STATE_DIR/last-failure"
+  count=$((prev + 1))
+  echo "$count" > "$COUNT_FILE"
+  if [ "$count" -lt "$THRESHOLD" ]; then
+    warn "連続失敗 $count/$THRESHOLD 回（しきい値未満のため unit は失敗扱いにしない）"
+    log "=== 結果: failures=$failures warnings=$warnings consecutive=$count/$THRESHOLD ==="
+    exit 0
+  fi
+  bad "連続失敗 $count/$THRESHOLD 回 — しきい値に到達しました"
+  log "=== 結果: failures=$failures warnings=$warnings consecutive=$count/$THRESHOLD ==="
+  printf '%s failures=%s warnings=%s consecutive=%s\n' \
+    "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$failures" "$warnings" "$count" > "$STATE_DIR/last-failure"
   exit 1
 fi
+
+# 成功したら連続失敗カウンタをリセットする
+echo 0 > "$COUNT_FILE"
 : > "$STATE_DIR/last-failure"
+log "=== 結果: failures=0 warnings=$warnings consecutive=0/$THRESHOLD ==="
 exit 0
