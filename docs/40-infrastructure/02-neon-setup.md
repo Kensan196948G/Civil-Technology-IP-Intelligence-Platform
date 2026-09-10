@@ -19,9 +19,12 @@
 
 | サービス | 内容 |
 |---|---|
-| `ctip-web.service` | 本番（`ctiip.mirai-dx-platform.com`）。Next.js `next start -p 18940`。`EnvironmentFile=.env.local` |
-| `ctiip-mvp-adhoc.service` | MVP（`ctiip-mvp.mirai-dx-platform.com`）。`next start -p 3001` |
+| `ctip-web.service` | 本番（**`ctip`**.mirai-dx-platform.com）。Next.js `next start -p 18940`。DB: `civil_tech_ip_intelligence` |
+| `ctiip-mvp-web.service` | MVP（`ctiip-mvp.mirai-dx-platform.com`）。`next start -p 3001`。**専用チェックアウト＋専用DB `civil_tech_ip_intelligence_mvp`** |
 | `ctip-web-cloudflared.service` | Cloudflare Tunnel（`ctip-web`） |
+| `ctiip-mvp-cloudflared.service` | Cloudflare Tunnel（`ctiip-mvp`） |
+| `ctiip-healthcheck.timer` | 外形監視（5分ごと） |
+| `ctiip-db-backup.timer` | 日次バックアップ（23:30 JST） |
 
 ## 2. セットアップ手順（新規ホスト／新規DB）
 

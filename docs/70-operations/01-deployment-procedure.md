@@ -19,13 +19,23 @@
 | 環境 | ホスト名 | 実行 | Tunnel |
 |---|---|---|---|
 | 本番 | **`ctip.mirai-dx-platform.com`**（i は1つ。`ctiip.` は DNS 未作成で解決不可） | `ctip-web.service`（`next start -p 18940`） | `ctip-web-cloudflared.service` |
-| MVP | `ctiip-mvp.mirai-dx-platform.com` | `ctiip-mvp-adhoc.service`（`next start -p 3001`） | `ctiip-mvp-cloudflared.service` |
+| MVP | `ctiip-mvp.mirai-dx-platform.com` | `ctiip-mvp-web.service`（`next start -p 3001`、専用チェックアウト） | `ctiip-mvp-cloudflared.service` |
 
-- デプロイ先チェックアウト（本番・MVP 共通の実行ディレクトリ）:
-  `/home/kensan/Projects/Mirai-Admin-Platform/Civil-Technology-IP-Intelligence-Platform`
-  （`ctip-web.service` の `WorkingDirectory`。**systemd の system unit が固定しているため、
-  別チェックアウトへ移すには unit の変更（要 root）が必要**）
+> **デプロイ先は本番と MVP で別チェックアウト**（2026-09-10 に分離）。
+> 同一 `.next` を共有すると、片方をビルドした時点で他方の実行中プロセスと不整合になり
+> 静的チャンクが 404/500 になる（実測済み）。
+>
+> - 本番: `/home/kensan/Projects/Mirai-Admin-Platform/Civil-Technology-IP-Intelligence-Platform`
+> - MVP : `/home/kensan/Projects/Mirai-Admin-Platform/ctiip-mvp-deploy`
+
+- デプロイ先チェックアウト:
+  - 本番: `/home/kensan/Projects/Mirai-Admin-Platform/Civil-Technology-IP-Intelligence-Platform`
+    （`ctip-web.service` の `WorkingDirectory`。**systemd の system unit が固定しているため、
+    別チェックアウトへ移すには unit の変更（要 root）が必要**）
+  - MVP : `/home/kensan/Projects/Mirai-Admin-Platform/ctiip-mvp-deploy`
 - 接続情報: `<deploy-dir>/apps/web/.env.local`（git 管理外）
+  - 本番 → `civil_tech_ip_intelligence`
+  - MVP  → `civil_tech_ip_intelligence_mvp`（**2026-09-10 に分離済み**）
 
 ### 手順
 
@@ -54,7 +64,7 @@ CTIIP_COMMIT_SHA="$TARGET_SHA" pnpm --filter @ctiip/web build
 
 # ⑥ 再起動
 systemctl restart ctip-web.service            # 本番
-# systemctl --user restart ctiip-mvp-adhoc.service   # MVP
+# systemctl --user restart ctiip-mvp-web.service   # MVP
 
 # ⑦ スモークテスト（version が対象コミットと一致することまで確認する）
 curl -fsS https://ctip.mirai-dx-platform.com/api/health
