@@ -10,8 +10,8 @@
 
 | 環境 | URL | 実行プロセス | DB（ローカル PostgreSQL） | データ |
 |---|---|---|---|---|
-| local | `http://localhost:3000` | `pnpm dev` | 開発用 DB（各自） | ダミー |
-| **MVP** | `https://ctiip-mvp.mirai-dx-platform.com` 🔒 | `ctiip-mvp-cloudflared.service`（Tunnel）→ `ctiip-mvp-adhoc.service`（`next start -p 3001`） | `civil_tech_ip_intelligence` | **ダミー中心**（C2以上禁止） |
+| local | `http://localhost:3000` | `pnpm dev` | `civil_tech_ip_intelligence`（⚠️ 本番と同一） | ダミー |
+| **MVP** | `https://ctiip-mvp.mirai-dx-platform.com` 🔒 | `ctiip-mvp-cloudflared.service`（Tunnel）→ `ctiip-mvp-web.service`（`next start -p 3001`、専用チェックアウト） | **`civil_tech_ip_intelligence_mvp`**（分離済み） | **ダミー中心**（C2以上禁止） |
 | **本番** | `https://ctip.mirai-dx-platform.com` 🔒 | `ctip-web-cloudflared.service`（Tunnel）→ `ctip-web.service`（`next start -p 18940`） | `civil_tech_ip_intelligence` | 実データ（初期はダミー併存） |
 
 公開は Cloudflare Tunnel（`ctip-web-cloudflared.service` ほか）による。昇格は `local → MVP → 本番` の一方向。
@@ -20,9 +20,23 @@
 > 作成されておらず名前解決できない（2026-09-10 実測）。§1 以降の `ctiip` 表記は設計上の
 > 名称であり、実際の公開ホスト名とは異なる。名称統一は要決定（DNS 変更は承認事項）。
 >
-> ⚠️ **local・MVP・本番が同一 DB `civil_tech_ip_intelligence` を共有している**（§4 の MUST に違反）。
-> E2E の `global-setup.ts` は seed により全業務テーブルを TRUNCATE するため、
-> **本番/MVP と同じ DB に対して E2E を実行してはならない**。分離は実データ投入前の必須作業。
+> **DB分離の状況（2026-09-10 更新）**:
+>
+> | 環境 | DB | 状態 |
+> |---|---|---|
+> | local（開発者） | `civil_tech_ip_intelligence` | ⚠️ 本番と同一（下記の残存リスク） |
+> | **MVP** | **`civil_tech_ip_intelligence_mvp`** | ✅ **分離済み**（専用DB・ダミーデータを seed 済み） |
+> | 本番 | `civil_tech_ip_intelligence` | — |
+>
+> 従来は local・MVP・本番の**3環境が同一DBを共有**しており、E2E の `global-setup.ts` が
+> seed で全業務テーブルを TRUNCATE するため**本番データを消しうる**状態だった。
+> MVP を専用DBへ分離したことで、**MVP／E2E が本番データへ影響することは無くなった**。
+>
+> ⚠️ **残存リスク**: **local（開発者の手元）と本番が今も同一DB `civil_tech_ip_intelligence`
+> を共有している**。§4 の MUST（「MVP 環境が本番DBを参照していないこと」）は満たしたが、
+> 開発時に誤って seed を実行すると本番データを失う。実データ投入前に
+> `civil_tech_ip_intelligence_dev` 等の専用DBへ切り替えること。
+> （`civil_tech_ip_intelligence_dev` は既に存在するが、スキーマが旧版のままである点に注意）
 >
 > 現行構成のデプロイ手順 → [デプロイ手順](../70-operations/01-deployment-procedure.md) §0-A
 

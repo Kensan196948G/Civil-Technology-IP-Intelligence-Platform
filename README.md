@@ -265,8 +265,8 @@ docs/                    設計・運用ドキュメント一式（本番設計�
 
 | 環境 | URL | 実行 | DB（ローカル PostgreSQL） | データ |
 |---|---|---|---|---|
-| local | `http://localhost:3000` | `pnpm dev` | 開発用 DB（各自） | ダミー |
-| **MVP** | `ctiip-mvp.mirai-dx-platform.com` | `ctiip-mvp-cloudflared.service`（Tunnel）→ `ctiip-mvp-adhoc.service`（`next start -p 3001`） | `civil_tech_ip_intelligence` | **ダミー中心**（C2以上の実データ禁止） |
+| local | `http://localhost:3000` | `pnpm dev` | `civil_tech_ip_intelligence`（⚠️ 本番と同一） | ダミー |
+| **MVP** | `ctiip-mvp.mirai-dx-platform.com` | `ctiip-mvp-cloudflared.service`（Tunnel）→ `ctiip-mvp-web.service`（`next start -p 3001`、専用チェックアウト） | **`civil_tech_ip_intelligence_mvp`**（分離済み） | **ダミー中心**（C2以上の実データ禁止） |
 | **本番** | `ctip.mirai-dx-platform.com` | `ctip-web-cloudflared.service`（Tunnel）→ `ctip-web.service`（`next start -p 18940`） | `civil_tech_ip_intelligence` | 実データ（ダミーは段階的にゼロ） |
 
 公開は Cloudflare Tunnel 経由。昇格は `local → MVP → 本番` の一方向。**MVP を経ずに本番へ出さない。**
@@ -274,12 +274,23 @@ docs/                    設計・運用ドキュメント一式（本番設計�
 > ⚠️ **本番のホスト名は `ctip`（i は1つ）** です。`ctiip.mirai-dx-platform.com` は DNS 未作成のため
 > 解決できません（§6 の注記を参照）。
 
-> ⚠️ **現行のDB構成上の既知リスク（2026-09-10 記録）**: local・MVP・本番が **同一の
-> `civil_tech_ip_intelligence` を共有** しています。`docs/40-infrastructure/04-environments.md` §4 と
-> `docs/40-infrastructure/03-dns-and-domain.md` §6 は「MVP が本番DBを参照しないこと」を MUST と
-> していますが、現状は分離されていません（実データ投入前に分離が必要。残存リスクとして記録）。
-> なお E2E（Playwright）の `global-setup.ts` は seed を実行して **全業務テーブルを TRUNCATE** するため、
-> **本番/MVPと同じDBに対してE2Eを実行してはいけません**（専用DBを指定してください）。
+> **DB分離の状況（2026-09-10）**:
+>
+> | 環境 | DB |
+> |---|---|
+> | **MVP** | **`civil_tech_ip_intelligence_mvp`**（✅ 分離済み・ダミーデータを seed 済み） |
+> | 本番 | `civil_tech_ip_intelligence` |
+> | local（開発者） | `civil_tech_ip_intelligence`（⚠️ 本番と同一） |
+>
+> 従来は3環境が同一DBを共有しており、E2E（Playwright）の `global-setup.ts` が seed で
+> **全業務テーブルを TRUNCATE** するため、**本番データを消しうる**状態でした。
+> MVP を専用DBへ分離したことで、**MVP／E2E が本番データへ影響することは無くなりました**。
+>
+> ⚠️ **残存リスク**: **local（開発者の手元）と本番が今も同一DB
+> `civil_tech_ip_intelligence` を共有**しています。開発時に誤って seed を実行すると
+> 本番データを失います。実データ投入前に専用DB（`civil_tech_ip_intelligence_dev` 等）へ
+> 切り替えてください。詳細は
+> [環境定義](docs/40-infrastructure/04-environments.md) を参照。
 
 デプロイ手順 → [デプロイ手順](docs/70-operations/01-deployment-procedure.md)
 
