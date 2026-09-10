@@ -1,5 +1,48 @@
 # 📊 監視・アラート
 
+## 0. 現行の実装（2026-09-10〜）
+
+Deep Debug 2026-09-10 で「**設計書は外部合成監視を宣言しているが実行機構が無い**」ことが
+判明したため、ホスト上の systemd user unit として実装した。
+
+| 項目 | 値 |
+|---|---|
+| 実行 | `ctiip-healthcheck.service`（oneshot） |
+| スケジュール | `ctiip-healthcheck.timer`（**5分ごと**、`OnBootSec=2min` / `OnUnitActiveSec=5min`） |
+| 実装 | `scripts/healthcheck.sh` |
+| 手動実行 | `systemctl --user start ctiip-healthcheck.service` |
+| 結果 | `journalctl --user -t ctiip-healthcheck` ／ `~/.local/state/ctiip-healthcheck/last-run.log` |
+| 失敗の確認 | `systemctl --user --failed`（終了コード 1 で unit が failed になる） |
+
+### 検知する内容
+
+| # | 項目 | 判定 |
+|---|---|---|
+| 1 | 公開URLの疎通 | `https://ctip…/api/health` と `https://ctiip-mvp…/api/health` が **HTTP 200** を返すこと |
+| 2 | DB 到達性 | `/api/health` の `db` が `ok` であること（`error` なら 503 + `status:"degraded"`） |
+| 3 | **版数ドリフト** | `/api/health` の `version`（ビルド時に埋め込んだ commit）が `origin/main` と一致すること |
+| 4 | MVP ローカル | `127.0.0.1:3001` が応答しない場合、`ctiip-mvp-web.service`（user unit）を再起動 |
+
+> **本番（system unit）の再起動は監視では行わない。** 本スクリプトの目的は「検知」であり、
+> 復旧操作は承認された手順（[デプロイ手順](01-deployment-procedure.md)）で人間が実施する。
+
+### この監視で検知できるようになった事象
+
+いずれも 2026-09-10 の Deep Debug まで**無検知で継続していた**ものである。
+
+| 事象 | 継続期間 | 検知する項目 |
+|---|---|---|
+| 本番が 47 コミット古いビルドで稼働 | 2026-08-29〜09-10 | #3（`version` 未報告＝旧実装） |
+| MVP が HTTP 530 / Cloudflare error 1033 で恒久停止 | 〜09-10 | #1 |
+| `/api/health` の `time` がビルド時刻で凍結 | 2026-09-01〜 | #3・#2（旧実装は `db` を返さない） |
+
+### 未実装（残存リスク）
+
+- メール・チャット等への**能動的通知は未実装**（journal と unit の failed 状態のみ）。
+- エラー率（5xx）・応答時間 p95・ジョブ滞留・遅いクエリは未取得（§1.1／§1.2 の残項目）。
+- 外形監視は**本ホスト内からの実行**であり、ホスト自体の停止は検知できない
+  （本来は外部の監視サービスから実行する。⚠️ 要決定）。
+
 ## 1. 監視項目
 
 ### 1.1 可用性・性能
