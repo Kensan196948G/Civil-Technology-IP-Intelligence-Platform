@@ -54,8 +54,8 @@ async function checkDatabase(): Promise<DbStatus> {
 
 export async function GET() {
   const env = process.env.CTIIP_ENV ?? 'unknown';
-  // ビルド時に埋め込まれる想定（CI/デプロイスクリプトが CTIIP_COMMIT_SHA を渡す）。
-  const version = process.env.CTIIP_COMMIT_SHA ?? null;
+  // ビルド時に next.config.js の `env` 経由でインライン展開される（空文字なら未設定扱い）。
+  const version = process.env.CTIIP_COMMIT_SHA || null;
   const db = await checkDatabase();
 
   // DBに繋がらない場合は異常として 503 を返す（外形監視・デプロイ後のスモークテストで
