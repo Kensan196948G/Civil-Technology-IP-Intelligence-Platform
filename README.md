@@ -143,11 +143,18 @@ AIの回答は、どの特許の、どの請求項の、どの一文に基づい
 
 | | 🧪 MVP環境 | 🌐 本番環境 |
 |---|---|---|
-| URL | `ctiip-mvp.mirai-dx-platform.com` | `ctiip.mirai-dx-platform.com` |
+| URL | `ctiip-mvp.mirai-dx-platform.com` | `ctip.mirai-dx-platform.com` |
 | 何のため | 動きを見て、意見をもらうため | 実際の業務で使うため |
 | データ | **サンプル（ダミー）が中心** | 本物のデータ |
 | 気をつけること | **ここの数字で業務判断をしないでください** | 未公開の発明を扱うので、取り扱い注意 |
 | 画面 | 「MVP環境 — サンプルデータ」の帯が常に出ます | 帯は出ません |
+
+> ⚠️ **ホスト名の注意（2026-09-10 修正）**: 本番のホスト名は **`ctip`（i は1つ）** です。
+> 設計ドキュメント（`docs/40-infrastructure/03-dns-and-domain.md`）には `ctiip`（i は2つ）と
+> 記載されていましたが、**`ctiip.mirai-dx-platform.com` には DNS レコードが作成されておらず
+> 名前解決できません**。実際に稼働しているのは `ctip.mirai-dx-platform.com`（Tunnel `ctip-web`
+> → `ctip-web.service`、port 18940）です。MVP 側の `ctiip-mvp` は設計どおりです。
+> 名称を `ctiip` に統一するかは **要決定**（DNS 変更は承認事項のため未実施）。
 
 どちらも会社のIDでログインします（多要素認証が必要です）。
 
@@ -259,12 +266,22 @@ docs/                    設計・運用ドキュメント一式（本番設計�
 | 環境 | URL | 実行 | DB（ローカル PostgreSQL） | データ |
 |---|---|---|---|---|
 | local | `http://localhost:3000` | `pnpm dev` | 開発用 DB（各自） | ダミー |
-| **MVP** | `ctiip-mvp.mirai-dx-platform.com` | `ctiip-mvp-adhoc.service`（`next start -p 3001`） | `civil_tech_ip_intelligence` | **ダミー中心**（C2以上の実データ禁止） |
-| **本番** | `ctiip.mirai-dx-platform.com` | `ctip-web.service`（`next start -p 18940`） | `civil_tech_ip_intelligence` | 実データ（ダミーは段階的にゼロ） |
+| **MVP** | `ctiip-mvp.mirai-dx-platform.com` | `ctiip-mvp-cloudflared.service`（Tunnel）→ `ctiip-mvp-adhoc.service`（`next start -p 3001`） | `civil_tech_ip_intelligence` | **ダミー中心**（C2以上の実データ禁止） |
+| **本番** | `ctip.mirai-dx-platform.com` | `ctip-web-cloudflared.service`（Tunnel）→ `ctip-web.service`（`next start -p 18940`） | `civil_tech_ip_intelligence` | 実データ（ダミーは段階的にゼロ） |
 
 公開は Cloudflare Tunnel 経由。昇格は `local → MVP → 本番` の一方向。**MVP を経ずに本番へ出さない。**
 
-詳細 → [環境定義](docs/40-infrastructure/04-environments.md) / [DNS](docs/40-infrastructure/03-dns-and-domain.md)
+> ⚠️ **本番のホスト名は `ctip`（i は1つ）** です。`ctiip.mirai-dx-platform.com` は DNS 未作成のため
+> 解決できません（§6 の注記を参照）。
+
+> ⚠️ **現行のDB構成上の既知リスク（2026-09-10 記録）**: local・MVP・本番が **同一の
+> `civil_tech_ip_intelligence` を共有** しています。`docs/40-infrastructure/04-environments.md` §4 と
+> `docs/40-infrastructure/03-dns-and-domain.md` §6 は「MVP が本番DBを参照しないこと」を MUST と
+> していますが、現状は分離されていません（実データ投入前に分離が必要。残存リスクとして記録）。
+> なお E2E（Playwright）の `global-setup.ts` は seed を実行して **全業務テーブルを TRUNCATE** するため、
+> **本番/MVPと同じDBに対してE2Eを実行してはいけません**（専用DBを指定してください）。
+
+デプロイ手順 → [デプロイ手順](docs/70-operations/01-deployment-procedure.md)
 
 ## 🔧 13. ローカル環境構築（MVP・現状動作する手順）
 

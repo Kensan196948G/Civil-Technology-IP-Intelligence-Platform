@@ -6,15 +6,25 @@
 > 下表 §1 以降の Workers／Neon ブランチの記述は **目標アーキテクチャ（本番設計）** のもので、
 > preview（PR ごとの自動環境）は現行では運用していません。
 
-## 0. 現行の実行構成（2026-09-04）
+## 0. 現行の実行構成（2026-09-10 更新）
 
 | 環境 | URL | 実行プロセス | DB（ローカル PostgreSQL） | データ |
 |---|---|---|---|---|
 | local | `http://localhost:3000` | `pnpm dev` | 開発用 DB（各自） | ダミー |
-| **MVP** | `https://ctiip-mvp.mirai-dx-platform.com` 🔒 | `ctiip-mvp-adhoc.service`（`next start -p 3001`） | `civil_tech_ip_intelligence` | **ダミー中心**（C2以上禁止） |
-| **本番** | `https://ctiip.mirai-dx-platform.com` 🔒 | `ctip-web.service`（`next start -p 18940`） | `civil_tech_ip_intelligence` | 実データ（初期はダミー併存） |
+| **MVP** | `https://ctiip-mvp.mirai-dx-platform.com` 🔒 | `ctiip-mvp-cloudflared.service`（Tunnel）→ `ctiip-mvp-adhoc.service`（`next start -p 3001`） | `civil_tech_ip_intelligence` | **ダミー中心**（C2以上禁止） |
+| **本番** | `https://ctip.mirai-dx-platform.com` 🔒 | `ctip-web-cloudflared.service`（Tunnel）→ `ctip-web.service`（`next start -p 18940`） | `civil_tech_ip_intelligence` | 実データ（初期はダミー併存） |
 
 公開は Cloudflare Tunnel（`ctip-web-cloudflared.service` ほか）による。昇格は `local → MVP → 本番` の一方向。
+
+> ⚠️ **本番のホスト名は `ctip`（i は1つ）**。`ctiip.mirai-dx-platform.com` は DNS レコードが
+> 作成されておらず名前解決できない（2026-09-10 実測）。§1 以降の `ctiip` 表記は設計上の
+> 名称であり、実際の公開ホスト名とは異なる。名称統一は要決定（DNS 変更は承認事項）。
+>
+> ⚠️ **local・MVP・本番が同一 DB `civil_tech_ip_intelligence` を共有している**（§4 の MUST に違反）。
+> E2E の `global-setup.ts` は seed により全業務テーブルを TRUNCATE するため、
+> **本番/MVP と同じ DB に対して E2E を実行してはならない**。分離は実データ投入前の必須作業。
+>
+> 現行構成のデプロイ手順 → [デプロイ手順](../70-operations/01-deployment-procedure.md) §0-A
 
 ## 1. 一覧（目標アーキテクチャ）
 
