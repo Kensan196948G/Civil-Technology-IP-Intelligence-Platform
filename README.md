@@ -265,7 +265,7 @@ docs/                    設計・運用ドキュメント一式（本番設計�
 
 | 環境 | URL | 実行 | DB（ローカル PostgreSQL） | データ |
 |---|---|---|---|---|
-| local | `http://localhost:3000` | `pnpm dev` | `civil_tech_ip_intelligence`（⚠️ 本番と同一） | ダミー |
+| local | `http://localhost:3000` | `pnpm dev` | `civil_tech_ip_intelligence_dev`（開発用・推奨） | ダミー |
 | **MVP** | `ctiip-mvp.mirai-dx-platform.com` | `ctiip-mvp-cloudflared.service`（Tunnel）→ `ctiip-mvp-web.service`（`next start -p 3001`、専用チェックアウト） | **`civil_tech_ip_intelligence_mvp`**（分離済み） | **ダミー中心**（C2以上の実データ禁止） |
 | **本番** | `ctip.mirai-dx-platform.com` | `ctip-web-cloudflared.service`（Tunnel）→ `ctip-web.service`（`next start -p 18940`） | `civil_tech_ip_intelligence` | 実データ（ダミーは段階的にゼロ） |
 
@@ -280,16 +280,17 @@ docs/                    設計・運用ドキュメント一式（本番設計�
 > |---|---|
 > | **MVP** | **`civil_tech_ip_intelligence_mvp`**（✅ 分離済み・ダミーデータを seed 済み） |
 > | 本番 | `civil_tech_ip_intelligence` |
-> | local（開発者） | `civil_tech_ip_intelligence`（⚠️ 本番と同一） |
+> | **local（開発者）** | **`civil_tech_ip_intelligence_dev`**（✅ 推奨。スキーマを最新化済み） |
 >
 > 従来は3環境が同一DBを共有しており、E2E（Playwright）の `global-setup.ts` が seed で
 > **全業務テーブルを TRUNCATE** するため、**本番データを消しうる**状態でした。
-> MVP を専用DBへ分離したことで、**MVP／E2E が本番データへ影響することは無くなりました**。
+> MVP を専用DBへ分離し、開発手順の既定も開発用DBへ変更したことで、
+> **MVP／E2E／開発が本番データへ影響する経路は無くなりました**。
 >
-> ⚠️ **残存リスク**: **local（開発者の手元）と本番が今も同一DB
-> `civil_tech_ip_intelligence` を共有**しています。開発時に誤って seed を実行すると
-> 本番データを失います。実データ投入前に専用DB（`civil_tech_ip_intelligence_dev` 等）へ
-> 切り替えてください。詳細は
+> ⚠️ **残存リスク**: 開発者が `.env.local` に本番DB名
+> `civil_tech_ip_intelligence` を指定した場合は、`db:seed` により**本番データを失います**
+> （seed 側の安全確認はホスト名・DB名の完全一致のみで、DBの役割までは判定できない）。
+> `.env.example` と本節の手順は開発用DBを既定としています。詳細は
 > [環境定義](docs/40-infrastructure/04-environments.md) を参照。
 
 デプロイ手順 → [デプロイ手順](docs/70-operations/01-deployment-procedure.md)
@@ -302,9 +303,11 @@ cd Civil-Technology-IP-Intelligence-Platform
 corepack enable && pnpm install
 
 # apps/web/.env.local に DATABASE_URL を設定（ローカル PostgreSQL。実値は管理者から受領。例は .env.example）
-pnpm --filter @ctiip/web db:migrate   # DDL適用（初回のみ）
+# ⚠️ 開発者は **civil_tech_ip_intelligence_dev**（開発用DB）を使うこと。
+#    civil_tech_ip_intelligence は本番DBであり、seed は全業務テーブルを TRUNCATE する。
+pnpm --filter @ctiip/web db:migrate   # DDL適用（初回のみ・冪等）
 # seed は接続先の許可リスト（ホスト名・DB名の完全一致）が必要
-CTIIP_ALLOW_SEED_TRUNCATE=true CTIIP_SEED_ALLOWED_HOST=127.0.0.1 CTIIP_SEED_ALLOWED_DB=civil_tech_ip_intelligence \
+CTIIP_ALLOW_SEED_TRUNCATE=true CTIIP_SEED_ALLOWED_HOST=127.0.0.1 CTIIP_SEED_ALLOWED_DB=civil_tech_ip_intelligence_dev \
   pnpm --filter @ctiip/web db:seed   # 架空ダミーデータ投入（既存データを洗い替えるため明示フラグが必須）
 
 pnpm dev                               # http://localhost:3000
