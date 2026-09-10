@@ -23,7 +23,7 @@ export function AppShell({
     <DetailProvider>
       <a href="#main-content" style={{ position: 'absolute', left: '-9999px', top: 0 }} onFocus={e => { e.currentTarget.style.left = '0'; e.currentTarget.style.zIndex = '9999'; e.currentTarget.style.background = 'var(--paper)'; e.currentTarget.style.padding = '8px'; }} onBlur={e => { e.currentTarget.style.left = '-9999px'; }}>本文へスキップ</a>
       <div className="shell">
-        <Sidebar counts={counts} userName={userName} roleLabel={ROLE_LABEL[role]} dept={dept} />
+        <Sidebar counts={counts} userName={userName} roleLabel={ROLE_LABEL[role]} role={role} dept={dept} />
         <div className="shell-main">
           <header className="topbar" role="banner">
             <div style={{ minWidth: 0 }}>
