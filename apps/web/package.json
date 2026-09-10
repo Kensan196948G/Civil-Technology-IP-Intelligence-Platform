@@ -12,6 +12,7 @@
     "cf:build": "npx @cloudflare/next-on-pages@1.13.16",
     "cf:deploy": "wrangler pages deploy .vercel/output/static --project-name=ctiip-mvp",
     "db:generate": "drizzle-kit generate",
+    "db:bootstrap": "tsx src/lib/db/bootstrap.ts",
     "db:migrate": "tsx src/lib/db/migrate.ts",
     "db:seed": "tsx src/lib/db/seed.ts"
   },
