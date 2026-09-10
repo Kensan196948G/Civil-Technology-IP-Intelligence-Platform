@@ -1,10 +1,34 @@
 // サイドバー全項目の単一の真実（Sidebarのアコーディオン描画・検索フィルタ・
 // ルート存在確認のいずれもこのファイルを参照する）。
+import type { DemoRole } from '@/lib/auth/demo';
+import { ADMIN_ALLOWED_ROLES } from '@/lib/auth/roles';
 
 export type NavLeaf = { label: string; href: string };
 export type NavGroup = { label: string; children: NavLeaf[] };
 export type NavItem = NavLeaf | NavGroup;
 export type NavSection = { key: string; icon: string; label: string; items: NavItem[] };
+
+// ---- 権限によるナビゲーション表示制御 ----
+//
+// Deep Debug (2026-09-10): サイドナビが権限で絞られておらず、一般技術者(engineer)にも
+// 「システム管理」(/admin) が表示されていた（middleware は 404 で拒否しており、
+// 「押せるのに開けない」状態だった）。設計は
+// docs/30-design/04-screen-design.md §3「権限のないモジュールは項目自体を表示しない」/
+// §7-4 同旨、根拠は docs/10-requirements/05-rbac-matrix.md §3（M25 Administration は
+// engineer / tech_manager / rnd / ip / legal が「-」）。
+//
+// ここは**表示制御のみ**。アクセス強制は middleware が担い、許可ロールは
+// lib/auth/roles.ts の共有定義を参照する（強制と表示の乖離を防ぐ）。
+const NAV_ROLE_GATE: ReadonlyArray<{ prefix: string; roles: readonly DemoRole[] }> = [
+  { prefix: '/admin', roles: ADMIN_ALLOWED_ROLES }
+];
+
+/** 指定ロールのサイドナビに href を表示してよいか。ゲート未定義のパスは全ロールに表示する。 */
+export function isNavHrefVisible(href: string, role: DemoRole): boolean {
+  const path = (href.split('?')[0] ?? href).replace(/\/+$/, '') || '/';
+  const gate = NAV_ROLE_GATE.find(g => path === g.prefix || path.startsWith(g.prefix + '/'));
+  return gate === undefined || gate.roles.includes(role);
+}
 
 // ---- デザインB（AI対話型）のサイドバー構造 ----
 export type PrimaryNavItem = { icon: string; label: string; href: string };

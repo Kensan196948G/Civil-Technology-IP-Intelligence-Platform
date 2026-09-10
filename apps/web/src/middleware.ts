@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { verifySignedValueWeb } from '@/lib/auth/sign-web';
 import { DEMO_USERS, COOKIE_NAME, type DemoRole } from '@/lib/auth/demo';
 import { buildRedirectUrl } from '@/lib/http/redirect-url';
+import { ADMIN_ALLOWED_ROLES as ADMIN_ALLOWED_ROLES_SHARED } from '@/lib/auth/roles';
 
 // Deep Debug Round2 再調査（重要）: 当初 /admin/* のRBACは (app)/admin/layout.tsx から
 // requireRole() 経由で notFound()/redirect() を呼ぶ方式で実装していたが、本番ビルド
@@ -28,7 +29,10 @@ import { buildRedirectUrl } from '@/lib/http/redirect-url';
 // 例外を投げるため、相対Locationも使えない。Cloudflare Tunnelは元のHostヘッダーを
 // そのままoriginへ転送するため、req.headers の host（x-forwarded-hostがあれば優先）
 // から実際の公開ホスト名を組み立てて絶対URLを生成する。
-const ADMIN_ALLOWED_ROLES: DemoRole[] = ['executive', 'sysadmin'];
+// 許可ロールはナビゲーションの表示制御（lib/nav.ts の isNavHrefVisible）と共有する。
+// 強制（ここ）と表示（ナビ）で定義が分かれると「押せるのに開けない」状態を生むため、
+// lib/auth/roles.ts を単一の真実とする。
+const ADMIN_ALLOWED_ROLES: readonly DemoRole[] = ADMIN_ALLOWED_ROLES_SHARED;
 
 function redirectTo(req: NextRequest, path: string): NextResponse {
   return withSecurityHeaders(NextResponse.redirect(buildRedirectUrl(req.headers, req.nextUrl.host, path)));

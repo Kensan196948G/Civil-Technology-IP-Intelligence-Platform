@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { RECENT_CONVERSATIONS } from '@/lib/copilot-demo';
+import { isNavHrefVisible } from '@/lib/nav';
+import { type DemoRole } from '@/lib/auth/demo';
 import type { NavCounts } from '@/lib/nav-counts';
 
 // 設計案（design-B-copilot）のサイドバー。全ライトモード（白背景・濃紺テキスト・
@@ -37,8 +39,8 @@ function isActive(pathname: string, href: string) {
 }
 
 export function Sidebar({
-  counts, userName, roleLabel, dept
-}: { counts: NavCounts; userName: string; roleLabel: string; dept: string }) {
+  counts, userName, roleLabel, role, dept
+}: { counts: NavCounts; userName: string; roleLabel: string; role: DemoRole; dept: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentConvo = searchParams.get('c') ?? '0';
@@ -64,7 +66,8 @@ export function Sidebar({
         ))}
 
         <div className="sidebar-group">会話から始まる仕事</div>
-        {tasksFor(counts).map(item => (
+        {/* 権限のないモジュールは項目自体を表示しない（設計 §3 / §7-4、RBAC §3） */}
+        {tasksFor(counts).filter(item => isNavHrefVisible(item.href, role)).map(item => (
           <NavLink key={item.href} item={item} active={isActive(pathname, item.href)} />
         ))}
 
