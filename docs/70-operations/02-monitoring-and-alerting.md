@@ -36,9 +36,31 @@ Deep Debug 2026-09-10 で「**設計書は外部合成監視を宣言してい�
 | MVP が HTTP 530 / Cloudflare error 1033 で恒久停止 | 〜09-10 | #1 |
 | `/api/health` の `time` がビルド時刻で凍結 | 2026-09-01〜 | #3・#2（旧実装は `db` を返さない） |
 
+### 失敗の記録（durable マーカー）
+
+systemd の `failed` 状態は**次の成功で消える**。日次バックアップや5分ごとのヘルスチェックの
+ような oneshot が「失敗 → 次回成功」を繰り返していると、状態だけを見ている監視には
+**常に正常に見えてしまう**。そのため発生そのものを残す。
+
+| 項目 | 値 |
+|---|---|
+| 配線 | `ctiip-healthcheck.service` / `ctiip-db-backup.service` の `OnFailure=ctiip-unit-failed@%n.service` |
+| 記録 | `scripts/ops/record-unit-failure.sh` |
+| 出力先 | `~/.local/state/ctiip/failed-units/<unit名>`（`unit` / `failedAt` / `result` / `exitStatus`） |
+| 確認 | `ls -la ~/.local/state/ctiip/failed-units/` |
+
+> 同ホストの CODIP（`codip-unit-failed@.service`）と同じ設計方針。
+
 ### 未実装（残存リスク）
 
-- メール・チャット等への**能動的通知は未実装**（journal と unit の failed 状態のみ）。
+- **メール・チャット等への能動的通知は未実装**。
+  本ホストには汎用アラートツール
+  `~/Projects/Mirai-DX-Project/Civil-Weather-Water-Decision/deploy/scripts/ops-alert.sh`
+  （journald + Slack/Teams Webhook 対応）が存在するが、
+  `~/.config/cwwd/ops-alert.env` の `SLACK_WEBHOOK_URL` / `TEAMS_WEBHOOK_URL` が
+  **未設定**のため現状は通知先が無い（**Credential 不足**）。
+  → 通知先の選定は人間の判断・要承認。設定後は `record-unit-failure.sh` から
+  `ops-alert.sh` を呼ぶ形に拡張できる。
 - エラー率（5xx）・応答時間 p95・ジョブ滞留・遅いクエリは未取得（§1.1／§1.2 の残項目）。
 - 外形監視は**本ホスト内からの実行**であり、ホスト自体の停止は検知できない
   （本来は外部の監視サービスから実行する。⚠️ 要決定）。
