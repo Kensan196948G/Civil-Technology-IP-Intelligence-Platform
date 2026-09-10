@@ -978,3 +978,49 @@ CREATE INDEX IF NOT EXISTS idx_netis_technologies_embedding_hnsw
   ON netis_technologies USING hnsw (embedding vector_cosine_ops);
 CREATE INDEX IF NOT EXISTS idx_technologies_embedding_hnsw
   ON technologies USING hnsw (embedding vector_cosine_ops);
+
+-- ── 外部キー列の索引（Deep Debug 2026-09-10 追加・加算のみ） ──────────────
+-- 背景: 主要な外部キー列に索引が無く（実測35列）、親行の削除・更新時に
+-- 子テーブルの全表走査が発生していた。`ON DELETE` の遅延とロック競合の原因になるため、
+-- PostgreSQL が自動では作らない外部キー側の索引を明示的に付与する。
+-- （PostgreSQL は参照元（子）の外部キー列に索引を自動作成しない。参照先の一意索引のみ。）
+--
+-- 検証: 本節の適用で `information_schema` 上「外部キー列かつ索引なし」の列が
+-- 0件になることを確認すること（適用前は35件）。
+--
+-- ロールバック: DROP INDEX IF EXISTS <下記の索引名>; で元に戻せる（列・制約は変更しない）。
+CREATE INDEX IF NOT EXISTS idx_access_grants_granted_by ON access_grants(granted_by);
+CREATE INDEX IF NOT EXISTS idx_ai_citations_ai_run_id ON ai_citations(ai_run_id);
+CREATE INDEX IF NOT EXISTS idx_ai_evaluations_reviewed_by ON ai_evaluations(reviewed_by);
+CREATE INDEX IF NOT EXISTS idx_approvals_approver_id ON approvals(approver_id);
+CREATE INDEX IF NOT EXISTS idx_approvals_instance_id ON approvals(instance_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_user_id ON audit_logs(actor_user_id);
+CREATE INDEX IF NOT EXISTS idx_claim_analyses_patent_id ON claim_analyses(patent_id);
+CREATE INDEX IF NOT EXISTS idx_claim_analyses_technology_id ON claim_analyses(technology_id);
+CREATE INDEX IF NOT EXISTS idx_claim_chart_rows_analysis_id ON claim_chart_rows(analysis_id);
+CREATE INDEX IF NOT EXISTS idx_claim_chart_rows_edited_by ON claim_chart_rows(edited_by);
+CREATE INDEX IF NOT EXISTS idx_claim_chart_rows_element_id ON claim_chart_rows(element_id);
+CREATE INDEX IF NOT EXISTS idx_claim_elements_claim_id ON claim_elements(claim_id);
+CREATE INDEX IF NOT EXISTS idx_competitive_signals_competitor_id ON competitive_signals(competitor_id);
+CREATE INDEX IF NOT EXISTS idx_drawing_parts_element_id ON drawing_parts(element_id);
+CREATE INDEX IF NOT EXISTS idx_engineering_documents_uploaded_by ON engineering_documents(uploaded_by);
+CREATE INDEX IF NOT EXISTS idx_entity_aliases_entity_id ON entity_aliases(entity_id);
+CREATE INDEX IF NOT EXISTS idx_field_applications_site_issue_id ON field_applications(site_issue_id);
+CREATE INDEX IF NOT EXISTS idx_fto_cases_created_by ON fto_cases(created_by);
+CREATE INDEX IF NOT EXISTS idx_fto_components_related_patent_id ON fto_components(related_patent_id);
+CREATE INDEX IF NOT EXISTS idx_inventions_site_id ON inventions(site_id);
+CREATE INDEX IF NOT EXISTS idx_inventions_submitted_by ON inventions(submitted_by);
+CREATE INDEX IF NOT EXISTS idx_investigations_created_by ON investigations(created_by);
+CREATE INDEX IF NOT EXISTS idx_ip_value_scores_evaluated_by ON ip_value_scores(evaluated_by);
+CREATE INDEX IF NOT EXISTS idx_patent_citations_cited_paper_id ON patent_citations(cited_paper_id);
+CREATE INDEX IF NOT EXISTS idx_patent_claims_patent_id ON patent_claims(patent_id);
+CREATE INDEX IF NOT EXISTS idx_poc_experiments_created_by ON poc_experiments(created_by);
+CREATE INDEX IF NOT EXISTS idx_poc_experiments_site_issue_id ON poc_experiments(site_issue_id);
+CREATE INDEX IF NOT EXISTS idx_reports_created_by ON reports(created_by);
+CREATE INDEX IF NOT EXISTS idx_safety_reviews_gate_reviewed_by ON safety_reviews(gate_reviewed_by);
+CREATE INDEX IF NOT EXISTS idx_site_issues_created_by ON site_issues(created_by);
+CREATE INDEX IF NOT EXISTS idx_site_issues_site_id ON site_issues(site_id);
+CREATE INDEX IF NOT EXISTS idx_trl_assessments_assessed_by ON trl_assessments(assessed_by);
+CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
+CREATE INDEX IF NOT EXISTS idx_watches_owner_id ON watches(owner_id);
+CREATE INDEX IF NOT EXISTS idx_workflow_instances_author_id ON workflow_instances(author_id);

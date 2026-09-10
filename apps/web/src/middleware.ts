@@ -4,6 +4,7 @@ import { verifySignedValueWeb } from '@/lib/auth/sign-web';
 import { DEMO_USERS, COOKIE_NAME, type DemoRole } from '@/lib/auth/demo';
 import { buildRedirectUrl } from '@/lib/http/redirect-url';
 import { ADMIN_ALLOWED_ROLES as ADMIN_ALLOWED_ROLES_SHARED } from '@/lib/auth/roles';
+import { securityHeaders } from '@/lib/http/security-headers';
 
 // Deep Debug Round2 再調査（重要）: 当初 /admin/* のRBACは (app)/admin/layout.tsx から
 // requireRole() 経由で notFound()/redirect() を呼ぶ方式で実装していたが、本番ビルド
@@ -35,7 +36,10 @@ import { ADMIN_ALLOWED_ROLES as ADMIN_ALLOWED_ROLES_SHARED } from '@/lib/auth/ro
 const ADMIN_ALLOWED_ROLES: readonly DemoRole[] = ADMIN_ALLOWED_ROLES_SHARED;
 
 function redirectTo(req: NextRequest, path: string): NextResponse {
-  return withSecurityHeaders(NextResponse.redirect(buildRedirectUrl(req.headers, req.nextUrl.host, path)));
+  return withSecurityHeaders(
+    NextResponse.redirect(buildRedirectUrl(req.headers, req.nextUrl.host, path)),
+    req
+  );
 }
 
 export async function middleware(req: NextRequest) {
@@ -61,15 +65,17 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  return withSecurityHeaders(NextResponse.next());
+  return withSecurityHeaders(NextResponse.next(), req);
 }
 
-// MVP用の最小限セキュリティヘッダー。本番のCloudflare Access/WAF設定は
-// docs/40-infrastructure/01-cloudflare-setup.md を正とする。
-function withSecurityHeaders(res: NextResponse): NextResponse {
-  res.headers.set('X-Content-Type-Options', 'nosniff');
-  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.headers.set('X-Frame-Options', 'DENY');
+// アプリ側で付与するセキュリティヘッダー。ロジックは純粋関数へ分離してある
+// （middleware は `next/server` を値importするため Vitest で扱いにくい）。
+// 本来 HSTS は Cloudflare（エッジ）側が正であり、ここはその補完。
+function withSecurityHeaders(res: NextResponse, req: NextRequest): NextResponse {
+  const proto = req.headers.get('x-forwarded-proto') ?? req.nextUrl.protocol.replace(':', '');
+  for (const [name, value] of Object.entries(securityHeaders({ isHttps: proto === 'https' }))) {
+    res.headers.set(name, value);
+  }
   return res;
 }
 
