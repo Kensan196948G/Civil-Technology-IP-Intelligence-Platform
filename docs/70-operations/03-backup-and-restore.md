@@ -40,6 +40,68 @@ pg_dump "$DATABASE_URL_DIRECT" \
 | 暗号化 | 保存時暗号化。アクセス権を限定 |
 | 検証 | 週次で1件を実際にリストアして検証する（取れているだけでは不十分） |
 
+### 3.1 現行の実装（2026-09-10〜）
+
+Deep Debug 2026-09-10 で「**設計書は日次バックアップを前提としているが実行機構が存在しない**」
+ことが判明したため、ホスト上の systemd user unit として実装した。
+
+| 項目 | 値 |
+|---|---|
+| 取得 | `ctiip-db-backup.service`（oneshot） |
+| スケジュール | `ctiip-db-backup.timer`（**日次 23:30 JST**、`Persistent=true`） |
+| 出力先 | `~/.local/state/ctiip-backups/ctiip-YYYYMMDD.sql`（plain SQL） |
+| 保持 | **14世代**（日次）。古いものから自動削除 |
+| 手動実行 | `systemctl --user start ctiip-db-backup.service` |
+| ログ | `journalctl --user -u ctiip-db-backup.service` |
+
+> ⚠️ **ホスト内バックアップである**。ホスト障害時にはバックアップごと失われる。
+> 外部ストレージへの退避と RPO/RTO の確定は本節冒頭の ⚠️ 要決定のままである。
+> **実データ投入前に必ず確定すること。**
+
+### 3.2 【重要】pg_dump は**サーバと同一メジャーバージョン**を使うこと
+
+初回実装時、PATH 上の `/usr/local/bin/pg_dump`（**v18.4**）をそのまま使ったところ、
+サーバ（PostgreSQL **16.14**）とメジャーバージョンが不一致となり、**復元が不可能**な
+バックアップが生成されていた。
+
+新しい pg_dump が出力し、PG16 が解釈できないもの:
+
+```
+SET transaction_timeout = 0;   -- PG17 以降のみ
+\restrict ...                  -- PG18 の psql メタコマンド
+```
+
+`psql -v ON_ERROR_STOP=1` で復元すると**1行目で ERROR になり即中断**する
+（結果としてテーブル0件）。**「バックアップは取れているが復元できない」**という、
+最も気づきにくい失敗である。
+
+**対策**: サーバと同一メジャーの絶対パスを指定する。
+
+```bash
+/usr/lib/postgresql/16/bin/pg_dump -h /var/run/postgresql -d civil_tech_ip_intelligence -f ...
+```
+
+> 本番・MVP の DB は PostgreSQL 16 である。サーバをメジャーアップグレードする際は、
+> 本 unit のパスも同時に更新すること。
+
+### 3.3 復元試験（restore drill）— **必ず実際に復元して確認する**
+
+本節冒頭の「検証: 週次で1件を実際にリストアして検証する（取れているだけでは不十分）」を
+満たすには、以下を実施する。上記 3.2 の不具合は**この手順を実施して初めて**判明した。
+
+```bash
+DUMP=$(ls -t ~/.local/state/ctiip-backups/ctiip-*.sql | head -1)
+DRILL=civil_tech_ip_intelligence_restore_drill
+
+createdb "$DRILL"                                   # 検証用（本番とは別）
+psql -h /var/run/postgresql -d "$DRILL" -v ON_ERROR_STOP=1 -q -f "$DUMP"
+# → 期待: 63テーブル / 索引183 / 主要テーブルの件数が本番と一致
+
+# 後始末（🔒 検証用DBの削除は承認事項。本番DBに対しては絶対に行わない）
+```
+
+**MUST**: 復元試験は**本番とは別のDB**に対して行う。本番DBへ向けて実行しない。
+
 ## 4. 復旧手順
 
 ### 4.1 誤操作によるデータ消失（一部）
