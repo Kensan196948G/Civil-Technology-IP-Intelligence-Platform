@@ -10,7 +10,7 @@
 
 | 環境 | URL | 実行プロセス | DB（ローカル PostgreSQL） | データ |
 |---|---|---|---|---|
-| local | `http://localhost:3000` | `pnpm dev` | `civil_tech_ip_intelligence`（⚠️ 本番と同一） | ダミー |
+| local | `http://localhost:3000` | `pnpm dev` | **`civil_tech_ip_intelligence_dev`**（開発用・推奨。スキーマ最新化済み） | ダミー |
 | **MVP** | `https://ctiip-mvp.mirai-dx-platform.com` 🔒 | `ctiip-mvp-cloudflared.service`（Tunnel）→ `ctiip-mvp-web.service`（`next start -p 3001`、専用チェックアウト） | **`civil_tech_ip_intelligence_mvp`**（分離済み） | **ダミー中心**（C2以上禁止） |
 | **本番** | `https://ctip.mirai-dx-platform.com` 🔒 | `ctip-web-cloudflared.service`（Tunnel）→ `ctip-web.service`（`next start -p 18940`） | `civil_tech_ip_intelligence` | 実データ（初期はダミー併存） |
 
@@ -24,7 +24,7 @@
 >
 > | 環境 | DB | 状態 |
 > |---|---|---|
-> | local（開発者） | `civil_tech_ip_intelligence` | ⚠️ 本番と同一（下記の残存リスク） |
+> | local（開発者） | **`civil_tech_ip_intelligence_dev`** | ✅ **推奨**（スキーマ最新化済み） |
 > | **MVP** | **`civil_tech_ip_intelligence_mvp`** | ✅ **分離済み**（専用DB・ダミーデータを seed 済み） |
 > | 本番 | `civil_tech_ip_intelligence` | — |
 >
@@ -32,11 +32,11 @@
 > seed で全業務テーブルを TRUNCATE するため**本番データを消しうる**状態だった。
 > MVP を専用DBへ分離したことで、**MVP／E2E が本番データへ影響することは無くなった**。
 >
-> ⚠️ **残存リスク**: **local（開発者の手元）と本番が今も同一DB `civil_tech_ip_intelligence`
-> を共有している**。§4 の MUST（「MVP 環境が本番DBを参照していないこと」）は満たしたが、
-> 開発時に誤って seed を実行すると本番データを失う。実データ投入前に
-> `civil_tech_ip_intelligence_dev` 等の専用DBへ切り替えること。
-> （`civil_tech_ip_intelligence_dev` は既に存在するが、スキーマが旧版のままである点に注意）
+> ⚠️ **残存リスク**: 開発者が `.env.local` に**本番DB名 `civil_tech_ip_intelligence` を
+> 指定した場合**は、`db:seed` により**本番データを失う**（seed 側の安全確認は
+> ホスト名・DB名の完全一致のみで、DBの役割までは判定できない）。
+> `.env.example`・README §13 の手順は開発用DB `civil_tech_ip_intelligence_dev` を
+> 既定としており、同DBはスキーマを最新化済み（63テーブル・183索引・拡張4種）。
 >
 > 現行構成のデプロイ手順 → [デプロイ手順](../70-operations/01-deployment-procedure.md) §0-A
 
