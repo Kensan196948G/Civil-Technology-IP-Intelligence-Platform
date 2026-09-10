@@ -113,48 +113,56 @@ jobs:
           fi
           echo "OK: 既知のシークレットパターンは検出されませんでした"
 
-  # Secretsの有無だけを判定する軽量ジョブ。
+  # E2E（Playwright）
   #
-  # 以前は e2e ジョブの中でこの判定を行い、未設定なら後続ステップを個別に skip していた。
-  # その場合ジョブ自体は「success（緑）」で完了するため、チェック一覧の見た目上は
-  # E2Eが通ったのと区別がつかず、実際には1件も実行されていない状態を緑と誤読しうる。
-  # 判定を独立したジョブへ切り出し、e2e 側をジョブレベルの if で制御することで、
-  # 未設定時は e2e が「skipped（灰）」として表示され、緑＝実行済みが一致する。
-  # （secrets コンテキストはジョブレベルの if では参照できないため、
-  #   判定結果を outputs 経由で渡す。Secretsの値そのものは出力しない）
-  e2e-preflight:
-    runs-on: ubuntu-latest
-    needs: quality
-    outputs:
-      ready: ${{ steps.check.outputs.ready }}
-    steps:
-      - name: Check E2E database secrets are configured
-        id: check
-        run: |
-          if [ -n "${{ secrets.DATABASE_URL_MVP }}" ] && [ -n "${{ secrets.CTIIP_SEED_ALLOWED_HOST }}" ] && [ -n "${{ secrets.CTIIP_SEED_ALLOWED_DB }}" ] && [ -n "${{ secrets.CTIIP_DEMO_COOKIE_SECRET }}" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo "OK: E2E用のSecretsが設定されています。E2Eを実行します。"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::DATABASE_URL_MVP / CTIIP_SEED_ALLOWED_HOST / CTIIP_SEED_ALLOWED_DB / CTIIP_DEMO_COOKIE_SECRET のいずれかがリポジトリSecretsに未設定のため、E2Eジョブをスキップします（skipped表示になります）。専用のE2E用Neonデータベースを用意し、Secretsへ設定してください。"
-            {
-              echo "### E2E はスキップされました"
-              echo ""
-              echo "E2E用のSecretsが未設定のため、E2Eジョブを実行していません。"
-              echo "**このPRのE2Eは未検証です。** 実行するには次のSecretsを設定してください。"
-              echo ""
-              echo "- \`DATABASE_URL_MVP\`"
-              echo "- \`CTIIP_SEED_ALLOWED_HOST\`"
-              echo "- \`CTIIP_SEED_ALLOWED_DB\`"
-              echo "- \`CTIIP_DEMO_COOKIE_SECRET\`"
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
-
+  # Deep Debug 2026-09-10 で判明した問題への対応:
+  #   以前は E2E 専用の Repository Secrets（DATABASE_URL_MVP 等）が未設定のため、
+  #   e2e-preflight が常に ready=false を返し、E2E ジョブは**毎回 skipped** だった。
+  #   結果として Playwright の14フロー（RBAC・行レベル制御・承認・エラーバウンダリ等）が
+  #   **PRのマージ判定に一切寄与していなかった**（実際 `gh secret list` は空）。
+  #
+  #   専用の検証DBを Secrets で用意する運用は、DB分離が前提になるうえ設定漏れで
+  #   静かに無効化される。そこで **CI 内で使い捨ての PostgreSQL を service container
+  #   として起動**し、Secrets に依存せず E2E を必ず実行する。
+  #
+  #   - イメージは `pgvector/pgvector:pg16`（`vector` 拡張が必要なため）。
+  #   - service container の既定ユーザーはスーパーユーザーなので、
+  #     `CREATE EXTENSION vector` を含む db:migrate がそのまま通る
+  #     （本番で問題になった「アプリロールでは拡張を導入できない」制約に当たらない）。
+  #   - 接続先は本番・MVP のいずれとも無関係な使い捨てDBである。
   e2e:
     runs-on: ubuntu-latest
-    needs: [quality, e2e-preflight]
-    # 未設定時はジョブごと skip する（success で緑にしない）
-    if: needs.e2e-preflight.outputs.ready == 'true'
+    needs: quality
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: ctiip
+          POSTGRES_PASSWORD: ctiip_ci_only_password
+          POSTGRES_DB: ctiip_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ctiip -d ctiip_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      # 使い捨てDBへの接続情報。実シークレットではないためリポジトリに置いてよい。
+      DATABASE_URL: postgresql://ctiip:ctiip_ci_only_password@127.0.0.1:5432/ctiip_e2e
+      # seed の安全確認（ホスト名・DB名の完全一致）。使い捨てDBのみを許可する。
+      CTIIP_SEED_ALLOWED_HOST: 127.0.0.1
+      CTIIP_SEED_ALLOWED_DB: ctiip_e2e
+      CTIIP_ALLOW_SEED_TRUNCATE: 'true'
+      # E2E 専用の使い捨て署名鍵（値は本番・MVP と無関係）。
+      CTIIP_DEMO_COOKIE_SECRET: ctiip-ci-e2e-only-not-a-real-secret
+      # Playwright の webServer は http://localhost:3311（HTTP）で起動するため false。
+      CTIIP_COOKIE_SECURE: 'false'
+      CI: 'true'
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -172,18 +180,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Apply migrations (ephemeral DB)
+        run: pnpm --filter @ctiip/web db:migrate
+
       - name: Install Playwright browsers
         run: pnpm --filter @ctiip/web exec playwright install --with-deps chromium
 
+      # global-setup.ts が db:seed を実行する（毎回ダミーデータを洗い替える）。
+      # ビルドと next start は playwright.config.ts の webServer が行う。
       - name: Run E2E (Playwright)
         working-directory: apps/web
-        env:
-          CI: true
-          DATABASE_URL: ${{ secrets.DATABASE_URL_MVP }}
-          CTIIP_SEED_ALLOWED_HOST: ${{ secrets.CTIIP_SEED_ALLOWED_HOST }}
-          CTIIP_SEED_ALLOWED_DB: ${{ secrets.CTIIP_SEED_ALLOWED_DB }}
-          CTIIP_DEMO_COOKIE_SECRET: ${{ secrets.CTIIP_DEMO_COOKIE_SECRET }}
-          CTIIP_ALLOW_SEED_TRUNCATE: 'true'
         run: pnpm exec playwright test --workers=1
 
       - name: Upload Playwright report
@@ -193,4 +199,3 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report/
           retention-days: 7
-
